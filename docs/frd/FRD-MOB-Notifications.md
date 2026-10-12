@@ -1,0 +1,26 @@
+---
+tags: [FRD, Mobile, Driver, Notification]
+category: Mobile
+related: [[PRD-MOB-Notifications]]
+---
+
+# FRD-MOB — Notifikasi Inbox
+
+**Mirror**: FRD-M12-01 (Inbox), FRD-M12-05 (Preferences)
+
+## FRD-MOB-NOTIF-01 Inbox Agregat
+Daftar notif read/unread + severity.
+**AC**: Given notif masuk, When buka Inbox, Then tampil dengan status read/unread & severity (mirror FRD-M12-01).
+
+## FRD-MOB-NOTIF-02 Push Real-time Critical
+**AC**: Given notif Critical, When push, Then tampil < 2 detik + badge unread (mirror FRD-M12-01).
+
+## FRD-MOB-NOTIF-03 Deep-link
+**AC**: Given driver tap notif tugas, When dibuka, Then diarahkan ke layar trip terkait.
+
+## FRD-MOB-NOTIF-04 Preferensi
+**AC**: Given preferensi matikan tipe non-kritis, When kirim, Then tipe itu dilewati; Critical tetap masuk (mirror FRD-M12-05).
+
+## Wording
+- "Tidak ada notifikasi baru."
+- "Semua notifikasi telah dibaca."
