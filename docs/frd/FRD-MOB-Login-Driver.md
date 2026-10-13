@@ -24,6 +24,10 @@ PIN salah 5x → lock sementara.
 Driver non-aktif / SIM expired ditolak.
 **AC**: Given SIM expired, When login, Then ditolak dengan pesan status lisensi (mirror FRD-M03-03).
 
+## FRD-MOB-LOGIN-05 Tanpa Registrasi Mandiri
+App tidak menyediakan pendaftaran akun; akun & perangkat disediakan admin/vendor (GenZys).
+**AC**: Given pengguna baru, When buka app, Then tidak ada opsi registrasi/sign-up — hanya login dengan kredensial yang diberikan (mirror FRD-M01-04).
+
 ## Wording
 - "PIN atau kode salah. Silakan coba lagi."
 - "Terlalu banyak percobaan. Coba lagi dalam {n} menit."

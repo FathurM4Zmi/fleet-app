@@ -16,6 +16,9 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Login-Driver]]
 ## Tujuan
 Driver masuk ke app dengan cara cepat & aman di lapangan: PIN, OTP, atau scan QR — bukan email/password yang merepotkan.
 
+> **Model akun (B2B)**: akun & perangkat disediakan oleh admin/vendor (GenZys). App **tidak** punya
+> registrasi mandiri (self-registration) — driver hanya login dengan kredensial yang diberikan.
+
 ## Alur & Layar
 1. Splash → cek session tersimpan (auto-login bila token valid).
 2. Pilih metode: **PIN** (6 digit) / **OTP** (SMS/WA) / **QR** (scan dari device terdaftar).

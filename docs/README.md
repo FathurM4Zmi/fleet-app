@@ -79,3 +79,4 @@ fleet-app/docs/
 - `BRD-Mobile.md` = salinan markdown dari BRD induk `prd/BRD_...docx` — **satu BRD yang sama** untuk desktop & mobile (bukan dokumen turunan terpisah).
 - **Saling terhubung (dua arah)**: setiap PRD/FRD mobile menautkan ke dokumen desktop (`prd/PRD-Mxx`, `prd/frd/FRD-Mxx`, `FRD.md`, `MODULE-MAP-v2.md`), dan setiap PRD/FRD desktop menaut balik ke layar mobile terkait. Peta lengkap: `RELASI-MOBILE-DESKTOP.md`.
 - Offline-first wajib untuk DVIR, POD, Fuel Log, Defect Report, Insiden (R-MOB-01).
+- **Tanpa registrasi mandiri**: akun & perangkat disediakan admin/vendor (GenZys) — driver hanya login (PIN/OTP/QR). Tidak ada layar sign-up di mobile.

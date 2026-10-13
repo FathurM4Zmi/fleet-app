@@ -75,6 +75,11 @@ Semua layar selaras dengan FRD induk `FRD.md` dan folder BE yang sudah ada.
 - SignalR (`@microsoft/signalr` / padanan Flutter `signalr_net`) untuk push real-time: tugas baru, alert, status.
 - Ownership: driver hanya melihat data miliknya (site + user scope, FRD-M01-06).
 
+## Model Akun & Provisioning (B2B)
+- **Tidak ada registrasi mandiri (self-registration)** di app mobile. Akun & perangkat disediakan oleh admin/vendor (GenZys) — sesuai model bisnis B2B.
+- Driver hanya **login** dengan kredensial yang diberikan (PIN/OTP/QR); pembuatan/suspend akun dilakukan admin di web (M01).
+- Tidak ada layar sign-up, form pendaftaran, maupun onboarding mandiri di mobile.
+
 ## Out-of-Scope (Mobile)
 Semua modul M01–M22 punya slice mobile, tetapi **fungsi admin-only** dari modul tersebut
 tidak masuk mobile: konfigurasi alert/behavior rules (M06/M18), registry & utilisasi aset (M19),
