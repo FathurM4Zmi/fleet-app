@@ -24,3 +24,16 @@ Daftar notif read/unread + severity.
 ## Wording
 - "Tidak ada notifikasi baru."
 - "Semua notifikasi telah dibaca."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M12 | [prd/frd/FRD-M12-Notifications.md](../../../prd/frd/FRD-M12-Notifications.md) |
+| PRD modul | [M12](../../../prd/PRD-M12-Notifications.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

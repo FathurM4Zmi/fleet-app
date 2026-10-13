@@ -31,3 +31,16 @@ Hanya rute trip driver; live map armada penuh = out-of-scope.
 ## Wording
 - "Sinyal kendaraan terputus selama {n} menit."
 - "Tidak ada perjalanan aktif."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M05 | [prd/frd/FRD-M05-Tracking-Map.md](../../../prd/frd/FRD-M05-Tracking-Map.md) |
+| PRD modul | [M05](../../../prd/PRD-M05-Tracking-Map.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

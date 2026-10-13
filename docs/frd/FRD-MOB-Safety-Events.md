@@ -35,3 +35,16 @@ Hanya event driver sendiri; behavior rules & vendor config = admin-only.
 ## Wording
 - "Perilaku mengemudi berisiko terdeteksi."
 - "Tidak ada peristiwa. Pertahankan cara mengemudi yang aman."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M18 | [prd/frd/FRD-M18-Safety-Events.md](../../../prd/frd/FRD-M18-Safety-Events.md) |
+| PRD modul | [M18](../../../prd/PRD-M18-Safety-Events-Coaching.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

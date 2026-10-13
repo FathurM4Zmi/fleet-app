@@ -47,3 +47,17 @@ Driver mengeksekusi trip di lapangan: mulai perjalanan, melihat rute & titik ant
 
 ## Dependency
 M04 (workflow/status), M14 (rute), M21 (POD & chat), M05 (live position).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M04 | [prd/PRD-M04-Assignment-Trip.md](../../../prd/PRD-M04-Assignment-Trip.md) |
+| FRD modul M04 | [prd/frd/FRD-M04-Trip-Assignment.md](../../../prd/frd/FRD-M04-Trip-Assignment.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

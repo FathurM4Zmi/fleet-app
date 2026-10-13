@@ -31,3 +31,16 @@ Severity Critical → push notifikasi (M12) walau app background.
 ## Wording
 - "Alasan override wajib diisi."
 - "Anda keluar dari zona rute yang ditentukan."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M06 | [prd/frd/FRD-M06-Geofence-Alert.md](../../../prd/frd/FRD-M06-Geofence-Alert.md) |
+| PRD modul | [M06](../../../prd/PRD-M06-Geofence-Alert.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

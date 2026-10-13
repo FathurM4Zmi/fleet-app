@@ -46,3 +46,17 @@ Driver menerima peringatan yang **relevan untuk trip-nya sendiri** (geofence bre
 
 ## Dependency
 M04 (trip), M05 (posisi), M06 (alert), M12 (push notifikasi).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M06 | [prd/PRD-M06-Geofence-Alert.md](../../../prd/PRD-M06-Geofence-Alert.md) |
+| FRD modul M06 | [prd/frd/FRD-M06-Geofence-Alert.md](../../../prd/frd/FRD-M06-Geofence-Alert.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

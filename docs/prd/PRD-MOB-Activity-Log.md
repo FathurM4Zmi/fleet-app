@@ -46,3 +46,17 @@ Driver dapat meninjau **jejak aktivitasnya sendiri** (login, submit DVIR/POD/fue
 
 ## Dependency
 M01 (identitas/actor), M11 (audit pipeline), M12 (preferensi notifikasi).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M11 | [prd/PRD-M11-Audit-Administration.md](../../../prd/PRD-M11-Audit-Administration.md) |
+| FRD modul M11 | [prd/frd/FRD-M11-Settings-Audit.md](../../../prd/frd/FRD-M11-Settings-Audit.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

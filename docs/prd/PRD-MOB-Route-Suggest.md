@@ -46,3 +46,17 @@ Driver melihat **rute & ETA yang disarankan** untuk trip-nya (multi-opsi ringkas
 
 ## Dependency
 M04 (trip), M05 (posisi/ETA), M06 (geofence urutan), M14 (optimizer).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M14 | [prd/PRD-M14-Route-Optimization.md](../../../prd/PRD-M14-Route-Optimization.md) |
+| FRD modul M14 | [prd/frd/FRD-M14-Route-Optimization.md](../../../prd/frd/FRD-M14-Route-Optimization.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

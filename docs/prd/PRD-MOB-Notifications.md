@@ -45,3 +45,17 @@ Driver melihat semua notifikasi terkait dirinya (tugas baru, coaching, reminder 
 
 ## Dependency
 M12 (notifikasi), M04/M17/M20 (sumber event), SignalR/push.
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M12 | [prd/PRD-M12-Notifications.md](../../../prd/PRD-M12-Notifications.md) |
+| FRD modul M12 | [prd/frd/FRD-M12-Notifications.md](../../../prd/frd/FRD-M12-Notifications.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

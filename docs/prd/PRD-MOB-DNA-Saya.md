@@ -47,3 +47,17 @@ Driver melihat **breakdown skor DNA miliknya** per sub-komponen beserta alasan p
 
 ## Dependency
 M13 (skor DNA), M18 (safety events), M05/M07 (telemetry & konsumsi), M20 (coaching).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M13 | [prd/PRD-M13-Fleet-DNA-Health-Engine.md](../../../prd/PRD-M13-Fleet-DNA-Health-Engine.md) |
+| FRD modul M13 | [prd/frd/FRD-M13-Fleet-DNA-Health.md](../../../prd/frd/FRD-M13-Fleet-DNA-Health.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

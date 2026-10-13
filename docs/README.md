@@ -11,6 +11,7 @@ otoritatif `MODULE-MAP-v2.md` (M01–M22) dan selaras dengan `FRD.md` + folder B
 ```
 fleet-app/docs/
 ├── BRD-Mobile.md                 # BRD — SAMA dengan BRD induk (markdown)
+├── RELASI-MOBILE-DESKTOP.md      # Peta relasi dua arah mobile ↔ desktop
 ├── prd/
 │   ├── PRD-Mobile-Driver-App.md  # PRD INDUK (screen inventory + prinsip)
 │   ├── PRD-MOB-Login-Driver.md   # M01
@@ -76,4 +77,5 @@ fleet-app/docs/
 ## Catatan
 - Setiap modul M01–M22 punya slice mobile; layar admin murni dibatasi read-only / out-of-scope.
 - `BRD-Mobile.md` = salinan markdown dari BRD induk `prd/BRD_...docx` — **satu BRD yang sama** untuk desktop & mobile (bukan dokumen turunan terpisah).
+- **Saling terhubung (dua arah)**: setiap PRD/FRD mobile menautkan ke dokumen desktop (`prd/PRD-Mxx`, `prd/frd/FRD-Mxx`, `FRD.md`, `MODULE-MAP-v2.md`), dan setiap PRD/FRD desktop menaut balik ke layar mobile terkait. Peta lengkap: `RELASI-MOBILE-DESKTOP.md`.
 - Offline-first wajib untuk DVIR, POD, Fuel Log, Defect Report, Insiden (R-MOB-01).

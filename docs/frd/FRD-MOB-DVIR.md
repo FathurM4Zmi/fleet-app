@@ -25,3 +25,16 @@ Checklist per template + foto defect untuk item gagal.
 - "Tersimpan offline. Akan tersinkron saat online."
 - "Foto kondisi wajib diunggah untuk item yang gagal."
 - "Laporan DVIR terkirim untuk ditinjau."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M17 | [prd/frd/FRD-M17-DVIR-Inspection.md](../../../prd/frd/FRD-M17-DVIR-Inspection.md) |
+| PRD modul | [M17](../../../prd/PRD-M17-DVIR-Inspection.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

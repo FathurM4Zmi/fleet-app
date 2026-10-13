@@ -45,3 +45,17 @@ Driver melihat ringkasan performanya sendiri (trip selesai, on-time, konsumsi BB
 
 ## Dependency
 M04 (trip), M07 (konsumsi), M10 (agregasi), M13/M18 (skor).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M10 | [prd/PRD-M10-Dashboard-Reporting.md](../../../prd/PRD-M10-Dashboard-Reporting.md) |
+| FRD modul M10 | [prd/frd/FRD-M10-Dashboard-Reporting.md](../../../prd/frd/FRD-M10-Dashboard-Reporting.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

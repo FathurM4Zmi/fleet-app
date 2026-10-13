@@ -45,3 +45,17 @@ Driver melihat rencana coaching yang ditugaskan kepadanya, progres milestone, sk
 
 ## Dependency
 M20 (coaching), M18/M13 (skor), M09 (sertifikasi/expiry).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M20 | [prd/PRD-M20-Driver-Coaching-Workforce.md](../../../prd/PRD-M20-Driver-Coaching-Workforce.md) |
+| FRD modul M20 | [prd/frd/FRD-M20-Driver-Coaching.md](../../../prd/frd/FRD-M20-Driver-Coaching.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

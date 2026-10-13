@@ -47,3 +47,17 @@ Driver masuk ke app dengan cara cepat & aman di lapangan: PIN, OTP, atau scan QR
 
 ## Dependency
 M01 backend (auth endpoint), M03 (status driver & lisensi).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M01 | [prd/PRD-M01-Access-Organization.md](../../../prd/PRD-M01-Access-Organization.md) |
+| FRD modul M01 | [prd/frd/FRD-M01-Auth-Access.md](../../../prd/frd/FRD-M01-Auth-Access.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

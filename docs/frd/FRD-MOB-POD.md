@@ -25,3 +25,16 @@ Foto + tanda tangan + (opsional) scan + geo + timestamp.
 - "Bukti pengiriman tersimpan."
 - "Foto atau tanda tangan penerima wajib diisi."
 - "Tersimpan offline. Akan tersinkron saat online."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M21 | [prd/frd/FRD-M21-Customer-POD.md](../../../prd/frd/FRD-M21-Customer-POD.md) |
+| PRD modul | [M21](../../../prd/PRD-M21-Customer-Experience-POD.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

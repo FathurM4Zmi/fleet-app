@@ -25,3 +25,16 @@ Volume, odometer, harga, stasiun, foto struk.
 - "Volume BBM harus lebih dari 0 liter."
 - "Odometer tidak boleh berkurang. Ajukan koreksi dengan alasan."
 - "Catatan BBM tersimpan."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M07 | [prd/frd/FRD-M07-Fuel-Cost.md](../../../prd/frd/FRD-M07-Fuel-Cost.md) |
+| PRD modul | [M07](../../../prd/PRD-M07-Fuel-Cost.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

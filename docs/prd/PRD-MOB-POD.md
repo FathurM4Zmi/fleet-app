@@ -48,3 +48,17 @@ Driver menangkap bukti pengiriman sekali proses: foto, tanda tangan, barcode/sca
 
 ## Dependency
 M21 (POD/chain-of-custody), M04 (trip), M12 (notifikasi pelanggan), M05 (lokasi).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M21 | [prd/PRD-M21-Customer-Experience-POD.md](../../../prd/PRD-M21-Customer-Experience-POD.md) |
+| FRD modul M21 | [prd/frd/FRD-M21-Customer-POD.md](../../../prd/frd/FRD-M21-Customer-POD.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

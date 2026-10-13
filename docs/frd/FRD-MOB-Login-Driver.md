@@ -28,3 +28,16 @@ Driver non-aktif / SIM expired ditolak.
 - "PIN atau kode salah. Silakan coba lagi."
 - "Terlalu banyak percobaan. Coba lagi dalam {n} menit."
 - "Akun diblokir: SIM Anda telah kedaluwarsa. Hubungi supervisor."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M01 | [prd/frd/FRD-M01-Auth-Access.md](../../../prd/frd/FRD-M01-Auth-Access.md) |
+| PRD modul | [M01](../../../prd/PRD-M01-Access-Organization.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

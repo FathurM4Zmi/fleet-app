@@ -48,3 +48,17 @@ Driver mengisi inspeksi pre/post-trip lewat checklist template + foto defect, **
 
 ## Dependency
 M17 (DVIR), M08 (auto-WO), M04 (block assignment), M02 (kendaraan).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M17 | [prd/PRD-M17-DVIR-Inspection.md](../../../prd/PRD-M17-DVIR-Inspection.md) |
+| FRD modul M17 | [prd/frd/FRD-M17-DVIR-Inspection.md](../../../prd/frd/FRD-M17-DVIR-Inspection.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

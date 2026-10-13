@@ -31,3 +31,16 @@ Hanya DNA driver sendiri; bobot config (OD-06) & overview armada = admin-only.
 ## Wording
 - "Skor kesehatan turun {n} poin sejak periode lalu."
 - "Skor belum tersedia. Selesaikan beberapa trip terlebih dahulu."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M13 | [prd/frd/FRD-M13-Fleet-DNA-Health.md](../../../prd/frd/FRD-M13-Fleet-DNA-Health.md) |
+| PRD modul | [M13](../../../prd/PRD-M13-Fleet-DNA-Health-Engine.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

@@ -31,3 +31,16 @@ Daftar settlement periode sebelumnya.
 ## Wording
 - "Pembuat tidak dapat menyetujui settlement-nya sendiri."
 - "Rate card untuk kelas kendaraan ini belum ditetapkan."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M15 | [prd/frd/FRD-M15-Billing-RateCard.md](../../../prd/frd/FRD-M15-Billing-RateCard.md) |
+| PRD modul | [M15](../../../prd/PRD-M15-Billing-Rate-Card.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

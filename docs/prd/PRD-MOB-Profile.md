@@ -45,3 +45,19 @@ Driver melihat & merawat datanya sendiri: profil, lisensi/SIM, dokumen, dan stat
 
 ## Dependency
 M03 (profil/lisensi), M09 (dokumen/expiry), M20 (sertifikasi).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M03 | [prd/PRD-M03-Driver-Master.md](../../../prd/PRD-M03-Driver-Master.md) |
+| FRD modul M03 | [prd/frd/FRD-M03-Driver-Management.md](../../../prd/frd/FRD-M03-Driver-Management.md) |
+| PRD modul M09 | [prd/PRD-M09-Document-Compliance.md](../../../prd/PRD-M09-Document-Compliance.md) |
+| FRD modul M09 | [prd/frd/FRD-M09-Document-Compliance.md](../../../prd/frd/FRD-M09-Document-Compliance.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

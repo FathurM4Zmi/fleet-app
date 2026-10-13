@@ -46,3 +46,17 @@ Driver melihat **aset/equipment yang menempel pada trip-nya** (trailer, kontaine
 
 ## Dependency
 M04 (trip), M05 (posisi/telemetry), M19 (aset/reefer), M12 (notifikasi).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M19 | [prd/PRD-M19-Asset-Equipment-Tracking.md](../../../prd/PRD-M19-Asset-Equipment-Tracking.md) |
+| FRD modul M19 | [prd/frd/FRD-M19-Asset-Equipment.md](../../../prd/frd/FRD-M19-Asset-Equipment.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

@@ -24,3 +24,16 @@ Menampilkan trip berikutnya + aksi Accept/Decline 1-tap.
 ## Wording
 - "Belum ada tugas. Istirahatlah dulu."
 - "Alasan penolakan wajib diisi."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M03 | [prd/frd/FRD-M03-Driver-Management.md](../../../prd/frd/FRD-M03-Driver-Management.md) |
+| PRD modul | [M03](../../../prd/PRD-M03-Driver-Master.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

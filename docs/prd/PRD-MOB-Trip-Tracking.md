@@ -47,3 +47,17 @@ Driver melihat **posisi dirinya sendiri** di peta, rute menuju tujuan, dan ETA â
 
 ## Dependency
 M04 (trip aktif), M05 (posisi/telemetry), M06 (no-signal alert).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M05 | [prd/PRD-M05-Tracking-Map.md](../../../prd/PRD-M05-Tracking-Map.md) |
+| FRD modul M05 | [prd/frd/FRD-M05-Tracking-Map.md](../../../prd/frd/FRD-M05-Tracking-Map.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

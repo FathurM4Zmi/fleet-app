@@ -31,3 +31,16 @@ Tombol menuju Defect Report (M08).
 ## Wording
 - "Belum ada kendaraan yang ditugaskan."
 - "Kendaraan ini tidak tersedia untuk ditugaskan."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M02 | [prd/frd/FRD-M02-Vehicle-Master.md](../../../prd/frd/FRD-M02-Vehicle-Master.md) |
+| PRD modul | [M02](../../../prd/PRD-M02-Vehicle-Master.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

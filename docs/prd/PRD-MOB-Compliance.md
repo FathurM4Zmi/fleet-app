@@ -47,3 +47,17 @@ Driver memantau **status kepatuhan dirinya** (SIM, sertifikasi, pelatihan, expir
 
 ## Dependency
 M03 (driver/dokumen), M09 (dokumen), M16 (kepatuhan/insiden), M18 (pelanggaran), M12 (notifikasi).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M16 | [prd/PRD-M16-Regulatory-Safety-Compliance.md](../../../prd/PRD-M16-Regulatory-Safety-Compliance.md) |
+| FRD modul M16 | [prd/frd/FRD-M16-Regulatory-Safety.md](../../../prd/frd/FRD-M16-Regulatory-Safety.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

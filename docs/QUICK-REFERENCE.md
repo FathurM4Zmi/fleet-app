@@ -7,7 +7,8 @@ related: [[README]] [[PRD-Mobile-Driver-App]]
 # GenZys FleetOps Mobile — Quick Reference
 
 App: `fleet-app` (Flutter) · Persona: **R6 Driver** · 23 layar driver-facing (cakupan M01–M22).
-Detail: `fleet-app/docs/` (BRD-Mobile + PRD/FRD per layar).
+Detail: `fleet-app/docs/` (BRD-Mobile + PRD/FRD per layar). Peta relasi dua arah mobile↔desktop: `RELASI-MOBILE-DESKTOP.md`.
+Tiap dokumen mobile menaut ke dokumen desktop (`prd/PRD-Mxx`, `prd/frd/FRD-Mxx`) dan sebaliknya.
 
 | # | Layar | Modul | Folder BE | 1-liner |
 |---|---|---|---|---|

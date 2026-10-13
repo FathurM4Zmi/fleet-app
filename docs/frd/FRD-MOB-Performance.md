@@ -30,3 +30,16 @@ Hanya data driver sendiri; dashboard armada & export = out-of-scope mobile.
 
 ## Wording
 - "Belum ada aktivitas pada periode ini."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M10 | [prd/frd/FRD-M10-Dashboard-Reporting.md](../../../prd/frd/FRD-M10-Dashboard-Reporting.md) |
+| PRD modul | [M10](../../../prd/PRD-M10-Dashboard-Reporting.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

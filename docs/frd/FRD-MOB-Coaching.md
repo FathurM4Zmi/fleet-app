@@ -23,3 +23,16 @@ related: [[PRD-MOB-Coaching]]
 ## Wording
 - "Belum ada rencana coaching."
 - "Progres coaching tersimpan."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M20 | [prd/frd/FRD-M20-Driver-Coaching.md](../../../prd/frd/FRD-M20-Driver-Coaching.md) |
+| PRD modul | [M20](../../../prd/PRD-M20-Driver-Coaching-Workforce.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

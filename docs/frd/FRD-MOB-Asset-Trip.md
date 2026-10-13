@@ -31,3 +31,16 @@ Hanya aset trip driver; asset list/registry & utilisasi/biaya = admin-only.
 ## Wording
 - "Pergerakan aset di luar zona yang diizinkan terdeteksi."
 - "Tidak ada aset pada perjalanan ini."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M19 | [prd/frd/FRD-M19-Asset-Equipment.md](../../../prd/frd/FRD-M19-Asset-Equipment.md) |
+| PRD modul | [M19](../../../prd/PRD-M19-Asset-Equipment-Tracking.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

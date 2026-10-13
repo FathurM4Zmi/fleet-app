@@ -87,7 +87,9 @@ Aktivitas Saya).
 
 ## Catatan Penutup
 ### Acuan Dokumen
-`BRD-Mobile.md`, `FRD.md` (FRD-Mxx-xx), `MODULE-MAP-v2.md`, folder BE terkait.
+`BRD-Mobile.md` (= BRD induk), `FRD.md` (FRD-Mxx-xx), `MODULE-MAP-v2.md`, folder BE terkait.
+Peta relasi dua arah mobile ↔ desktop: [`RELASI-MOBILE-DESKTOP.md`](../RELASI-MOBILE-DESKTOP.md).
+Setiap PRD/FRD layar menautkan ke dokumen desktop (`prd/PRD-Mxx`, `prd/frd/FRD-Mxx`), dan sebaliknya.
 ### Sumber Scope
 Layar driver-facing resmi dari FRD (`[Driver]`) + slice mobile dari **seluruh 22 modul** (M01–M22),
 dengan fungsi admin-only dibatasi read-only / out-of-scope.

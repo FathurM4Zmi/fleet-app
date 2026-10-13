@@ -35,3 +35,16 @@ Daftar insiden yang pernah dilaporkan (read-only).
 ## Wording
 - "{dokumen} telah kedaluwarsa dan menonaktifkan operasional terkait."
 - "Foto bukti wajib dilampirkan."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M16 | [prd/frd/FRD-M16-Regulatory-Safety.md](../../../prd/frd/FRD-M16-Regulatory-Safety.md) |
+| PRD modul | [M16](../../../prd/PRD-M16-Regulatory-Safety-Compliance.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

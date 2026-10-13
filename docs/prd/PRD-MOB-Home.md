@@ -46,3 +46,17 @@ Satu layar ringkas yang menjawab "apa yang harus saya lakukan sekarang": status 
 
 ## Dependency
 M03 (profil/status), M04 (tugas), M13/M18 (DNA), M09 (reminder dokumen).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M03 | [prd/PRD-M03-Driver-Master.md](../../../prd/PRD-M03-Driver-Master.md) |
+| FRD modul M03 | [prd/frd/FRD-M03-Driver-Management.md](../../../prd/frd/FRD-M03-Driver-Management.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

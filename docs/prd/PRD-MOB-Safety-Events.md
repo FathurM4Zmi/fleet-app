@@ -47,3 +47,17 @@ Driver melihat **peristiwa perilaku mengemudinya sendiri** (harsh brake/accel/co
 
 ## Dependency
 M05/M06 (telemetry & threshold), M13 (skor), M18 (event/scorecard), M20 (coaching).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M18 | [prd/PRD-M18-Safety-Events-Coaching.md](../../../prd/PRD-M18-Safety-Events-Coaching.md) |
+| FRD modul M18 | [prd/frd/FRD-M18-Safety-Events.md](../../../prd/frd/FRD-M18-Safety-Events.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

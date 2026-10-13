@@ -47,3 +47,17 @@ Driver melihat **kartu BBM miliknya** (limit, status) dan **riwayat transaksi pe
 
 ## Dependency
 M07 (fuel log/rekonsiliasi), M15 (cost center), M22 (kartu/transaksi), M12 (notifikasi).
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Layar ini adalah **slice driver-only** dari modul desktop di bawah. Fungsi admin modul tersebut tidak ada di mobile.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| PRD modul M22 | [prd/PRD-M22-Fuel-Spend-Management.md](../../../prd/PRD-M22-Fuel-Spend-Management.md) |
+| FRD modul M22 | [prd/frd/FRD-M22-Fuel-Spend.md](../../../prd/frd/FRD-M22-Fuel-Spend.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

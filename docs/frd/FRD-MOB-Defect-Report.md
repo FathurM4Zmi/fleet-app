@@ -35,3 +35,16 @@ Submit kerusakan dapat dilakukan tanpa sinyal, sync idempotent.
 ## Wording
 - "Jadwal perawatan preventif terlewat."
 - "Foto kerusakan wajib untuk tingkat High atau Out-of-service."
+
+---
+
+## Terhubung ke Dokumen Desktop (Sistem)
+> Mirror FRD desktop di bawah; layar mobile = slice driver-only.
+
+| Dokumen Desktop | Tautan |
+|---|---|
+| FRD modul M08 | [prd/frd/FRD-M08-Maintenance-WorkOrder.md](../../../prd/frd/FRD-M08-Maintenance-WorkOrder.md) |
+| PRD modul | [M08](../../../prd/PRD-M08-Maintenance-Work-Orders.md) |
+| FRD induk | [FRD.md](../../../FRD.md) |
+| PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
+| Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |
