@@ -14,7 +14,7 @@ related:
 # PRD Mobile — GenZys FleetOps Driver App (Induk)
 
 **[PRD-MOB]** - Mobile Driver App
-**MODUL**: Mobile Driver App (`fleet-app`, Flutter) — agregasi layar driver-facing dari M01/M03/M04/M07/M12/M17/M20/M21
+**MODUL**: Mobile Driver App (`fleet-app`, Flutter) — agregasi layar driver-facing dari seluruh modul M01–M22
 **PERSONA**: R6 Driver
 **PLATFORM**: Mobile (Android prioritas, iOS target berikutnya)
 **PRIORITAS**: Phase 1-2 (seiring Wave operasi)
@@ -40,8 +40,21 @@ Semua layar selaras dengan FRD induk `FRD.md` dan folder BE yang sudah ada.
 | 8 | Fuel Log (entri BBM) | [[PRD-MOB-Fuel-Log]] | [[FRD-MOB-Fuel-Log]] | M07 | `FuelCost` |
 | 9 | Notifikasi Inbox | [[PRD-MOB-Notifications]] | [[FRD-MOB-Notifications]] | M12 | `Notifications` |
 | 10 | Coaching & Sertifikasi Saya | [[PRD-MOB-Coaching]] | [[FRD-MOB-Coaching]] | M20 | `CoachingWorkforce` |
+| 11 | Kendaraan Saya | [[PRD-MOB-Vehicle-Detail]] | [[FRD-MOB-Vehicle-Detail]] | M02 | `VehicleMaster` |
+| 12 | Rute & Posisi Trip | [[PRD-MOB-Trip-Tracking]] | [[FRD-MOB-Trip-Tracking]] | M05 | `TrackingMap` |
+| 13 | Peringatan Trip | [[PRD-MOB-Alerts]] | [[FRD-MOB-Alerts]] | M06 | `GeofenceAlert` |
+| 14 | Laporan Kerusakan | [[PRD-MOB-Defect-Report]] | [[FRD-MOB-Defect-Report]] | M08 | `MaintenanceWorkOrder` |
+| 15 | Ringkasan Kinerja Saya | [[PRD-MOB-Performance]] | [[FRD-MOB-Performance]] | M10 | `DashboardReporting` |
+| 16 | Aktivitas Saya | [[PRD-MOB-Activity-Log]] | [[FRD-MOB-Activity-Log]] | M11 | `AuditAdministration` |
+| 17 | DNA Kesehatan Saya | [[PRD-MOB-DNA-Saya]] | [[FRD-MOB-DNA-Saya]] | M13 | `HealthEngine` |
+| 18 | Rute Disarankan | [[PRD-MOB-Route-Suggest]] | [[FRD-MOB-Route-Suggest]] | M14 | `RouteOptimizer` |
+| 19 | Settlement & Pendapatan Saya | [[PRD-MOB-Settlement]] | [[FRD-MOB-Settlement]] | M15 | `BillingCostCenter` |
+| 20 | Kepatuhan & Sertifikasi Saya | [[PRD-MOB-Compliance]] | [[FRD-MOB-Compliance]] | M16 | `SafetyCompliance` |
+| 21 | Peristiwa Safety Saya | [[PRD-MOB-Safety-Events]] | [[FRD-MOB-Safety-Events]] | M18 | `SafetyEvents` |
+| 22 | Aset & Equipment Trip | [[PRD-MOB-Asset-Trip]] | [[FRD-MOB-Asset-Trip]] | M19 | `AssetEquipment` |
+| 23 | Kartu BBM & Pengeluaran Saya | [[PRD-MOB-Fuel-Card]] | [[FRD-MOB-Fuel-Card]] | M22 | `FuelSpendMgmt` |
 
-**Total: 10 layar mobile.**
+**Total: 23 layar mobile (cakupan M01–M22).**
 
 ---
 
@@ -63,8 +76,12 @@ Semua layar selaras dengan FRD induk `FRD.md` dan folder BE yang sudah ada.
 - Ownership: driver hanya melihat data miliknya (site + user scope, FRD-M01-06).
 
 ## Out-of-Scope (Mobile)
-Modul admin (billing, rate card, audit, config), route optimizer (sisi dispatcher),
-live map armada penuh (driver cukup rute trip-nya), video dashcam hosting.
+Semua modul M01–M22 punya slice mobile, tetapi **fungsi admin-only** dari modul tersebut
+tidak masuk mobile: konfigurasi alert/behavior rules (M06/M18), registry & utilisasi aset (M19),
+rate card/approval settlement (M15), audit sistem & security config (M11), dashboard armada
+penuh + export laporan (M10), route optimizer sisi dispatcher (M14), live map armada penuh,
+video dashcam hosting. Layar admin murni bersifat **read-only** di mobile (mis. Settlement,
+Aktivitas Saya).
 
 ---
 
@@ -72,6 +89,7 @@ live map armada penuh (driver cukup rute trip-nya), video dashcam hosting.
 ### Acuan Dokumen
 `BRD-Mobile.md`, `FRD.md` (FRD-Mxx-xx), `MODULE-MAP-v2.md`, folder BE terkait.
 ### Sumber Scope
-Layar driver-facing resmi dari FRD (`[Driver]`) + layar turunan wajar (Profile, Fuel Log, Notifikasi, Coaching).
+Layar driver-facing resmi dari FRD (`[Driver]`) + slice mobile dari **seluruh 22 modul** (M01–M22),
+dengan fungsi admin-only dibatasi read-only / out-of-scope.
 ### Hal yang Dilengkapi Sebelum Kickoff
 Keputusan offline-sync strategy, prioritas Android vs iOS, provider tile/peta untuk driver, kebijakan izin kamera/lokasi.
