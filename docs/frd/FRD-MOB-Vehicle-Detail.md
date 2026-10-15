@@ -7,6 +7,7 @@ related: [[PRD-MOB-Vehicle-Detail]]
 # FRD-MOB — Kendaraan Saya (Vehicle Detail)
 
 **Mirror**: FRD-M02-02 (Vehicle Detail), FRD-M02-06 (Vehicle Documents), FRD-M02-09 (Vehicle Health & DNA)
+**BRD-Mobile**: MBR-011 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-VEH-01 Detail Kendaraan Ditugaskan
 Menampilkan identitas, spesifikasi, dan status kendaraan yang sedang/akan ditugaskan ke driver.
@@ -41,6 +42,7 @@ Tombol menuju Defect Report (M08).
 |---|---|
 | FRD modul M02 | [prd/frd/FRD-M02-Vehicle-Master.md](../../../prd/frd/FRD-M02-Vehicle-Master.md) |
 | PRD modul | [M02](../../../prd/PRD-M02-Vehicle-Master.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

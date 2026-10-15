@@ -7,6 +7,7 @@ related: [[PRD-MOB-Fuel-Log]]
 # FRD-MOB — Fuel Log
 
 **Mirror**: FRD-M07-02 (Add/Import Fuel), FRD-M07-01 (Fuel Entries), pola FRD-M02-04 (odometer)
+**BRD-Mobile**: MBR-008 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-FUEL-01 Entri BBM
 Volume, odometer, harga, stasiun, foto struk.
@@ -35,6 +36,7 @@ Volume, odometer, harga, stasiun, foto struk.
 |---|---|
 | FRD modul M07 | [prd/frd/FRD-M07-Fuel-Cost.md](../../../prd/frd/FRD-M07-Fuel-Cost.md) |
 | PRD modul | [M07](../../../prd/PRD-M07-Fuel-Cost.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

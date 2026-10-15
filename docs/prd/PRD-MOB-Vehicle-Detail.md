@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Vehicle-Detail]] [[PRD-MOB-Home]]
 **Modul Sumber**: M02 (Vehicle Master) · **Folder BE**: `VehicleMaster`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 1
 **FRD**: FRD-M02-02 (Vehicle Detail), FRD-M02-06 (Vehicle Documents), FRD-M02-09 (Vehicle Health & DNA)
+**BRD-Mobile**: MBR-011 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -58,6 +59,7 @@ M02 (kendaraan), M09 (dokumen), M13 (DNA), M08 (riwayat WO).
 |---|---|
 | PRD modul M02 | [prd/PRD-M02-Vehicle-Master.md](../../../prd/PRD-M02-Vehicle-Master.md) |
 | FRD modul M02 | [prd/frd/FRD-M02-Vehicle-Master.md](../../../prd/frd/FRD-M02-Vehicle-Master.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

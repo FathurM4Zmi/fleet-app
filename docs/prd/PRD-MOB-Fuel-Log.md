@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Fuel-Log]]
 **Modul Sumber**: M07 (Fuel & Cost) · **Folder BE**: `FuelCost`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Phase 2
 **FRD**: FRD-M07-02 (Add/Import Fuel), FRD-M07-01 (Fuel Entries)
+**BRD-Mobile**: MBR-008 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -59,6 +60,7 @@ M07 (fuel/biaya), M02 (kendaraan/odometer), M22 (rekonsiliasi/fraud).
 |---|---|
 | PRD modul M07 | [prd/PRD-M07-Fuel-Cost.md](../../../prd/PRD-M07-Fuel-Cost.md) |
 | FRD modul M07 | [prd/frd/FRD-M07-Fuel-Cost.md](../../../prd/frd/FRD-M07-Fuel-Cost.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

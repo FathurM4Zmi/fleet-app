@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-DVIR]]
 **Modul Sumber**: M17 (DVIR & Daily Inspection) · **Folder BE**: `DvirInspection`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Phase 2
 **FRD**: FRD-M17-02 (Driver DVIR Form), FRD-M17-03 (Workflow), FRD-M17-07 (Defect→WO)
+**BRD-Mobile**: MBR-006 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -58,6 +59,7 @@ M17 (DVIR), M08 (auto-WO), M04 (block assignment), M02 (kendaraan).
 |---|---|
 | PRD modul M17 | [prd/PRD-M17-DVIR-Inspection.md](../../../prd/PRD-M17-DVIR-Inspection.md) |
 | FRD modul M17 | [prd/frd/FRD-M17-DVIR-Inspection.md](../../../prd/frd/FRD-M17-DVIR-Inspection.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

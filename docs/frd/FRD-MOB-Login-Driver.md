@@ -7,6 +7,7 @@ related: [[PRD-MOB-Login-Driver]]
 # FRD-MOB — Login Driver
 
 **Mirror**: FRD-M01-02 (Login driver), FRD-M01-03 (Forgot/Reset), FRD-M01-01 (lock)
+**BRD-Mobile**: MBR-001, MBR-026 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-LOGIN-01 Login PIN/OTP/QR
 Driver terautentikasi via PIN 6 digit / OTP / scan QR sekali-pakai.
@@ -42,6 +43,7 @@ App tidak menyediakan pendaftaran akun; akun & perangkat disediakan admin/vendor
 |---|---|
 | FRD modul M01 | [prd/frd/FRD-M01-Auth-Access.md](../../../prd/frd/FRD-M01-Auth-Access.md) |
 | PRD modul | [M01](../../../prd/PRD-M01-Access-Organization.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

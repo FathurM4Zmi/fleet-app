@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Activity-Log]]
 **Modul Sumber**: M11 (Settings, Configuration & Audit) · **Folder BE**: `AuditAdministration`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 3
 **FRD**: FRD-M11-06 (Audit Log Viewer)
+**BRD-Mobile**: MBR-016 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -56,6 +57,7 @@ M01 (identitas/actor), M11 (audit pipeline), M12 (preferensi notifikasi).
 |---|---|
 | PRD modul M11 | [prd/PRD-M11-Audit-Administration.md](../../../prd/PRD-M11-Audit-Administration.md) |
 | FRD modul M11 | [prd/frd/FRD-M11-Settings-Audit.md](../../../prd/frd/FRD-M11-Settings-Audit.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

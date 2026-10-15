@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Route-Suggest]] [[PRD-MOB-Trip-Trac
 **Modul Sumber**: M14 (Route Optimization & Dispatch Intelligence) · **Folder BE**: `RouteOptimizer`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 4
 **FRD**: FRD-M14-01 (Route Optimizer)
+**BRD-Mobile**: MBR-018 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -56,6 +57,7 @@ M04 (trip), M05 (posisi/ETA), M06 (geofence urutan), M14 (optimizer).
 |---|---|
 | PRD modul M14 | [prd/PRD-M14-Route-Optimization.md](../../../prd/PRD-M14-Route-Optimization.md) |
 | FRD modul M14 | [prd/frd/FRD-M14-Route-Optimization.md](../../../prd/frd/FRD-M14-Route-Optimization.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

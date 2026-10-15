@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Profile]]
 **Modul Sumber**: M03 (Driver) + M09 (Document) · **Folder BE**: `DriverMaster` / `DocumentCompliance`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Phase 1
 **FRD**: FRD-M03-02 (Driver Profile), FRD-M03-06 (Driver Documents), FRD-M03-05 (Licensing)
+**BRD-Mobile**: MBR-003 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -57,6 +58,7 @@ M03 (profil/lisensi), M09 (dokumen/expiry), M20 (sertifikasi).
 | FRD modul M03 | [prd/frd/FRD-M03-Driver-Management.md](../../../prd/frd/FRD-M03-Driver-Management.md) |
 | PRD modul M09 | [prd/PRD-M09-Document-Compliance.md](../../../prd/PRD-M09-Document-Compliance.md) |
 | FRD modul M09 | [prd/frd/FRD-M09-Document-Compliance.md](../../../prd/frd/FRD-M09-Document-Compliance.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

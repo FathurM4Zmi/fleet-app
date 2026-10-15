@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Fuel-Card]] [[PRD-MOB-Fuel-Log]]
 **Modul Sumber**: M22 (Fuel & Spend Management) · **Folder BE**: `FuelSpendMgmt`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 5
 **FRD**: FRD-M22-01 (Fuel Card Mgmt), FRD-M22-02 (Spend Transactions)
+**BRD-Mobile**: MBR-023 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -57,6 +58,7 @@ M07 (fuel log/rekonsiliasi), M15 (cost center), M22 (kartu/transaksi), M12 (noti
 |---|---|
 | PRD modul M22 | [prd/PRD-M22-Fuel-Spend-Management.md](../../../prd/PRD-M22-Fuel-Spend-Management.md) |
 | FRD modul M22 | [prd/frd/FRD-M22-Fuel-Spend.md](../../../prd/frd/FRD-M22-Fuel-Spend.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

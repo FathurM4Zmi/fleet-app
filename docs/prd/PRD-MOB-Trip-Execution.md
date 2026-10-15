@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Trip-Execution]] [[PRD-MOB-POD]]
 **Modul Sumber**: M04 (Trip Assignment) · **Folder BE**: `AssignmentTrip`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Phase 1
 **FRD**: FRD-M04-09 (Trip Execution), FRD-M04-06 (Trip Status Workflow)
+**BRD-Mobile**: MBR-005 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -57,6 +58,7 @@ M04 (workflow/status), M14 (rute), M21 (POD & chat), M05 (live position).
 |---|---|
 | PRD modul M04 | [prd/PRD-M04-Assignment-Trip.md](../../../prd/PRD-M04-Assignment-Trip.md) |
 | FRD modul M04 | [prd/frd/FRD-M04-Trip-Assignment.md](../../../prd/frd/FRD-M04-Trip-Assignment.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

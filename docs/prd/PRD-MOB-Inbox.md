@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Inbox]]
 **Modul Sumber**: M04 (Trip Assignment) · **Folder BE**: `AssignmentTrip`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Phase 1
 **FRD**: FRD-M04-08 (Driver Inbox)
+**BRD-Mobile**: MBR-004 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -56,6 +57,7 @@ M04 (trip & workflow), M12 (notifikasi tugas baru), SignalR (real-time).
 |---|---|
 | PRD modul M04 | [prd/PRD-M04-Assignment-Trip.md](../../../prd/PRD-M04-Assignment-Trip.md) |
 | FRD modul M04 | [prd/frd/FRD-M04-Trip-Assignment.md](../../../prd/frd/FRD-M04-Trip-Assignment.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

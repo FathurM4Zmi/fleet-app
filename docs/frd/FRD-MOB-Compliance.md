@@ -7,6 +7,7 @@ related: [[PRD-MOB-Compliance]]
 # FRD-MOB — Kepatuhan & Sertifikasi Saya (Compliance)
 
 **Mirror**: FRD-M16-01 (Compliance Dashboard), FRD-M16-02 (Incident Reporting), FRD-M16-04 (Driver Training/Certification)
+**BRD-Mobile**: MBR-020 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-CMP-01 Status Kepatuhan
 SIM, sertifikat, pelatihan + badge expiry.
@@ -45,6 +46,7 @@ Daftar insiden yang pernah dilaporkan (read-only).
 |---|---|
 | FRD modul M16 | [prd/frd/FRD-M16-Regulatory-Safety.md](../../../prd/frd/FRD-M16-Regulatory-Safety.md) |
 | PRD modul | [M16](../../../prd/PRD-M16-Regulatory-Safety-Compliance.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

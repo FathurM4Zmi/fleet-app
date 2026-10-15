@@ -7,6 +7,7 @@ related: [[PRD-MOB-Notifications]]
 # FRD-MOB — Notifikasi Inbox
 
 **Mirror**: FRD-M12-01 (Inbox), FRD-M12-05 (Preferences)
+**BRD-Mobile**: MBR-009, MBR-030 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-NOTIF-01 Inbox Agregat
 Daftar notif read/unread + severity.
@@ -34,6 +35,7 @@ Daftar notif read/unread + severity.
 |---|---|
 | FRD modul M12 | [prd/frd/FRD-M12-Notifications.md](../../../prd/frd/FRD-M12-Notifications.md) |
 | PRD modul | [M12](../../../prd/PRD-M12-Notifications.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

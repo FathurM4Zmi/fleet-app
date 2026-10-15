@@ -7,6 +7,7 @@ related: [[PRD-MOB-Safety-Events]]
 # FRD-MOB — Peristiwa Safety Saya (Safety Events)
 
 **Mirror**: FRD-M18-01 (Safety Events Feed), FRD-M18-02 (Event Evidence), FRD-M18-04 (Safety Scorecard)
+**BRD-Mobile**: MBR-021 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-SAF-01 Feed Peristiwa Pribadi
 Daftar event perilaku driver (harsh brake/accel/corner, speeding) dari telemetry.
@@ -45,6 +46,7 @@ Hanya event driver sendiri; behavior rules & vendor config = admin-only.
 |---|---|
 | FRD modul M18 | [prd/frd/FRD-M18-Safety-Events.md](../../../prd/frd/FRD-M18-Safety-Events.md) |
 | PRD modul | [M18](../../../prd/PRD-M18-Safety-Events-Coaching.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

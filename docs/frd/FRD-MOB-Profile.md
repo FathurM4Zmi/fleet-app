@@ -7,6 +7,7 @@ related: [[PRD-MOB-Profile]]
 # FRD-MOB — Profil & Dokumen Saya
 
 **Mirror**: FRD-M03-02 (Profile), FRD-M03-05 (Licensing), FRD-M03-06 (Documents), FRD-M09-05 (Expiry)
+**BRD-Mobile**: MBR-003 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-PROFILE-01 Lihat Profil & Lisensi
 **AC**: Given driver login, When buka Profil, Then data pribadi, SIM, kelas, & endorsement tampil (mirror FRD-M03-02/05).
@@ -31,6 +32,7 @@ related: [[PRD-MOB-Profile]]
 | FRD modul M03 | [prd/frd/FRD-M03-Driver-Management.md](../../../prd/frd/FRD-M03-Driver-Management.md) |
 | FRD modul M09 | [prd/frd/FRD-M09-Document-Compliance.md](../../../prd/frd/FRD-M09-Document-Compliance.md) |
 | PRD modul | [M03](../../../prd/PRD-M03-Driver-Master.md) · [M09](../../../prd/PRD-M09-Document-Compliance.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

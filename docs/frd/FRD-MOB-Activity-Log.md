@@ -7,6 +7,7 @@ related: [[PRD-MOB-Activity-Log]]
 # FRD-MOB — Aktivitas Saya (Activity Log)
 
 **Mirror**: FRD-M11-06 (Audit Log Viewer), BRL-028 (immutability)
+**BRD-Mobile**: MBR-016 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-ACT-01 Daftar Aktivitas Pribadi
 Daftar kronologis aksi driver sendiri (login, DVIR, POD, fuel, trip).
@@ -41,6 +42,7 @@ Tidak menampilkan konfigurasi/security/audit sistem (admin-only).
 |---|---|
 | FRD modul M11 | [prd/frd/FRD-M11-Settings-Audit.md](../../../prd/frd/FRD-M11-Settings-Audit.md) |
 | PRD modul | [M11](../../../prd/PRD-M11-Audit-Administration.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

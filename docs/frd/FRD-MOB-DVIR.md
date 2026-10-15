@@ -7,6 +7,7 @@ related: [[PRD-MOB-DVIR]]
 # FRD-MOB — DVIR Form
 
 **Mirror**: FRD-M17-02 (Driver DVIR Form), FRD-M17-03 (workflow), FRD-M17-07 (defect→WO)
+**BRD-Mobile**: MBR-006 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-DVIR-01 Checklist & Foto Defect
 Checklist per template + foto defect untuk item gagal.
@@ -35,6 +36,7 @@ Checklist per template + foto defect untuk item gagal.
 |---|---|
 | FRD modul M17 | [prd/frd/FRD-M17-DVIR-Inspection.md](../../../prd/frd/FRD-M17-DVIR-Inspection.md) |
 | PRD modul | [M17](../../../prd/PRD-M17-DVIR-Inspection.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

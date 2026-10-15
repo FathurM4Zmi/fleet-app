@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-POD]] [[PRD-MOB-Trip-Execution]]
 **Modul Sumber**: M21 (Customer Experience & POD) · **Folder BE**: `CustomerExperiencePOD`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Phase 2
 **FRD**: FRD-M21-02 (POD Capture), FRD-M21-06 (POD & Chain-of-Custody)
+**BRD-Mobile**: MBR-007 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -58,6 +59,7 @@ M21 (POD/chain-of-custody), M04 (trip), M12 (notifikasi pelanggan), M05 (lokasi)
 |---|---|
 | PRD modul M21 | [prd/PRD-M21-Customer-Experience-POD.md](../../../prd/PRD-M21-Customer-Experience-POD.md) |
 | FRD modul M21 | [prd/frd/FRD-M21-Customer-POD.md](../../../prd/frd/FRD-M21-Customer-POD.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

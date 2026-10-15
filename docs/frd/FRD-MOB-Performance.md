@@ -7,6 +7,7 @@ related: [[PRD-MOB-Performance]]
 # FRD-MOB — Ringkasan Kinerja Saya (Performance Summary)
 
 **Mirror**: FRD-M10-01 (Main Dashboard), FRD-M10-03 (KPI Overview), FRD-M10-07 (Driver Performance)
+**BRD-Mobile**: MBR-015 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-PERF-01 KPI Pribadi
 Kartu KPI driver: trip selesai, on-time %, jarak, konsumsi L/100km.
@@ -40,6 +41,7 @@ Hanya data driver sendiri; dashboard armada & export = out-of-scope mobile.
 |---|---|
 | FRD modul M10 | [prd/frd/FRD-M10-Dashboard-Reporting.md](../../../prd/frd/FRD-M10-Dashboard-Reporting.md) |
 | PRD modul | [M10](../../../prd/PRD-M10-Dashboard-Reporting.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

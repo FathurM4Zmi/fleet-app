@@ -7,6 +7,7 @@ related: [[PRD-MOB-Alerts]]
 # FRD-MOB — Peringatan Trip (Alerts)
 
 **Mirror**: FRD-M06-01 (Unified Command Feed), FRD-M06-04 (Geofence Breach), FRD-M06-06 (Exception Resolution)
+**BRD-Mobile**: MBR-013 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-ALT-01 Feed Peringatan Trip
 Daftar peringatan yang tertaut ke trip driver, urut severity + SLA countdown.
@@ -41,6 +42,7 @@ Severity Critical → push notifikasi (M12) walau app background.
 |---|---|
 | FRD modul M06 | [prd/frd/FRD-M06-Geofence-Alert.md](../../../prd/frd/FRD-M06-Geofence-Alert.md) |
 | PRD modul | [M06](../../../prd/PRD-M06-Geofence-Alert.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

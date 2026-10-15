@@ -7,6 +7,7 @@ related: [[PRD-MOB-Coaching]]
 # FRD-MOB — Coaching & Sertifikasi Saya
 
 **Mirror**: FRD-M20-02 (Coaching Plans), FRD-M20-03 (Training), FRD-M18-04 (Scorecard)
+**BRD-Mobile**: MBR-010 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-COACH-01 Lihat Coaching Plan
 **AC**: Given ada plan untuk driver, When buka Coaching, Then plan + milestone + status tampil (mirror FRD-M20-02).
@@ -33,6 +34,7 @@ related: [[PRD-MOB-Coaching]]
 |---|---|
 | FRD modul M20 | [prd/frd/FRD-M20-Driver-Coaching.md](../../../prd/frd/FRD-M20-Driver-Coaching.md) |
 | PRD modul | [M20](../../../prd/PRD-M20-Driver-Coaching-Workforce.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

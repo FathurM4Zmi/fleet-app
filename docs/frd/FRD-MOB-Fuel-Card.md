@@ -7,6 +7,7 @@ related: [[PRD-MOB-Fuel-Card]]
 # FRD-MOB — Kartu BBM & Pengeluaran Saya (Fuel Card)
 
 **Mirror**: FRD-M22-01 (Fuel Card Mgmt), FRD-M22-02 (Spend Transactions), FRD-M22-03 (Fraud Detection)
+**BRD-Mobile**: MBR-023 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-FCARD-01 Kartu Saya (Masked)
 Nomor kartu (masked), limit, sisa kuota, status aktif.
@@ -45,6 +46,7 @@ Hanya kartu/transaksi driver sendiri; aktivasi/limit = admin-only.
 |---|---|
 | FRD modul M22 | [prd/frd/FRD-M22-Fuel-Spend.md](../../../prd/frd/FRD-M22-Fuel-Spend.md) |
 | PRD modul | [M22](../../../prd/PRD-M22-Fuel-Spend-Management.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

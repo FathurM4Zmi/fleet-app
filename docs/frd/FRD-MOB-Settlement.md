@@ -7,6 +7,7 @@ related: [[PRD-MOB-Settlement]]
 # FRD-MOB — Settlement & Pendapatan Saya (Settlement)
 
 **Mirror**: FRD-M15-04 (Invoice / Settlement), FRD-M15-02 (Trip Costing), FRD-M01-07 (SoD)
+**BRD-Mobile**: MBR-019 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-SET-01 Ringkasan Settlement
 Total pendapatan/settlement + rincian per trip untuk periode terpilih.
@@ -41,6 +42,7 @@ Daftar settlement periode sebelumnya.
 |---|---|
 | FRD modul M15 | [prd/frd/FRD-M15-Billing-RateCard.md](../../../prd/frd/FRD-M15-Billing-RateCard.md) |
 | PRD modul | [M15](../../../prd/PRD-M15-Billing-Rate-Card.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

@@ -7,6 +7,7 @@ related: [[PRD-MOB-Asset-Trip]]
 # FRD-MOB — Aset & Equipment Trip (Asset Trip)
 
 **Mirror**: FRD-M19-01 (Asset List), FRD-M19-03 (Reefer / Cold-Chain), FRD-M19-06 (Asset Geofence)
+**BRD-Mobile**: MBR-022 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-AST-01 Aset Terpasang pada Trip
 Daftar aset yang menempel pada trip aktif driver (asset-tag, kategori, status).
@@ -41,6 +42,7 @@ Hanya aset trip driver; asset list/registry & utilisasi/biaya = admin-only.
 |---|---|
 | FRD modul M19 | [prd/frd/FRD-M19-Asset-Equipment.md](../../../prd/frd/FRD-M19-Asset-Equipment.md) |
 | PRD modul | [M19](../../../prd/PRD-M19-Asset-Equipment-Tracking.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

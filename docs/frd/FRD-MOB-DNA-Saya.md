@@ -7,6 +7,7 @@ related: [[PRD-MOB-DNA-Saya]]
 # FRD-MOB — DNA Kesehatan Saya (Driver DNA)
 
 **Mirror**: FRD-M13-04 (Driver DNA Detail), FRD-M13-02 (Fleet DNA Overview), FRD-M13-06 (Score Recompute)
+**BRD-Mobile**: MBR-017 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-DNA-01 Skor Komposit & Breakdown
 DNA ring driver + breakdown sub-komponen dengan alasan.
@@ -41,6 +42,7 @@ Hanya DNA driver sendiri; bobot config (OD-06) & overview armada = admin-only.
 |---|---|
 | FRD modul M13 | [prd/frd/FRD-M13-Fleet-DNA-Health.md](../../../prd/frd/FRD-M13-Fleet-DNA-Health.md) |
 | PRD modul | [M13](../../../prd/PRD-M13-Fleet-DNA-Health-Engine.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

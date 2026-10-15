@@ -7,6 +7,7 @@ related: [[PRD-MOB-Route-Suggest]]
 # FRD-MOB — Rute Disarankan (Route Suggest)
 
 **Mirror**: FRD-M14-01 (Route Optimizer)
+**BRD-Mobile**: MBR-018 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-RTE-01 Opsi Rute + ETA
 Menampilkan 2–3 opsi rute (waktu, jarak, asumsi) untuk trip aktif.
@@ -41,6 +42,7 @@ ETA diperbarui saat posisi berubah (via M05).
 |---|---|
 | FRD modul M14 | [prd/frd/FRD-M14-Route-Optimization.md](../../../prd/frd/FRD-M14-Route-Optimization.md) |
 | PRD modul | [M14](../../../prd/PRD-M14-Route-Optimization.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

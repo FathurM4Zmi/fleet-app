@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Trip-Tracking]] [[PRD-MOB-Trip-Exec
 **Modul Sumber**: M05 (Tracking, Telemetry & Live Map) · **Folder BE**: `TrackingMap`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 2
 **FRD**: FRD-M05-01 (Live Fleet Map), FRD-M05-02 (History Trace), FRD-M05-03 (Telemetry Feed)
+**BRD-Mobile**: MBR-012 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -57,6 +58,7 @@ M04 (trip aktif), M05 (posisi/telemetry), M06 (no-signal alert).
 |---|---|
 | PRD modul M05 | [prd/PRD-M05-Tracking-Map.md](../../../prd/PRD-M05-Tracking-Map.md) |
 | FRD modul M05 | [prd/frd/FRD-M05-Tracking-Map.md](../../../prd/frd/FRD-M05-Tracking-Map.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

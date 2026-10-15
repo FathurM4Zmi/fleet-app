@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Settlement]] [[PRD-MOB-Fuel-Log]]
 **Modul Sumber**: M15 (Billing, Rate Card & Cost Center) · **Folder BE**: `BillingCostCenter`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 3
 **FRD**: FRD-M15-04 (Invoice / Settlement), FRD-M15-02 (Trip Costing)
+**BRD-Mobile**: MBR-019 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -57,6 +58,7 @@ M04 (trip), M07 (biaya BBM), M15 (costing/settlement), M12 (notifikasi status).
 |---|---|
 | PRD modul M15 | [prd/PRD-M15-Billing-Rate-Card.md](../../../prd/PRD-M15-Billing-Rate-Card.md) |
 | FRD modul M15 | [prd/frd/FRD-M15-Billing-RateCard.md](../../../prd/frd/FRD-M15-Billing-RateCard.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

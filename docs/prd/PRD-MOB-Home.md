@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Home]]
 **Modul Sumber**: M03 (Driver Management) · **Folder BE**: `DriverMaster`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Phase 1
 **FRD**: FRD-M03-09 (Driver App Home)
+**BRD-Mobile**: MBR-002 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -56,6 +57,7 @@ M03 (profil/status), M04 (tugas), M13/M18 (DNA), M09 (reminder dokumen).
 |---|---|
 | PRD modul M03 | [prd/PRD-M03-Driver-Master.md](../../../prd/PRD-M03-Driver-Master.md) |
 | FRD modul M03 | [prd/frd/FRD-M03-Driver-Management.md](../../../prd/frd/FRD-M03-Driver-Management.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

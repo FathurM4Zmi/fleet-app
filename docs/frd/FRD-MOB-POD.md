@@ -7,6 +7,7 @@ related: [[PRD-MOB-POD]]
 # FRD-MOB — POD Capture
 
 **Mirror**: FRD-M21-02 (POD Capture), FRD-M21-06 (chain-of-custody)
+**BRD-Mobile**: MBR-007 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-POD-01 Capture Bukti
 Foto + tanda tangan + (opsional) scan + geo + timestamp.
@@ -35,6 +36,7 @@ Foto + tanda tangan + (opsional) scan + geo + timestamp.
 |---|---|
 | FRD modul M21 | [prd/frd/FRD-M21-Customer-POD.md](../../../prd/frd/FRD-M21-Customer-POD.md) |
 | PRD modul | [M21](../../../prd/PRD-M21-Customer-Experience-POD.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

@@ -7,6 +7,7 @@ related: [[PRD-MOB-Home]]
 # FRD-MOB — Driver App Home
 
 **Mirror**: FRD-M03-09 (Driver App Home), FRD-M04-08 (accept/decline)
+**BRD-Mobile**: MBR-002 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-HOME-01 Next Trip Card
 Menampilkan trip berikutnya + aksi Accept/Decline 1-tap.
@@ -34,6 +35,7 @@ Menampilkan trip berikutnya + aksi Accept/Decline 1-tap.
 |---|---|
 | FRD modul M03 | [prd/frd/FRD-M03-Driver-Management.md](../../../prd/frd/FRD-M03-Driver-Management.md) |
 | PRD modul | [M03](../../../prd/PRD-M03-Driver-Master.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

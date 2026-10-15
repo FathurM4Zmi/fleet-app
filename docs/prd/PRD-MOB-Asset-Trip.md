@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Asset-Trip]] [[PRD-MOB-Trip-Executi
 **Modul Sumber**: M19 (Asset & Equipment Tracking) · **Folder BE**: `AssetEquipment`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 5
 **FRD**: FRD-M19-01 (Asset List), FRD-M19-03 (Reefer / Cold-Chain), FRD-M19-06 (Asset Geofence)
+**BRD-Mobile**: MBR-022 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -56,6 +57,7 @@ M04 (trip), M05 (posisi/telemetry), M19 (aset/reefer), M12 (notifikasi).
 |---|---|
 | PRD modul M19 | [prd/PRD-M19-Asset-Equipment-Tracking.md](../../../prd/PRD-M19-Asset-Equipment-Tracking.md) |
 | FRD modul M19 | [prd/frd/FRD-M19-Asset-Equipment.md](../../../prd/frd/FRD-M19-Asset-Equipment.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

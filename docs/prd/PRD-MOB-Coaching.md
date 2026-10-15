@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Coaching]]
 **Modul Sumber**: M20 (Driver Coaching & Workforce) · **Folder BE**: `CoachingWorkforce`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Phase 3
 **FRD**: FRD-M20-02 (Coaching Plans), FRD-M20-03 (Training), FRD-M18-04 (Safety Scorecard)
+**BRD-Mobile**: MBR-010 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -55,6 +56,7 @@ M20 (coaching), M18/M13 (skor), M09 (sertifikasi/expiry).
 |---|---|
 | PRD modul M20 | [prd/PRD-M20-Driver-Coaching-Workforce.md](../../../prd/PRD-M20-Driver-Coaching-Workforce.md) |
 | FRD modul M20 | [prd/frd/FRD-M20-Driver-Coaching.md](../../../prd/frd/FRD-M20-Driver-Coaching.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

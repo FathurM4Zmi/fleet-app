@@ -7,6 +7,7 @@ related: [[PRD-MOB-Trip-Execution]]
 # FRD-MOB — Trip Execution
 
 **Mirror**: FRD-M04-09 (Trip Execution), FRD-M04-06 (status workflow)
+**BRD-Mobile**: MBR-005 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-TRIPEXEC-01 Transisi Status
 Assigned → Started → Arrived → Completed; tiap transisi immutable + tercatat.
@@ -35,6 +36,7 @@ Posisi driver dikirim berkala (hemat baterai) untuk live map M05.
 |---|---|
 | FRD modul M04 | [prd/frd/FRD-M04-Trip-Assignment.md](../../../prd/frd/FRD-M04-Trip-Assignment.md) |
 | PRD modul | [M04](../../../prd/PRD-M04-Assignment-Trip.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Defect-Report]] [[PRD-MOB-DVIR]] [[
 **Modul Sumber**: M08 (Maintenance & Work Orders) · **Folder BE**: `MaintenanceWorkOrder`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 2
 **FRD**: FRD-M08-01 (WO List), FRD-M08-02 (WO Detail), FRD-M08-03 (Create/Edit WO), FRD-M08-04 (Maintenance Schedule)
+**BRD-Mobile**: MBR-014 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -57,6 +58,7 @@ M02 (kendaraan), M08 (WO), M17 (auto-WO dari DVIR), M06 (alert overdue).
 |---|---|
 | PRD modul M08 | [prd/PRD-M08-Maintenance-Work-Orders.md](../../../prd/PRD-M08-Maintenance-Work-Orders.md) |
 | FRD modul M08 | [prd/frd/FRD-M08-Maintenance-WorkOrder.md](../../../prd/frd/FRD-M08-Maintenance-WorkOrder.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

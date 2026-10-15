@@ -7,6 +7,7 @@ related: [[PRD-MOB-Trip-Tracking]]
 # FRD-MOB — Rute & Posisi Trip (Trip Tracking)
 
 **Mirror**: FRD-M05-01 (Live Fleet Map), FRD-M05-02 (History Trace), FRD-M05-03 (Telemetry Feed), FRD-M05-07 (Data Quality)
+**BRD-Mobile**: MBR-012 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-TRK-01 Peta Posisi Driver
 Peta menampilkan posisi driver live + marker tujuan + garis rute trip aktif.
@@ -41,6 +42,7 @@ Hanya rute trip driver; live map armada penuh = out-of-scope.
 |---|---|
 | FRD modul M05 | [prd/frd/FRD-M05-Tracking-Map.md](../../../prd/frd/FRD-M05-Tracking-Map.md) |
 | PRD modul | [M05](../../../prd/PRD-M05-Tracking-Map.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

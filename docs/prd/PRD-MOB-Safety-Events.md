@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Safety-Events]] [[PRD-MOB-Coaching]
 **Modul Sumber**: M18 (Safety Events & Coaching) · **Folder BE**: `SafetyEvents`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 5
 **FRD**: FRD-M18-01 (Safety Events Feed), FRD-M18-02 (Event Evidence), FRD-M18-04 (Safety Scorecard)
+**BRD-Mobile**: MBR-021 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -57,6 +58,7 @@ M05/M06 (telemetry & threshold), M13 (skor), M18 (event/scorecard), M20 (coachin
 |---|---|
 | PRD modul M18 | [prd/PRD-M18-Safety-Events-Coaching.md](../../../prd/PRD-M18-Safety-Events-Coaching.md) |
 | FRD modul M18 | [prd/frd/FRD-M18-Safety-Events.md](../../../prd/frd/FRD-M18-Safety-Events.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

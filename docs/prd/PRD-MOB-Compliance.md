@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Compliance]] [[PRD-MOB-Profile]]
 **Modul Sumber**: M16 (Regulatory & Safety Compliance) · **Folder BE**: `SafetyCompliance`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 4
 **FRD**: FRD-M16-01 (Compliance Dashboard), FRD-M16-02 (Incident Reporting), FRD-M16-04 (Driver Training/Certification)
+**BRD-Mobile**: MBR-020 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -57,6 +58,7 @@ M03 (driver/dokumen), M09 (dokumen), M16 (kepatuhan/insiden), M18 (pelanggaran),
 |---|---|
 | PRD modul M16 | [prd/PRD-M16-Regulatory-Safety-Compliance.md](../../../prd/PRD-M16-Regulatory-Safety-Compliance.md) |
 | FRD modul M16 | [prd/frd/FRD-M16-Regulatory-Safety.md](../../../prd/frd/FRD-M16-Regulatory-Safety.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

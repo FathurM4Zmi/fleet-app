@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-DNA-Saya]] [[PRD-MOB-Coaching]] [[P
 **Modul Sumber**: M13 (Fleet DNA / Health Score Engine) · **Folder BE**: `HealthEngine`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 4
 **FRD**: FRD-M13-04 (Driver DNA Detail), FRD-M13-02 (Fleet DNA Overview)
+**BRD-Mobile**: MBR-017 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -57,6 +58,7 @@ M13 (skor DNA), M18 (safety events), M05/M07 (telemetry & konsumsi), M20 (coachi
 |---|---|
 | PRD modul M13 | [prd/PRD-M13-Fleet-DNA-Health-Engine.md](../../../prd/PRD-M13-Fleet-DNA-Health-Engine.md) |
 | FRD modul M13 | [prd/frd/FRD-M13-Fleet-DNA-Health.md](../../../prd/frd/FRD-M13-Fleet-DNA-Health.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Login-Driver]]
 **Modul Sumber**: M01 (Auth, RBAC & Access) · **Folder BE**: `AccessOrganization`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Phase 1
 **FRD**: FRD-M01-02 (Login driver), FRD-M01-03 (Forgot/Reset)
+**BRD-Mobile**: MBR-001, MBR-026 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -60,6 +61,7 @@ M01 backend (auth endpoint), M03 (status driver & lisensi).
 |---|---|
 | PRD modul M01 | [prd/PRD-M01-Access-Organization.md](../../../prd/PRD-M01-Access-Organization.md) |
 | FRD modul M01 | [prd/frd/FRD-M01-Auth-Access.md](../../../prd/frd/FRD-M01-Auth-Access.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

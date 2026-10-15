@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Notifications]]
 **Modul Sumber**: M12 (Notifications) · **Folder BE**: `Notifications`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Phase 2
 **FRD**: FRD-M12-01 (Inbox), FRD-M12-05 (Preferences)
+**BRD-Mobile**: MBR-009, MBR-030 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -55,6 +56,7 @@ M12 (notifikasi), M04/M17/M20 (sumber event), SignalR/push.
 |---|---|
 | PRD modul M12 | [prd/PRD-M12-Notifications.md](../../../prd/PRD-M12-Notifications.md) |
 | FRD modul M12 | [prd/frd/FRD-M12-Notifications.md](../../../prd/frd/FRD-M12-Notifications.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

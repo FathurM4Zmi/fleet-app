@@ -19,6 +19,7 @@ related:
 **PLATFORM**: Mobile (Android prioritas, iOS target berikutnya)
 **PRIORITAS**: Phase 1-2 (seiring Wave operasi)
 **STATUS**: Draft for Review
+**BRD-Mobile**: [BRD-Mobile.md](../BRD-Mobile.md) (MBR-001..030, MBRL-001..015)
 
 ---
 
@@ -28,33 +29,35 @@ setiap layar dirinci di PRD per-layar (`prd/PRD-MOB-*.md`) + FRD per-layar (`frd
 Semua layar selaras dengan FRD induk `FRD.md` dan folder BE yang sudah ada.
 
 ## Daftar Layar (Screen Inventory)
-| # | Layar | PRD | FRD | Modul Sumber | Folder BE |
-|---|---|---|---|---|---|
-| 1 | Login Driver (PIN/OTP/QR) | [[PRD-MOB-Login-Driver]] | [[FRD-MOB-Login-Driver]] | M01 | `AccessOrganization` |
-| 2 | Driver App Home | [[PRD-MOB-Home]] | [[FRD-MOB-Home]] | M03 | `DriverMaster` |
-| 3 | Profil & Dokumen Saya | [[PRD-MOB-Profile]] | [[FRD-MOB-Profile]] | M03 | `DriverMaster`/`DocumentCompliance` |
-| 4 | Driver Inbox (daftar trip) | [[PRD-MOB-Inbox]] | [[FRD-MOB-Inbox]] | M04 | `AssignmentTrip` |
-| 5 | Trip Execution | [[PRD-MOB-Trip-Execution]] | [[FRD-MOB-Trip-Execution]] | M04 | `AssignmentTrip` |
-| 6 | DVIR Form (pre/post-trip) | [[PRD-MOB-DVIR]] | [[FRD-MOB-DVIR]] | M17 | `DvirInspection` |
-| 7 | POD Capture | [[PRD-MOB-POD]] | [[FRD-MOB-POD]] | M21 | `CustomerExperiencePOD` |
-| 8 | Fuel Log (entri BBM) | [[PRD-MOB-Fuel-Log]] | [[FRD-MOB-Fuel-Log]] | M07 | `FuelCost` |
-| 9 | Notifikasi Inbox | [[PRD-MOB-Notifications]] | [[FRD-MOB-Notifications]] | M12 | `Notifications` |
-| 10 | Coaching & Sertifikasi Saya | [[PRD-MOB-Coaching]] | [[FRD-MOB-Coaching]] | M20 | `CoachingWorkforce` |
-| 11 | Kendaraan Saya | [[PRD-MOB-Vehicle-Detail]] | [[FRD-MOB-Vehicle-Detail]] | M02 | `VehicleMaster` |
-| 12 | Rute & Posisi Trip | [[PRD-MOB-Trip-Tracking]] | [[FRD-MOB-Trip-Tracking]] | M05 | `TrackingMap` |
-| 13 | Peringatan Trip | [[PRD-MOB-Alerts]] | [[FRD-MOB-Alerts]] | M06 | `GeofenceAlert` |
-| 14 | Laporan Kerusakan | [[PRD-MOB-Defect-Report]] | [[FRD-MOB-Defect-Report]] | M08 | `MaintenanceWorkOrder` |
-| 15 | Ringkasan Kinerja Saya | [[PRD-MOB-Performance]] | [[FRD-MOB-Performance]] | M10 | `DashboardReporting` |
-| 16 | Aktivitas Saya | [[PRD-MOB-Activity-Log]] | [[FRD-MOB-Activity-Log]] | M11 | `AuditAdministration` |
-| 17 | DNA Kesehatan Saya | [[PRD-MOB-DNA-Saya]] | [[FRD-MOB-DNA-Saya]] | M13 | `HealthEngine` |
-| 18 | Rute Disarankan | [[PRD-MOB-Route-Suggest]] | [[FRD-MOB-Route-Suggest]] | M14 | `RouteOptimizer` |
-| 19 | Settlement & Pendapatan Saya | [[PRD-MOB-Settlement]] | [[FRD-MOB-Settlement]] | M15 | `BillingCostCenter` |
-| 20 | Kepatuhan & Sertifikasi Saya | [[PRD-MOB-Compliance]] | [[FRD-MOB-Compliance]] | M16 | `SafetyCompliance` |
-| 21 | Peristiwa Safety Saya | [[PRD-MOB-Safety-Events]] | [[FRD-MOB-Safety-Events]] | M18 | `SafetyEvents` |
-| 22 | Aset & Equipment Trip | [[PRD-MOB-Asset-Trip]] | [[FRD-MOB-Asset-Trip]] | M19 | `AssetEquipment` |
-| 23 | Kartu BBM & Pengeluaran Saya | [[PRD-MOB-Fuel-Card]] | [[FRD-MOB-Fuel-Card]] | M22 | `FuelSpendMgmt` |
+| # | Layar | PRD | FRD | MBR | Modul Sumber | Folder BE |
+|---|---|---|---|---|---|---|
+| 1 | Login Driver (PIN/OTP/QR) | [[PRD-MOB-Login-Driver]] | [[FRD-MOB-Login-Driver]] | MBR-001, 026 | M01 | `AccessOrganization` |
+| 2 | Driver App Home | [[PRD-MOB-Home]] | [[FRD-MOB-Home]] | MBR-002 | M03 | `DriverMaster` |
+| 3 | Profil & Dokumen Saya | [[PRD-MOB-Profile]] | [[FRD-MOB-Profile]] | MBR-003 | M03 | `DriverMaster`/`DocumentCompliance` |
+| 4 | Driver Inbox (daftar trip) | [[PRD-MOB-Inbox]] | [[FRD-MOB-Inbox]] | MBR-004 | M04 | `AssignmentTrip` |
+| 5 | Trip Execution | [[PRD-MOB-Trip-Execution]] | [[FRD-MOB-Trip-Execution]] | MBR-005 | M04 | `AssignmentTrip` |
+| 6 | DVIR Form (pre/post-trip) | [[PRD-MOB-DVIR]] | [[FRD-MOB-DVIR]] | MBR-006 | M17 | `DvirInspection` |
+| 7 | POD Capture | [[PRD-MOB-POD]] | [[FRD-MOB-POD]] | MBR-007 | M21 | `CustomerExperiencePOD` |
+| 8 | Fuel Log (entri BBM) | [[PRD-MOB-Fuel-Log]] | [[FRD-MOB-Fuel-Log]] | MBR-008 | M07 | `FuelCost` |
+| 9 | Notifikasi Inbox | [[PRD-MOB-Notifications]] | [[FRD-MOB-Notifications]] | MBR-009, 030 | M12 | `Notifications` |
+| 10 | Coaching & Sertifikasi Saya | [[PRD-MOB-Coaching]] | [[FRD-MOB-Coaching]] | MBR-010 | M20 | `CoachingWorkforce` |
+| 11 | Kendaraan Saya | [[PRD-MOB-Vehicle-Detail]] | [[FRD-MOB-Vehicle-Detail]] | MBR-011 | M02 | `VehicleMaster` |
+| 12 | Rute & Posisi Trip | [[PRD-MOB-Trip-Tracking]] | [[FRD-MOB-Trip-Tracking]] | MBR-012 | M05 | `TrackingMap` |
+| 13 | Peringatan Trip | [[PRD-MOB-Alerts]] | [[FRD-MOB-Alerts]] | MBR-013 | M06 | `GeofenceAlert` |
+| 14 | Laporan Kerusakan | [[PRD-MOB-Defect-Report]] | [[FRD-MOB-Defect-Report]] | MBR-014 | M08 | `MaintenanceWorkOrder` |
+| 15 | Ringkasan Kinerja Saya | [[PRD-MOB-Performance]] | [[FRD-MOB-Performance]] | MBR-015 | M10 | `DashboardReporting` |
+| 16 | Aktivitas Saya | [[PRD-MOB-Activity-Log]] | [[FRD-MOB-Activity-Log]] | MBR-016 | M11 | `AuditAdministration` |
+| 17 | DNA Kesehatan Saya | [[PRD-MOB-DNA-Saya]] | [[FRD-MOB-DNA-Saya]] | MBR-017 | M13 | `HealthEngine` |
+| 18 | Rute Disarankan | [[PRD-MOB-Route-Suggest]] | [[FRD-MOB-Route-Suggest]] | MBR-018 | M14 | `RouteOptimizer` |
+| 19 | Settlement & Pendapatan Saya | [[PRD-MOB-Settlement]] | [[FRD-MOB-Settlement]] | MBR-019 | M15 | `BillingCostCenter` |
+| 20 | Kepatuhan & Sertifikasi Saya | [[PRD-MOB-Compliance]] | [[FRD-MOB-Compliance]] | MBR-020 | M16 | `SafetyCompliance` |
+| 21 | Peristiwa Safety Saya | [[PRD-MOB-Safety-Events]] | [[FRD-MOB-Safety-Events]] | MBR-021 | M18 | `SafetyEvents` |
+| 22 | Aset & Equipment Trip | [[PRD-MOB-Asset-Trip]] | [[FRD-MOB-Asset-Trip]] | MBR-022 | M19 | `AssetEquipment` |
+| 23 | Kartu BBM & Pengeluaran Saya | [[PRD-MOB-Fuel-Card]] | [[FRD-MOB-Fuel-Card]] | MBR-023 | M22 | `FuelSpendMgmt` |
 
-**Total: 23 layar mobile (cakupan M01–M22).**
+**Total: 23 layar mobile (cakupan M01–M22).** Kebutuhan lintas layar: MBR-024 (offline-first),
+MBR-025 (ownership), MBR-026 (tanpa registrasi), MBR-027 (satu tangan), MBR-028 (keamanan device),
+MBR-029 (push realtime), MBR-030 (push + deep-link).
 
 ---
 
@@ -92,9 +95,9 @@ Aktivitas Saya).
 
 ## Catatan Penutup
 ### Acuan Dokumen
-`BRD-Mobile.md` (= BRD induk), `FRD.md` (FRD-Mxx-xx), `MODULE-MAP-v2.md`, folder BE terkait.
-Peta relasi dua arah mobile ↔ desktop: [`RELASI-MOBILE-DESKTOP.md`](../RELASI-MOBILE-DESKTOP.md).
-Setiap PRD/FRD layar menautkan ke dokumen desktop (`prd/PRD-Mxx`, `prd/frd/FRD-Mxx`), dan sebaliknya.
+[`BRD-Mobile.md`](../BRD-Mobile.md) (BRD driver-focused, `MBR-xxx`/`MBRL-xxx`) turunan BRD induk (`BR-xxx`/`BRL-xxx`), `FRD.md` (FRD-Mxx-xx), `MODULE-MAP-v2.md`, folder BE terkait.
+Peta relasi + matriks traceability dua arah mobile ↔ desktop: [`RELASI-MOBILE-DESKTOP.md`](../RELASI-MOBILE-DESKTOP.md).
+Setiap PRD/FRD layar menautkan ke BRD-Mobile dan ke dokumen desktop (`prd/PRD-Mxx`, `prd/frd/FRD-Mxx`), dan sebaliknya.
 ### Sumber Scope
 Layar driver-facing resmi dari FRD (`[Driver]`) + slice mobile dari **seluruh 22 modul** (M01–M22),
 dengan fungsi admin-only dibatasi read-only / out-of-scope.

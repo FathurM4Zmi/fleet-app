@@ -10,6 +10,7 @@ related: [[PRD-Mobile-Driver-App]] [[FRD-MOB-Alerts]] [[PRD-MOB-Notifications]]
 **Modul Sumber**: M06 (Geofence, Alert & Exception) · **Folder BE**: `GeofenceAlert`
 **Platform**: Mobile · **Persona**: R6 Driver · **Prioritas**: Wave 2
 **FRD**: FRD-M06-01 (Unified Command Feed), FRD-M06-04 (Geofence Breach), FRD-M06-06 (Exception Resolution)
+**BRD-Mobile**: MBR-013 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ---
 
@@ -56,6 +57,7 @@ M04 (trip), M05 (posisi), M06 (alert), M12 (push notifikasi).
 |---|---|
 | PRD modul M06 | [prd/PRD-M06-Geofence-Alert.md](../../../prd/PRD-M06-Geofence-Alert.md) |
 | FRD modul M06 | [prd/frd/FRD-M06-Geofence-Alert.md](../../../prd/frd/FRD-M06-Geofence-Alert.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | Peta modul | [MODULE-MAP-v2.md](../../../MODULE-MAP-v2.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](PRD-Mobile-Driver-App.md) |

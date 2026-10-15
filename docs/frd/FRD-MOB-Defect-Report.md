@@ -7,6 +7,7 @@ related: [[PRD-MOB-Defect-Report]]
 # FRD-MOB — Laporan Kerusakan (Defect Report)
 
 **Mirror**: FRD-M08-01 (WO List), FRD-M08-02 (WO Detail), FRD-M08-03 (Create/Edit WO), FRD-M08-04 (Maintenance Schedule), FRD-M17-07 (Defect → WO)
+**BRD-Mobile**: MBR-014 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-DEF-01 Form Kerusakan
 Kendaraan, kategori, deskripsi, severity (Low/Medium/High/Out-of-service), foto.
@@ -45,6 +46,7 @@ Submit kerusakan dapat dilakukan tanpa sinyal, sync idempotent.
 |---|---|
 | FRD modul M08 | [prd/frd/FRD-M08-Maintenance-WorkOrder.md](../../../prd/frd/FRD-M08-Maintenance-WorkOrder.md) |
 | PRD modul | [M08](../../../prd/PRD-M08-Maintenance-Work-Orders.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

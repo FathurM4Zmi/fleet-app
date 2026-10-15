@@ -7,6 +7,7 @@ related: [[PRD-MOB-Inbox]]
 # FRD-MOB — Driver Inbox
 
 **Mirror**: FRD-M04-08 (Driver Inbox), FRD-M04-06 (status workflow)
+**BRD-Mobile**: MBR-004 · [BRD-Mobile.md](../BRD-Mobile.md)
 
 ## FRD-MOB-INBOX-01 Daftar Trip
 Daftar trip ditugaskan; filter by status.
@@ -35,6 +36,7 @@ Daftar trip ditugaskan; filter by status.
 |---|---|
 | FRD modul M04 | [prd/frd/FRD-M04-Trip-Assignment.md](../../../prd/frd/FRD-M04-Trip-Assignment.md) |
 | PRD modul | [M04](../../../prd/PRD-M04-Assignment-Trip.md) |
+| BRD mobile | [BRD-Mobile.md](../BRD-Mobile.md) |
 | FRD induk | [FRD.md](../../../FRD.md) |
 | PRD mobile induk | [PRD-Mobile-Driver-App.md](../prd/PRD-Mobile-Driver-App.md) |
 | Peta relasi | [RELASI-MOBILE-DESKTOP.md](../RELASI-MOBILE-DESKTOP.md) |

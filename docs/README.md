@@ -3,6 +3,9 @@
 Dokumentasi aplikasi mobile driver (Flutter). Semua layar mobile ditarik dari modul
 otoritatif `MODULE-MAP-v2.md` (M01–M22) dan selaras dengan `FRD.md` + folder BE.
 
+**Rantai dokumen:** BRD induk (`BR-xxx`/`BRL-xxx`) → **BRD-Mobile** (`MBR-xxx`/`MBRL-xxx`, driver-focused)
+→ PRD-MOB per layar → FRD-MOB per layar (mirror `FRD-Mxx-xx` desktop) → folder BE.
+
 > **Cakupan lengkap 22 modul.** Setiap modul M01–M22 punya slice mobile (driver-facing);
 > modul yang murni admin (mis. M10 export, M11 config, M15 approval) tetap dibuatkan
 > layarnya namun **dibatasi read-only / out-of-scope** sesuai kebutuhan mobile.
@@ -10,8 +13,9 @@ otoritatif `MODULE-MAP-v2.md` (M01–M22) dan selaras dengan `FRD.md` + folder B
 ## Struktur
 ```
 fleet-app/docs/
-├── BRD-Mobile.md                 # BRD — SAMA dengan BRD induk (markdown)
-├── RELASI-MOBILE-DESKTOP.md      # Peta relasi dua arah mobile ↔ desktop
+├── BRD-Mobile.md                 # BRD mobile driver-focused (MBR/MBRL) — turunan BRD induk
+├── RELASI-MOBILE-DESKTOP.md      # Peta relasi + traceability MBR ↔ PRD/FRD ↔ desktop
+├── QUICK-REFERENCE.md            # Ringkasan 23 layar + MBR
 ├── prd/
 │   ├── PRD-Mobile-Driver-App.md  # PRD INDUK (screen inventory + prinsip)
 │   ├── PRD-MOB-Login-Driver.md   # M01
@@ -42,41 +46,43 @@ fleet-app/docs/
 ```
 
 ## Statistik
+- **BRD**: 1 (BRD-Mobile, driver-focused) + BRD induk (`prd/BRD_...docx`)
+- **Kebutuhan bisnis mobile**: 30 `MBR-xxx` + 15 `MBRL-xxx` (aturan mobile)
 - **PRD**: 24 (1 induk + 23 layar)
 - **FRD**: 23 (per layar)
 - **Layar mobile**: 23 (driver-facing, mencakup M01–M22)
 - **Platform**: Flutter (Android prioritas, iOS target berikutnya)
 
-## Layar → Modul Sumber → Folder BE
-| # | Layar | Modul | Folder BE |
-|---|---|---|---|
-| 1 | Login Driver | M01 | `AccessOrganization` |
-| 2 | Driver App Home | M03 | `DriverMaster` |
-| 3 | Profil & Dokumen | M03+M09 | `DriverMaster`/`DocumentCompliance` |
-| 4 | Driver Inbox | M04 | `AssignmentTrip` |
-| 5 | Trip Execution | M04 | `AssignmentTrip` |
-| 6 | DVIR Form | M17 | `DvirInspection` |
-| 7 | POD Capture | M21 | `CustomerExperiencePOD` |
-| 8 | Fuel Log | M07 | `FuelCost` |
-| 9 | Notifikasi | M12 | `Notifications` |
-| 10 | Coaching | M20 | `CoachingWorkforce` |
-| 11 | Kendaraan Saya | M02 | `VehicleMaster` |
-| 12 | Rute & Posisi Trip | M05 | `TrackingMap` |
-| 13 | Peringatan Trip | M06 | `GeofenceAlert` |
-| 14 | Laporan Kerusakan | M08 | `MaintenanceWorkOrder` |
-| 15 | Ringkasan Kinerja Saya | M10 | `DashboardReporting` |
-| 16 | Aktivitas Saya | M11 | `AuditAdministration` |
-| 17 | DNA Kesehatan Saya | M13 | `HealthEngine` |
-| 18 | Rute Disarankan | M14 | `RouteOptimizer` |
-| 19 | Settlement & Pendapatan | M15 | `BillingCostCenter` |
-| 20 | Kepatuhan & Sertifikasi | M16 | `SafetyCompliance` |
-| 21 | Peristiwa Safety Saya | M18 | `SafetyEvents` |
-| 22 | Aset & Equipment Trip | M19 | `AssetEquipment` |
-| 23 | Kartu BBM & Pengeluaran | M22 | `FuelSpendMgmt` |
+## Layar → Modul Sumber → Kebutuhan → Folder BE
+| # | Layar | Modul | MBR | Folder BE |
+|---|---|---|---|---|
+| 1 | Login Driver | M01 | MBR-001, 026 | `AccessOrganization` |
+| 2 | Driver App Home | M03 | MBR-002 | `DriverMaster` |
+| 3 | Profil & Dokumen | M03+M09 | MBR-003 | `DriverMaster`/`DocumentCompliance` |
+| 4 | Driver Inbox | M04 | MBR-004 | `AssignmentTrip` |
+| 5 | Trip Execution | M04 | MBR-005 | `AssignmentTrip` |
+| 6 | DVIR Form | M17 | MBR-006 | `DvirInspection` |
+| 7 | POD Capture | M21 | MBR-007 | `CustomerExperiencePOD` |
+| 8 | Fuel Log | M07 | MBR-008 | `FuelCost` |
+| 9 | Notifikasi | M12 | MBR-009, 030 | `Notifications` |
+| 10 | Coaching | M20 | MBR-010 | `CoachingWorkforce` |
+| 11 | Kendaraan Saya | M02 | MBR-011 | `VehicleMaster` |
+| 12 | Rute & Posisi Trip | M05 | MBR-012 | `TrackingMap` |
+| 13 | Peringatan Trip | M06 | MBR-013 | `GeofenceAlert` |
+| 14 | Laporan Kerusakan | M08 | MBR-014 | `MaintenanceWorkOrder` |
+| 15 | Ringkasan Kinerja Saya | M10 | MBR-015 | `DashboardReporting` |
+| 16 | Aktivitas Saya | M11 | MBR-016 | `AuditAdministration` |
+| 17 | DNA Kesehatan Saya | M13 | MBR-017 | `HealthEngine` |
+| 18 | Rute Disarankan | M14 | MBR-018 | `RouteOptimizer` |
+| 19 | Settlement & Pendapatan | M15 | MBR-019 | `BillingCostCenter` |
+| 20 | Kepatuhan & Sertifikasi | M16 | MBR-020 | `SafetyCompliance` |
+| 21 | Peristiwa Safety Saya | M18 | MBR-021 | `SafetyEvents` |
+| 22 | Aset & Equipment Trip | M19 | MBR-022 | `AssetEquipment` |
+| 23 | Kartu BBM & Pengeluaran | M22 | MBR-023 | `FuelSpendMgmt` |
 
 ## Catatan
 - Setiap modul M01–M22 punya slice mobile; layar admin murni dibatasi read-only / out-of-scope.
-- `BRD-Mobile.md` = salinan markdown dari BRD induk `prd/BRD_...docx` — **satu BRD yang sama** untuk desktop & mobile (bukan dokumen turunan terpisah).
-- **Saling terhubung (dua arah)**: setiap PRD/FRD mobile menautkan ke dokumen desktop (`prd/PRD-Mxx`, `prd/frd/FRD-Mxx`, `FRD.md`, `MODULE-MAP-v2.md`), dan setiap PRD/FRD desktop menaut balik ke layar mobile terkait. Peta lengkap: `RELASI-MOBILE-DESKTOP.md`.
-- Offline-first wajib untuk DVIR, POD, Fuel Log, Defect Report, Insiden (R-MOB-01).
-- **Tanpa registrasi mandiri**: akun & perangkat disediakan admin/vendor (GenZys) — driver hanya login (PIN/OTP/QR). Tidak ada layar sign-up di mobile.
+- `BRD-Mobile.md` = **BRD mobile driver-focused** (turunan, bukan salinan) dari BRD induk `prd/BRD_...docx` — menetapkan kebutuhan `MBR-xxx` + aturan `MBRL-xxx` yang memetakan ke `BR-xxx`/`BRL-xxx` induk.
+- **Saling terhubung (dua arah)**: setiap PRD/FRD mobile menautkan ke dokumen desktop (`prd/PRD-Mxx`, `prd/frd/FRD-Mxx`, `FRD.md`, `MODULE-MAP-v2.md`) + `BRD-Mobile.md`, dan setiap PRD/FRD desktop menaut balik ke layar mobile terkait. Peta + matriks traceability lengkap: `RELASI-MOBILE-DESKTOP.md`.
+- Offline-first wajib untuk DVIR, POD, Fuel Log, Defect Report, Insiden (MBR-024, MBRL-009).
+- **Tanpa registrasi mandiri**: akun & perangkat disediakan admin/vendor (GenZys) — driver hanya login (PIN/OTP/QR). Tidak ada layar sign-up di mobile (MBR-026, MBRL-002).
