@@ -27,7 +27,7 @@ Driver melaporkan kerusakan kendaraan dari lapangan dalam 1 menit (foto + deskri
 | Riwayat | WO selesai kendaraan saya (read-only) |
 
 ## Spesifikasi Fungsional
-- Laporan kerusakan offline-safe: simpan lokal, sync idempotent saat online (R-MOB-01).
+- Laporan kerusakan offline-safe: simpan lokal, sync idempotent saat online (MBR-024, MBRL-009).
 - Severity **Out-of-service** → kendaraan ditandai tidak layak + trigger alur M17 (auto-block) dan notifikasi dispatcher.
 - Temuan DVIR otomatis membuat WO (FRD-M17-07) — tampil di sini sebagai WO berstatus open.
 - Driver hanya melihat WO kendaraan yang ditugaskan (ownership, FRD-M01-06).
@@ -43,7 +43,7 @@ Driver melaporkan kerusakan kendaraan dari lapangan dalam 1 menit (foto + deskri
 - Foto wajib: "Foto kerusakan wajib untuk tingkat High atau Out-of-service."
 
 ## Non-Fungsional
-- Kompres foto sebelum upload (device kamera rendah, R-MOB-02).
+- Kompres foto sebelum upload (device kamera rendah, MBRL-016).
 - Berfungsi offline; antrian sinkron ditampilkan jelas.
 
 ## Dependency

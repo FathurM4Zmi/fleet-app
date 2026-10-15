@@ -19,7 +19,7 @@ related:
 **PLATFORM**: Mobile (Android prioritas, iOS target berikutnya)
 **PRIORITAS**: Phase 1-2 (seiring Wave operasi)
 **STATUS**: Draft for Review
-**BRD-Mobile**: [BRD-Mobile.md](../BRD-Mobile.md) (MBR-001..030, MBRL-001..015)
+**BRD-Mobile**: [BRD-Mobile.md](../BRD-Mobile.md) (MBR-001..030, MBRL-001..016)
 
 ---
 

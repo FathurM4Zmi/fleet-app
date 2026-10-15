@@ -31,7 +31,7 @@ Daftar WO kendaraan driver + status; riwayat immutable.
 
 ## FRD-MOB-DEF-06 Offline-safe Submit
 Submit kerusakan dapat dilakukan tanpa sinyal, sync idempotent.
-**AC**: Given offline, When driver submit, Then laporan tersimpan lokal dan terkirim saat online (mirror R-MOB-01).
+**AC**: Given offline, When driver submit, Then laporan tersimpan lokal dan terkirim saat online (mirror MBR-024, MBRL-009).
 
 ## Wording
 - "Jadwal perawatan preventif terlewat."

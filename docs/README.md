@@ -47,7 +47,7 @@ fleet-app/docs/
 
 ## Statistik
 - **BRD**: 1 (BRD-Mobile, driver-focused) + BRD induk (`prd/BRD_...docx`)
-- **Kebutuhan bisnis mobile**: 30 `MBR-xxx` + 15 `MBRL-xxx` (aturan mobile)
+- **Kebutuhan bisnis mobile**: 30 `MBR-xxx` + 16 `MBRL-xxx` (aturan mobile)
 - **PRD**: 24 (1 induk + 23 layar)
 - **FRD**: 23 (per layar)
 - **Layar mobile**: 23 (driver-facing, mencakup M01–M22)

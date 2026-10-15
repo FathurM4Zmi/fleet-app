@@ -27,7 +27,7 @@ Foto bukti wajib dilampirkan.
 
 ## FRD-MOB-CMP-05 Offline-safe Insiden
 Laporan insiden dapat dibuat tanpa sinyal.
-**AC**: Given offline, When driver submit insiden, Then tersimpan lokal dan terkirim saat online (mirror R-MOB-01).
+**AC**: Given offline, When driver submit insiden, Then tersimpan lokal dan terkirim saat online (mirror MBR-024, MBRL-009).
 
 ## FRD-MOB-CMP-06 Riwayat Insiden
 Daftar insiden yang pernah dilaporkan (read-only).

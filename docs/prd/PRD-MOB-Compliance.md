@@ -43,7 +43,7 @@ Driver memantau **status kepatuhan dirinya** (SIM, sertifikasi, pelatihan, expir
 - Foto wajib: "Foto bukti wajib dilampirkan."
 
 ## Non-Fungsional
-- Form insiden offline-safe (R-MOB-01); kompres foto (R-MOB-02).
+- Form insiden offline-safe (MBR-024, MBRL-009); kompres foto (MBRL-016).
 - Sertakan lokasi otomatis saat laporan dibuat (bila izin lokasi aktif).
 
 ## Dependency

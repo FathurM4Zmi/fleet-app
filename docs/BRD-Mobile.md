@@ -421,6 +421,7 @@ ke aturan induk `BRL-xxx`; `—` berarti aturan khas mobile.
 | MBRL-013 | Data lokasi driver diperlakukan sebagai data sensitif; akses terbatas & sesuai kebijakan privasi. | BRD induk Bab 11 |
 | MBRL-014 | Fungsi admin modul (konfigurasi/approval/export) tidak tersedia di mobile. | — |
 | MBRL-015 | Prototype memakai synthetic data; tidak memakai data driver/rute nyata tanpa persetujuan. | BRL-030 |
+| MBRL-016 | Foto bukti (DVIR, POD, defect, insiden) dikompresi sebelum upload untuk menghemat bandwidth & waktu sinkron. | — |
 
 ---
 
