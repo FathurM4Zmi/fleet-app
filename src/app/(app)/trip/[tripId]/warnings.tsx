@@ -21,10 +21,13 @@ export default function TripWarningsScreen() {
   const { trip } = useTrip(tripId);
   const query = useTripWarnings(tripId);
   const [handled, setHandled] = useState<string[]>([]);
+  const [filter, setFilter] = useState<'active' | 'all' | 'done'>('active');
 
   const tripWarnings = (query.data?.active ?? []).map(toTripWarning);
   const tripWarningHistory = (query.data?.history ?? []).map(toTripWarningHistory);
   const active = tripWarnings.filter((warning) => !handled.includes(warning.key));
+  const done = tripWarnings.filter((warning) => handled.includes(warning.key));
+  const visible = filter === 'active' ? active : filter === 'done' ? done : tripWarnings;
 
   return (
     <Screen>
@@ -32,11 +35,6 @@ export default function TripWarningsScreen() {
         title="Peringatan Trip"
         subtitle={`${active.length} belum ditangani`}
         onBack
-        right={
-          <Pressable accessibilityRole="button" accessibilityLabel="Filter" hitSlop={8}>
-            <Icon name="sliders" size={22} color={colors.onSurface} />
-          </Pressable>
-        }
       />
 
       <ScrollView
@@ -45,34 +43,46 @@ export default function TripWarningsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
-          <View style={[styles.filterChip, styles.filterChipActive]}>
-            <Text variant="labelMd" color="onPrimary">
-              Aktif ({active.length})
-            </Text>
-          </View>
-          <View style={styles.filterChip}>
-            <Text variant="labelMd" color="secondary">
-              Semua
-            </Text>
-          </View>
-          <View style={styles.filterChip}>
-            <Text variant="labelMd" color="secondary">
-              Selesai
-            </Text>
-          </View>
+          {(
+            [
+              { key: 'active', label: `Aktif (${active.length})` },
+              { key: 'all', label: `Semua (${tripWarnings.length})` },
+              { key: 'done', label: `Selesai (${done.length})` },
+            ] as const
+          ).map((item) => {
+            const selected = item.key === filter;
+            return (
+              <Pressable
+                key={item.key}
+                onPress={() => setFilter(item.key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                style={[styles.filterChip, selected && styles.filterChipActive]}
+              >
+                <Text variant="labelMd" color={selected ? 'onPrimary' : 'secondary'}>
+                  {item.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
 
-        {active.length === 0 ? (
+        {visible.length === 0 ? (
           <EmptyState
             icon="success"
-            title="Semua peringatan tertangani"
-            description="Tidak ada peringatan aktif untuk trip ini."
+            title={filter === 'done' ? 'Belum ada yang selesai' : 'Semua peringatan tertangani'}
+            description={
+              filter === 'done'
+                ? 'Peringatan yang Anda tandai ditangani akan muncul di sini.'
+                : 'Tidak ada peringatan aktif untuk trip ini.'
+            }
           />
         ) : (
-          active.map((warning) => (
+          visible.map((warning) => (
             <WarningCard
               key={warning.key}
               warning={warning}
+              handled={handled.includes(warning.key)}
               onHandle={() => setHandled((current) => [...current, warning.key])}
               onOpenRoute={() => router.push(`/trip/${tripId}/routes`)}
             />
@@ -132,10 +142,12 @@ export default function TripWarningsScreen() {
 
 function WarningCard({
   warning,
+  handled = false,
   onHandle,
   onOpenRoute,
 }: {
   warning: TripWarning;
+  handled?: boolean;
   onHandle: () => void;
   onOpenRoute: () => void;
 }) {
@@ -187,7 +199,14 @@ function WarningCard({
           </Pressable>
         ) : null}
 
-        {warning.severity === 'critical' ? (
+        {handled ? (
+          <View style={styles.handledRow}>
+            <Icon name="success" size={16} color={colors.success} />
+            <Text variant="labelMd" color="success">
+              Sudah ditangani
+            </Text>
+          </View>
+        ) : warning.severity === 'critical' ? (
           <View style={styles.warningActions}>
             <Pressable accessibilityRole="button" style={[styles.action, styles.actionGhost]}>
               <Text variant="labelLg">Beri Alasan</Text>
@@ -249,6 +268,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   warningBody: { gap: spacing.xs },
+  handledRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.divider,
+  },
   warningNote: { lineHeight: 20 },
 
   suggestion: {

@@ -290,12 +290,6 @@ export default function FuelLogScreen() {
           {receiptUri ? (
             <View style={styles.receiptWrap}>
               <Image source={{ uri: receiptUri }} style={styles.receiptImage} resizeMode="cover" />
-              <View style={styles.receiptBadge}>
-                <Icon name="success" size={12} color={colors.onPrimary} />
-                <Text variant="labelMd" color={colors.onPrimary}>
-                  Tersimpan
-                </Text>
-              </View>
               <Pressable
                 onPress={() => setReceiptUri(undefined)}
                 accessibilityRole="button"
@@ -318,23 +312,6 @@ export default function FuelLogScreen() {
           )}
         </View>
 
-        {/* Online sync chip */}
-        <View style={styles.syncChip}>
-          <View style={styles.syncIcon}>
-            <Icon name="online" size={18} color={colors.success} />
-          </View>
-          <View style={styles.flex}>
-            <View style={styles.syncTitleRow}>
-              <View style={styles.syncDot} />
-              <Text variant="labelLg" color={colors.success}>
-                Terhubung online
-              </Text>
-            </View>
-            <Text variant="labelMd" color={colors.success} style={styles.syncNote}>
-              Catatan langsung terkirim ke server saat disimpan.
-            </Text>
-          </View>
-        </View>
       </ScreenBody>
 
       <BottomBar>
@@ -347,7 +324,7 @@ export default function FuelLogScreen() {
           <View style={styles.savedRow}>
             <Icon name="cloudDone" size={20} color={colors.success} />
             <Text variant="labelLg" color="success">
-              Catatan BBM tersimpan &amp; tersinkron
+              Catatan BBM tersimpan
             </Text>
           </View>
         ) : (

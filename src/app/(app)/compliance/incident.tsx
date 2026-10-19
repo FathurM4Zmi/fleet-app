@@ -132,13 +132,6 @@ export default function IncidentReportScreen() {
           </Text>
         </View>
 
-        {/* Online banner */}
-        <View style={styles.online}>
-          <Icon name="online" size={20} color={colors.success} />
-          <Text variant="labelLg" color={colors.success} style={styles.flex}>
-            Terhubung online. Laporan langsung diteruskan ke dispatcher.
-          </Text>
-        </View>
 
         {/* Category */}
         <View style={styles.section}>

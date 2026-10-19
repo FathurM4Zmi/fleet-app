@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,7 +24,12 @@ export default function TripRouteScreen() {
     return (
       <Screen>
         <View style={[styles.darkBar, { paddingTop: insets.top }]}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Kembali" style={styles.darkBack}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Kembali"
+            onPress={() => router.back()}
+            style={styles.darkBack}
+          >
             <Icon name="back" size={24} color={colors.onPrimary} />
           </Pressable>
           <Text variant="headlineSm" color={colors.onPrimary}>
@@ -48,7 +53,12 @@ export default function TripRouteScreen() {
   return (
     <Screen>
       <View style={[styles.darkBar, { paddingTop: insets.top }]}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Kembali" style={styles.darkBack}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Kembali"
+          onPress={() => router.back()}
+          style={styles.darkBack}
+        >
           <Icon name="back" size={24} color={colors.onPrimary} />
         </Pressable>
         <Text variant="headlineSm" color={colors.onPrimary}>

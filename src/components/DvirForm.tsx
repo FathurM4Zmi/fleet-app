@@ -103,14 +103,7 @@ export function DvirForm({ tripId, type }: DvirFormProps) {
 
           <VehicleCard plate={vehicle?.plate ?? '—'} model={vehicle?.model ?? '—'} />
 
-          {isPre ? (
-            <View style={styles.online}>
-              <Icon name="online" size={18} color={colors.success} />
-              <Text variant="caption" color={colors.success} style={styles.flex}>
-                Terhubung online. Laporan langsung terkirim ke server.
-              </Text>
-            </View>
-          ) : (
+          {!isPre ? (
             <Card>
               <View style={styles.contextRow}>
                 <View style={styles.flex}>
@@ -129,7 +122,7 @@ export function DvirForm({ tripId, type }: DvirFormProps) {
                 </View>
               </View>
             </Card>
-          )}
+          ) : null}
 
           {!isPre ? (
             <Card style={styles.odometerCard}>

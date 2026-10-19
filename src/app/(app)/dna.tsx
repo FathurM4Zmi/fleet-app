@@ -16,7 +16,7 @@ import {
 } from '@/components/ui';
 import { toDna } from '@/data/adapters';
 import { useDna } from '@/hooks/api/useDriverData';
-import { formatRecency, scoreTone } from '@/lib/format';
+import { scoreTone } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
 
 export default function DnaScreen() {
@@ -67,18 +67,6 @@ export default function DnaScreen() {
       />
 
       <ScreenBody bottomPadding={spacing.xxl * 2}>
-        <View style={styles.syncRow}>
-          <View style={styles.syncLeft}>
-            <View style={styles.syncDot} />
-            <Text variant="labelSm" color="textSecondary" style={styles.tracked}>
-              TERSINKRONISASI
-            </Text>
-          </View>
-          <Text variant="labelSm" color="textMuted">
-            Diperbarui: {formatRecency(dnaSummary.updatedAt)} WIB
-          </Text>
-        </View>
-
         <Card shadow style={styles.hero}>
           <View style={styles.heroRow}>
             <ProgressRing

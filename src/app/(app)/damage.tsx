@@ -134,13 +134,6 @@ export default function DamageReportScreen() {
           </View>
         </Card>
 
-        {/* Online banner */}
-        <View style={styles.online}>
-          <Icon name="online" size={20} color={colors.success} />
-          <Text variant="labelLg" color={colors.success} style={styles.flex}>
-            Terhubung online. Laporan langsung dikirim ke tim teknis.
-          </Text>
-        </View>
 
         {/* Category */}
         <View style={styles.section}>

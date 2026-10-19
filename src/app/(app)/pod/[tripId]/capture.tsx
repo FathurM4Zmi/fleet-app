@@ -244,13 +244,6 @@ export default function PodCaptureScreen() {
           </View>
         </View>
 
-        {/* Online notice */}
-        <View style={styles.online}>
-          <Icon name="online" size={20} color={colors.success} />
-          <Text variant="caption" color="#2E6855" style={styles.flex}>
-            Terhubung online. Bukti pengiriman langsung diunggah ke server.
-          </Text>
-        </View>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>

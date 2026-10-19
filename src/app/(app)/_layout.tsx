@@ -28,6 +28,7 @@ export default function AppLayout() {
       <Stack.Screen name="vehicle/odometer/submitted" />
       <Stack.Screen name="damage" />
       <Stack.Screen name="safety" />
+      <Stack.Screen name="supervisor" />
       <Stack.Screen name="notifications/[notificationId]" />
       <Stack.Screen name="documents/[documentKey]" />
       <Stack.Screen name="trip/[tripId]/index" />
@@ -37,6 +38,7 @@ export default function AppLayout() {
       <Stack.Screen name="trip/[tripId]/routes" />
       <Stack.Screen name="trip/[tripId]/warnings" />
       <Stack.Screen name="trip/[tripId]/assets" />
+      <Stack.Screen name="trip/[tripId]/chat" />
       <Stack.Screen name="dvir/[tripId]/pre-trip" />
       <Stack.Screen name="dvir/[tripId]/post-trip" />
       <Stack.Screen name="dvir/[tripId]/submitted" />

@@ -34,6 +34,7 @@ identifier ambigu (telepon dipakai >1 driver) ditolak.
 |---|---|---|
 | Home | `GET /home` | profil, 5 trip terdekat, unread, DVIR pending, task terbuka |
 | Profil | `GET /me` | nama, NIK, site, SIM, status, masa berlaku |
+| Ubah kontak | `PUT /me` `{ name, phone }` | hanya nama & nomor HP; `driverId` dari klaim token |
 | Dokumen | `GET /documents` | daftar dokumen driver + status valid/expiring/expired |
 | Detail dokumen | `GET /documents/{id}` | baris detail + status |
 
@@ -190,7 +191,7 @@ sampai modul finansial menutup periode — jangan tampilkan sebagai "Dibayar".
 | Grup | Endpoint |
 |---|---|
 | Auth driver | 5 |
-| Profil & beranda | 2 |
+| Profil & beranda | 3 |
 | Trip, tracking, rute, warning, aset | 12 |
 | DVIR | 3 |
 | POD/task | 4 |
@@ -201,6 +202,6 @@ sampai modul finansial menutup periode — jangan tampilkan sebagai "Dibayar".
 | Kerusakan/safety/kepatuhan | 5 |
 | Kendaraan/dokumen | 6 |
 | Settlement | 1 |
-| **Subtotal `/api/driver`** | **50** |
+| **Subtotal `/api/driver`** | **51** |
 | Provisioning admin (`api/drivers/{id}/app-access`, `/qr-token`) | 2 |
-| **Total driver-facing** | **52** |
+| **Total driver-facing** | **53** |

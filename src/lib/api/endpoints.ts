@@ -69,6 +69,11 @@ export const authApi = {
 export const profileApi = {
   me: () => apiRequest<DriverMe>(`${BASE}/me`),
   home: () => apiRequest<DriverHome>(`${BASE}/home`),
+  updateContact: (body: { name: string; phone?: string | null }) =>
+    apiRequest<{ driverId: string; name: string; phone: string | null }>(`${BASE}/me`, {
+      method: 'PUT',
+      body,
+    }),
 };
 
 /* ── Trip (M04) ─────────────────────────────────────────────────────── */
