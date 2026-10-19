@@ -2,9 +2,10 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/Icon';
-import { Card, Screen, ScreenBody, ScreenHeader, Text, TrendChart } from '@/components/ui';
-import { coachingCertifications, coachingPlan, coachingScore, coachingSessions, coachingTrend } from '@/data/fixtures';
-import type { CoachingMilestoneState, DocumentStatus } from '@/data/types';
+import { Card, EmptyState, Screen, ScreenBody, ScreenHeader, Text, TrendChart } from '@/components/ui';
+import { toCoaching } from '@/data/adapters';
+import { useCoaching, useDna } from '@/hooks/api/useDriverData';
+import type { CoachingMilestoneState, DocumentStatus, StatusDocument } from '@/data/types';
 import { colors, radius, spacing } from '@/theme';
 
 const DOC_ICON: Record<string, IconName> = {
@@ -25,9 +26,43 @@ const MILESTONE_TONE: Record<CoachingMilestoneState, { fg: string; bg?: string; 
 };
 
 export default function CoachingScreen() {
+  const coachingQuery = useCoaching();
+  const dnaQuery = useDna();
+  const data = coachingQuery.data ? toCoaching(coachingQuery.data) : undefined;
+  const coachingPlan = data?.plan;
+  const coachingSessions = data?.sessions ?? [];
+  const coachingCertifications: StatusDocument[] = [];
+
+  const coachingScore = {
+    period: '30 hari terakhir',
+    value: dnaQuery.data?.score ?? 0,
+    max: 100,
+    delta: dnaQuery.data?.delta ?? 0,
+  };
+  const coachingTrend = (dnaQuery.data?.trend ?? []).map((point) => ({
+    label: point.label,
+    score: point.score,
+  }));
+
+  if (!coachingPlan) {
+    return (
+      <Screen>
+        <ScreenHeader title="Coaching Saya" onBack />
+        <EmptyState
+          icon="school"
+          title="Belum ada rencana coaching"
+          description={
+            coachingQuery.error?.message ??
+            'Rencana coaching akan muncul di sini setelah supervisor menetapkannya.'
+          }
+        />
+      </Screen>
+    );
+  }
+
   const done = coachingPlan.milestones.filter((milestone) => milestone.state === 'done').length;
   const total = coachingPlan.milestones.length;
-  const percent = Math.round((done / total) * 100);
+  const percent = total ? Math.round((done / total) * 100) : 0;
 
   return (
     <Screen>
@@ -98,7 +133,7 @@ export default function CoachingScreen() {
               </Text>
             </View>
             <Text variant="labelSm" color="textSecondary">
-              Peringkat Site: #{coachingScore.siteRank}
+              Rata-rata fleet: {dnaQuery.data?.fleetAverage ?? 0}
             </Text>
           </View>
         </Card>

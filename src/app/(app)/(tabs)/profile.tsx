@@ -4,9 +4,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { Badge, Card, Screen, Text } from '@/components/ui';
-import { vehicleById } from '@/data/fixtures';
+import { toDriver, toVehicle } from '@/data/adapters';
+import { useDna, useHome, useVehicle } from '@/hooks/api/useDriverData';
 import { formatDate, scoreTone } from '@/lib/format';
-import { useAppStore } from '@/store/app';
+import { emptyDriver } from '@/store/app';
+import { useAuth } from '@/store/auth';
 import { colors, radius, shadows, spacing } from '@/theme';
 
 interface MenuEntry {
@@ -23,10 +25,13 @@ interface MenuEntry {
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { state } = useAppStore();
-  const driver = state.driver;
+  const home = useHome();
+  const dna = useDna();
+  const vehicleQuery = useVehicle();
+  const { logout } = useAuth();
+  const driver = home.data ? toDriver(home.data.profile, dna.data?.score ?? 0) : emptyDriver;
 
-  const vehicle = vehicleById('veh-001');
+  const vehicle = vehicleQuery.data ? toVehicle(vehicleQuery.data) : undefined;
   const dnaTone = scoreTone(driver.dnaScore);
 
   const features: MenuEntry[] = [
@@ -306,12 +311,14 @@ export default function ProfileScreen() {
           <Icon name="lock" size={18} color={colors.secondary} />
           <Text variant="caption" color="secondary" style={styles.noteText}>
             Data ini hanya dapat diubah oleh administrator. SIM berlaku sampai{' '}
-            {formatDate(driver.licenseExpiry)}.
+            {driver.licenseExpiry ? formatDate(driver.licenseExpiry) : '—'}.
           </Text>
         </View>
 
         <Pressable
-          onPress={() => router.replace('/(auth)/login')}
+          onPress={() => {
+            void logout();
+          }}
           accessibilityRole="button"
           style={styles.logout}
         >

@@ -5,7 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { BottomBar, Button, Card, Screen, ScreenBody, Text } from '@/components/ui';
-import { SAFETY_FILTERS, safetyEvents, safetyScore } from '@/data/fixtures';
+import { SAFETY_FILTERS } from '@/data/constants';
+import { toSafetyEvent } from '@/data/adapters';
+import { useSafetyEvents } from '@/hooks/api/useDriverData';
 import { colors, radius, shadows, spacing } from '@/theme';
 import type { SafetyEvent } from '@/data/types';
 
@@ -24,10 +26,26 @@ const SEVERITY_TILE: Record<SafetyEvent['severity'], { bg: string; fg: string }>
 export default function SafetyScreen() {
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState('all');
+  const query = useSafetyEvents(30, 100);
+  const safetyEvents = (query.data ?? []).map(toSafetyEvent);
+
+  const penalty = safetyEvents.reduce((total, event) => {
+    if (event.severity === 'critical') return total + 10;
+    if (event.severity === 'warning') return total + 4;
+    return total + 1;
+  }, 0);
+  const safetyScore = {
+    value: Math.max(0, 100 - penalty),
+    delta: safetyEvents.length === 0 ? 'Tidak ada pelanggaran' : `${safetyEvents.length} peristiwa`,
+    note:
+      safetyEvents.length === 0
+        ? 'Tidak ada peristiwa safety dalam 30 hari terakhir.'
+        : `Skor dihitung dari ${safetyEvents.length} peristiwa safety 30 hari terakhir.`,
+  };
 
   const visible = useMemo(
     () => safetyEvents.filter((event) => filter === 'all' || event.category === filter),
-    [filter],
+    [safetyEvents, filter],
   );
 
   return (

@@ -1,25 +1,43 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { Button, PinInput, Screen, ScreenBody, Text } from '@/components/ui';
+import { ApiError } from '@/lib/api/client';
+import { authApi } from '@/lib/api/endpoints';
 import { formatCountdown } from '@/lib/format';
-import { useAuth } from '@/store/app';
+import { useAuth } from '@/store/auth';
 import { colors, radius, spacing } from '@/theme';
 
 const OTP_LENGTH = 6;
-/** Prototype credential — the real flow validates the server-issued code. */
-const DEMO_OTP = '123456';
 const RESEND_SECONDS = 42;
 
 export default function OtpScreen() {
   const insets = useSafeAreaInsets();
-  const { login } = useAuth();
+  const { identifier = '' } = useLocalSearchParams<{ identifier?: string }>();
+  const { loginWithOtp } = useAuth();
   const [code, setCode] = useState('');
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const requestCode = useCallback(async () => {
+    try {
+      await authApi.requestOtp(identifier);
+      setSecondsLeft(RESEND_SECONDS);
+      setError(null);
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : 'Gagal mengirim kode OTP.');
+    }
+  }, [identifier]);
+
+  useEffect(() => {
+    // Kirim kode sekali saat layar dibuka; state baru berubah setelah request selesai.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void requestCode();
+  }, [requestCode]);
 
   useEffect(() => {
     if (secondsLeft === 0) return;
@@ -27,21 +45,28 @@ export default function OtpScreen() {
     return () => clearInterval(timer);
   }, [secondsLeft]);
 
-  const canSubmit = code.length === OTP_LENGTH;
+  const canSubmit = code.length === OTP_LENGTH && !busy;
 
   /**
    * `candidate` comes straight from `PinInput.onComplete`, which fires inside the
    * same text-change handler that queued `setCode`. Reading the `code` state there
    * would still yield the pre-keystroke value, so the completed code is passed in.
    */
-  const handleVerify = (candidate: string = code) => {
-    if (candidate === DEMO_OTP) {
-      setError(null);
-      login('drv-001');
-      return;
+  const handleVerify = async (candidate: string = code) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await loginWithOtp(identifier, candidate);
+    } catch (caught) {
+      setCode('');
+      setError(
+        caught instanceof ApiError
+          ? caught.message
+          : 'Kode salah atau kedaluwarsa. Silakan minta kode baru.',
+      );
+    } finally {
+      setBusy(false);
     }
-    setCode('');
-    setError('Kode salah atau kedaluwarsa. Silakan minta kode baru.');
   };
 
   return (
@@ -76,7 +101,8 @@ export default function OtpScreen() {
             Masukkan kode OTP
           </Text>
           <Text variant="bodyMd" color="textSecondary" align="center" style={styles.headingBody}>
-            Kami kirimkan 6 digit kode ke <Text variant="bodyBold">+62 812-••••-7890</Text>
+            Kami kirimkan 6 digit kode ke akun{' '}
+            <Text variant="bodyBold">{identifier || 'terdaftar'}</Text>
           </Text>
           <Pressable style={styles.waChip} accessibilityRole="button">
             <Icon name="chat" size={16} color={colors.primaryContainer} />
@@ -118,7 +144,7 @@ export default function OtpScreen() {
             Belum menerima kode?
           </Text>
           <Pressable
-            onPress={() => setSecondsLeft(RESEND_SECONDS)}
+            onPress={() => void requestCode()}
             disabled={secondsLeft > 0}
             accessibilityRole="button"
           >
@@ -144,7 +170,7 @@ export default function OtpScreen() {
         </View>
 
         <Text variant="micro" color="textMuted" align="center" style={styles.demoHint}>
-          Kode demo untuk prototipe: {DEMO_OTP}
+          Kode dikirim ke akun terdaftar. Hubungi dispatcher bila tidak diterima.
         </Text>
       </ScreenBody>
 

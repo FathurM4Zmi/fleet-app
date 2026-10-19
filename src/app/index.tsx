@@ -1,6 +1,6 @@
 import { Redirect } from 'expo-router';
 
-import { useAuth } from '@/store/app';
+import { useAuth } from '@/store/auth';
 
 /** Entry route — sends the driver to the right stack based on the session. */
 export default function Index() {

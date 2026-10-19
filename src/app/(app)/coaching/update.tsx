@@ -11,8 +11,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
-import { Button, Screen, Text } from '@/components/ui';
-import { coachingPlan } from '@/data/fixtures';
+import { Button, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
+import { toCoaching } from '@/data/adapters';
+import { useCoaching } from '@/hooks/api/useDriverData';
+import { insightApi } from '@/lib/api/endpoints';
 import { capturePhoto, captureVideo } from '@/lib/photo';
 import { colors, radius, spacing } from '@/theme';
 
@@ -20,14 +22,45 @@ const NOTE_LIMIT = 200;
 
 export default function CoachingUpdateScreen() {
   const insets = useSafeAreaInsets();
+  const coachingQuery = useCoaching();
+  const coachingPlan = coachingQuery.data ? toCoaching(coachingQuery.data).plan : null;
   const [note, setNote] = useState('');
   const [photoA, setPhotoA] = useState<string>();
   const [photoB, setPhotoB] = useState<string>();
   const [video, setVideo] = useState<string>();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!coachingPlan) {
+    return (
+      <Screen>
+        <ScreenHeader title="Perbarui Progres" onBack />
+        <EmptyState
+          icon="school"
+          title="Belum ada rencana coaching"
+          description={coachingQuery.error?.message ?? 'Supervisor belum menetapkan rencana coaching.'}
+        />
+      </Screen>
+    );
+  }
 
   const done = coachingPlan.milestones.filter((milestone) => milestone.state === 'done').length;
   const total = coachingPlan.milestones.length;
-  const percent = Math.round((done / total) * 100);
+  const percent = total ? Math.round((done / total) * 100) : 0;
+
+  const save = async () => {
+    if (saving || !coachingPlan.id) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await insightApi.updateCoaching(coachingPlan.id, 'Completed');
+      router.back();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Gagal menyimpan progres.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const evidence = [
     { key: 'photo-1', label: 'Foto 1', uri: photoA, set: setPhotoA, capture: capturePhoto },
@@ -216,7 +249,16 @@ export default function CoachingUpdateScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <Button label="Simpan Progres" onPress={() => router.back()} />
+          <Button
+            label={saving ? 'Menyimpan…' : 'Simpan Progres'}
+            disabled={saving}
+            onPress={save}
+          />
+          {error ? (
+            <Text variant="caption" color="critical" align="center">
+              {error}
+            </Text>
+          ) : null}
           <Button label="Batal" variant="secondary" onPress={() => router.back()} />
         </View>
       </View>

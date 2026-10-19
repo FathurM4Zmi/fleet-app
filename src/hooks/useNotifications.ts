@@ -1,20 +1,42 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { notificationDetailById } from '@/data/fixtures';
-import { useAppStore } from '@/store/app';
+import { toNotification } from '@/data/adapters';
+import { notificationApi } from '@/lib/api/endpoints';
+import { useApiQuery } from '@/hooks/api/useApiQuery';
 
 export function useNotifications() {
-  const { state, dispatch } = useAppStore();
+  const query = useApiQuery(() => notificationApi.list({ pageSize: 100 }), []);
+  const { refetch } = query;
 
-  return useMemo(
-    () => ({
-      notifications: state.notifications,
-      unreadCount: state.notifications.filter((entry) => !entry.readAt).length,
-      markRead: (id: string) => dispatch({ type: 'notification/markRead', id }),
-      markAllRead: () => dispatch({ type: 'notification/markAllRead' }),
-      /** Extra context for the notification detail screen. */
-      detailFor: (id: string) => notificationDetailById(id),
-    }),
-    [state.notifications, dispatch],
+  const notifications = useMemo(
+    () => (query.data?.items ?? []).map(toNotification),
+    [query.data],
   );
+
+  const markRead = useCallback(
+    async (id: string) => {
+      await notificationApi.read(id);
+      await refetch();
+    },
+    [refetch],
+  );
+
+  const markAllRead = useCallback(async () => {
+    const unread = notifications.filter((entry) => !entry.readAt);
+    await Promise.all(unread.map((entry) => notificationApi.read(entry.id)));
+    await refetch();
+  }, [notifications, refetch]);
+
+  return {
+    notifications,
+    unreadCount: notifications.filter((entry) => !entry.readAt).length,
+    loading: query.loading,
+    refreshing: query.refreshing,
+    error: query.error,
+    refetch,
+    markRead,
+    markAllRead,
+    /** Extra context is not exposed by the API yet; the screen falls back to the body. */
+    detailFor: (_id: string) => undefined,
+  };
 }

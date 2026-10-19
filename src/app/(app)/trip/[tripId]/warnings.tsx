@@ -4,7 +4,8 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
 import { Button, Card, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
-import { tripWarningHistory, tripWarnings } from '@/data/fixtures';
+import { toTripWarning, toTripWarningHistory } from '@/data/adapters';
+import { useTripWarnings } from '@/hooks/api/useDriverData';
 import { useTrip } from '@/hooks/useTrip';
 import { colors, radius, shadows, spacing } from '@/theme';
 import type { TripWarning } from '@/data/types';
@@ -18,8 +19,11 @@ const SEVERITY = {
 export default function TripWarningsScreen() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const { trip } = useTrip(tripId);
+  const query = useTripWarnings(tripId);
   const [handled, setHandled] = useState<string[]>([]);
 
+  const tripWarnings = (query.data?.active ?? []).map(toTripWarning);
+  const tripWarningHistory = (query.data?.history ?? []).map(toTripWarningHistory);
   const active = tripWarnings.filter((warning) => !handled.includes(warning.key));
 
   return (

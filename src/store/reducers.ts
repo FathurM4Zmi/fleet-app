@@ -1,5 +1,5 @@
 import { createId, nowIso } from '@/lib/id';
-import { createPostTripItems, createPreTripItems } from '@/data/fixtures';
+import { createPostTripItems, createPreTripItems } from '@/data/checklists';
 import type {
   AuthSession,
   DamageReport,

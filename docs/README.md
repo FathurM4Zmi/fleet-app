@@ -1,6 +1,6 @@
 # Dokumentasi Mobile — GenZys FleetOps Driver App (`fleet-app`)
 
-Dokumentasi aplikasi mobile driver (Flutter). Semua layar mobile ditarik dari modul
+Dokumentasi aplikasi mobile driver (**React Native / Expo SDK 57**). Semua layar mobile ditarik dari modul
 otoritatif `MODULE-MAP-v2.md` (M01–M22) dan selaras dengan `FRD.md` + folder BE.
 
 **Rantai dokumen:** BRD induk (`BR-xxx`/`BRL-xxx`) → **BRD-Mobile** (`MBR-xxx`/`MBRL-xxx`, driver-focused)
@@ -16,6 +16,7 @@ fleet-app/docs/
 ├── BRD-Mobile.md                 # BRD mobile driver-focused (MBR/MBRL) — turunan BRD induk
 ├── RELASI-MOBILE-DESKTOP.md      # Peta relasi + traceability MBR ↔ PRD/FRD ↔ desktop
 ├── QUICK-REFERENCE.md            # Ringkasan 23 layar + MBR
+├── API-CONTRACT.md               # Peta layar → endpoint backend (sumber tunggal)
 ├── prd/
 │   ├── PRD-Mobile-Driver-App.md  # PRD INDUK (screen inventory + prinsip)
 │   ├── PRD-MOB-Login-Driver.md   # M01
@@ -51,7 +52,8 @@ fleet-app/docs/
 - **PRD**: 24 (1 induk + 23 layar)
 - **FRD**: 23 (per layar)
 - **Layar mobile**: 23 (driver-facing, mencakup M01–M22)
-- **Platform**: Flutter (Android prioritas, iOS target berikutnya)
+- **Platform**: React Native + Expo Router (Android prioritas, iOS target berikutnya)
+- **Kontrak API**: `API-CONTRACT.md` — 23 layar → 51 endpoint driver (terverifikasi ke controller BE)
 
 ## Layar → Modul Sumber → Kebutuhan → Folder BE
 | # | Layar | Modul | MBR | Folder BE |

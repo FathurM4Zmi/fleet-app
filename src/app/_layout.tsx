@@ -11,7 +11,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
-import { AppStoreProvider, useAuth } from '@/store/app';
+import { AppStoreProvider } from '@/store/app';
+import { AuthProvider, useAuth } from '@/store/auth';
 import { colors } from '@/theme';
 
 export {
@@ -44,15 +45,21 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <AppStoreProvider>
-      <StatusBar style="dark" />
-      <RootNavigator />
-    </AppStoreProvider>
+    <AuthProvider>
+      <AppStoreProvider>
+        <StatusBar style="dark" />
+        <RootNavigator />
+      </AppStoreProvider>
+    </AuthProvider>
   );
 }
 
 function RootNavigator() {
-  const { isAuthenticated } = useAuth();
+  const { status } = useAuth();
+
+  // Wait for the stored token to be read before choosing a stack, otherwise a
+  // signed-in driver briefly sees the login screen on cold start.
+  if (status === 'loading') return null;
 
   return (
     <Stack
@@ -61,10 +68,10 @@ function RootNavigator() {
         contentStyle: { backgroundColor: colors.canvas },
       }}
     >
-      <Stack.Protected guard={isAuthenticated}>
+      <Stack.Protected guard={status === 'authenticated'}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-      <Stack.Protected guard={!isAuthenticated}>
+      <Stack.Protected guard={status !== 'authenticated'}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
     </Stack>

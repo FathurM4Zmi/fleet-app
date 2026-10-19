@@ -5,9 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/Icon';
 import { Badge, Button, Card, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
 import { useDvirForm } from '@/hooks/useDvirForm';
+import { useTrips } from '@/hooks/useTrips';
 import { useTrip } from '@/hooks/useTrip';
 import { estimatedDurationHours, formatNumber, formatTime } from '@/lib/format';
-import { useAppStore } from '@/store/app';
 import { colors, radius, spacing } from '@/theme';
 
 type Tone = 'success' | 'warning' | 'info' | 'idle';
@@ -29,7 +29,7 @@ export default function DvirSubmittedScreen() {
   const inspectionType: 'pre' | 'post' = type === 'post' ? 'post' : 'pre';
   const { trip, vehicle, driver } = useTrip(tripId);
   const { inspection } = useDvirForm(tripId, inspectionType);
-  const { state } = useAppStore();
+  const { trips } = useTrips();
   const insets = useSafeAreaInsets();
 
   const failed = result === 'failed';
@@ -49,7 +49,7 @@ export default function DvirSubmittedScreen() {
   const submittedTime = formatTime(submittedAt);
   const photos = (inspection?.items ?? []).filter((item) => item.result === 'fail' && item.photoUri);
 
-  const completedTrips = state.trips.filter((entry) => entry.status === 'completed');
+  const completedTrips = trips.filter((entry) => entry.status === 'completed');
   const totalKm = completedTrips.reduce((sum, entry) => sum + entry.distanceKm, 0);
   const totalHours = completedTrips.reduce(
     (sum, entry) => sum + estimatedDurationHours(entry.distanceKm),
@@ -255,7 +255,7 @@ export default function DvirSubmittedScreen() {
             <View style={styles.timelineRail} />
             {(failed
               ? [
-                  { label: 'DVIR terkirim', sub: `Pengemudi: ${driver.name}`, time: submittedTime, tone: 'info' as Tone, icon: 'check' as IconName },
+                  { label: 'DVIR terkirim', sub: `Pengemudi: ${driver?.name ?? 'Pengemudi'}`, time: submittedTime, tone: 'info' as Tone, icon: 'check' as IconName },
                   { label: 'Work order dibuat otomatis', sub: 'Sistem Logistik FleetOps', time: submittedTime, tone: 'warning' as Tone, icon: 'workOrder' as IconName },
                   { label: 'Supervisor diberi tahu', sub: 'Notifikasi push dikirim', time: submittedTime, tone: 'info' as Tone, icon: 'notifications' as IconName },
                   { label: 'Tinjauan supervisor', sub: 'Dalam antrean verifikasi', time: 'Menunggu', tone: 'idle' as Tone, icon: null },

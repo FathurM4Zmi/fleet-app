@@ -13,26 +13,40 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
-import { Button, Text } from '@/components/ui';
-import { vehicleDetail } from '@/data/fixtures';
+import { Button, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
+import { toVehicle } from '@/data/adapters';
+import { useVehicle } from '@/hooks/api/useDriverData';
+import { ApiError } from '@/lib/api/client';
+import { vehicleApi } from '@/lib/api/endpoints';
 import { formatKm } from '@/lib/format';
+import { enqueue } from '@/lib/offline/queue';
 import { capturePhoto } from '@/lib/photo';
-import { useAppStore } from '@/store/app';
+import { uploadImage } from '@/lib/upload';
 import { colors, radius, shadows, spacing, typography } from '@/theme';
 
 const MAX_REASON = 200;
-const RECORDED_KM = 148_320;
-const REQUESTED_KM = 147_900;
 
 export default function OdometerCorrectionScreen() {
   const insets = useSafeAreaInsets();
-  const { dispatch } = useAppStore();
+  const vehicleQuery = useVehicle();
+  const vehicle = vehicleQuery.data ? toVehicle(vehicleQuery.data) : undefined;
+  const recordedKm = vehicle?.odometerKm ?? 0;
 
+  const [requested, setRequested] = useState('');
   const [reason, setReason] = useState('');
   const [odometerPhoto, setOdometerPhoto] = useState<string | undefined>();
   const [supportPhoto, setSupportPhoto] = useState<string | undefined>();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = reason.trim().length > 0 && Boolean(odometerPhoto);
+  const requestedKm = Number(requested) || 0;
+  const canSubmit =
+    Boolean(vehicle) &&
+    requestedKm > 0 &&
+    requestedKm !== recordedKm &&
+    reason.trim().length >= 5 &&
+    Boolean(odometerPhoto) &&
+    !saving;
 
   const pickOdometer = async () => {
     const uri = await capturePhoto();
@@ -44,20 +58,58 @@ export default function OdometerCorrectionScreen() {
     if (uri) setSupportPhoto(uri);
   };
 
-  const submit = () => {
-    if (!canSubmit) return;
-    dispatch({
-      type: 'odometer/correct',
-      correction: {
-        vehicleId: vehicleDetail.vehicleId,
-        recordedKm: RECORDED_KM,
-        requestedKm: REQUESTED_KM,
-        reason: reason.trim(),
-        photoUris: [odometerPhoto, supportPhoto].filter(Boolean) as string[],
-      },
-    });
-    router.replace('/vehicle/odometer/submitted');
+  const submit = async () => {
+    if (!canSubmit || !vehicle) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const photoPaths: string[] = [];
+      for (const uri of [odometerPhoto, supportPhoto]) {
+        if (!uri) continue;
+        try {
+          photoPaths.push(await uploadImage(uri, 'odometer'));
+        } catch {
+          photoPaths.push(uri);
+        }
+      }
+
+      const payload = { requestedKm, reason: reason.trim(), photoPaths };
+      try {
+        await vehicleApi.submitOdometerCorrection(payload);
+      } catch (caught) {
+        if (caught instanceof ApiError && caught.isNetworkError) {
+          await enqueue({
+            kind: 'odometer',
+            label: 'Koreksi odometer',
+            path: '/api/driver/vehicle/odometer-correction',
+            method: 'POST',
+            body: payload,
+          });
+        } else {
+          throw caught;
+        }
+      }
+
+      router.replace('/vehicle/odometer/submitted');
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Gagal mengajukan koreksi.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (!vehicle) {
+    return (
+      <Screen>
+        <ScreenHeader title="Koreksi Odometer" onBack />
+        <EmptyState
+          icon="truck"
+          title="Kendaraan tidak ditemukan"
+          description={vehicleQuery.error?.message ?? 'Belum ada unit yang ditugaskan.'}
+        />
+      </Screen>
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -98,7 +150,7 @@ export default function OdometerCorrectionScreen() {
                 <Text variant="labelMd" color="secondary" style={styles.upper}>
                   TERAKHIR
                 </Text>
-                <Text variant="headlineSm">{formatKm(RECORDED_KM)}</Text>
+                <Text variant="headlineSm">{formatKm(recordedKm)}</Text>
               </View>
               <View style={styles.compareArrow}>
                 <Icon name="forward" size={18} color={colors.secondary} />
@@ -108,9 +160,24 @@ export default function OdometerCorrectionScreen() {
                   DIINPUTKAN
                 </Text>
                 <Text variant="headlineSm" color="critical">
-                  {formatKm(REQUESTED_KM)}
+                  {requestedKm > 0 ? formatKm(requestedKm) : '—'}
                 </Text>
               </View>
+            </View>
+
+            {/* Corrected value */}
+            <View style={styles.fieldGroup}>
+              <Text variant="labelMd" color="onSurfaceVariant" style={styles.upper}>
+                ODOMETER YANG BENAR (KM)
+              </Text>
+              <TextInput
+                value={requested}
+                onChangeText={(value) => setRequested(value.replace(/[^0-9]/g, ''))}
+                placeholder="Contoh: 147900"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="number-pad"
+                style={styles.kmInput}
+              />
             </View>
 
             {/* Amber alert */}
@@ -183,7 +250,17 @@ export default function OdometerCorrectionScreen() {
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Button label="Ajukan Koreksi" icon="send" disabled={!canSubmit} onPress={submit} />
+            {error ? (
+              <Text variant="caption" color="critical" align="center">
+                {error}
+              </Text>
+            ) : null}
+            <Button
+              label={saving ? 'Mengirim…' : 'Ajukan Koreksi'}
+              icon="send"
+              disabled={!canSubmit}
+              onPress={submit}
+            />
             <Button label="Batal" variant="secondary" onPress={() => router.back()} />
           </View>
         </View>
@@ -311,6 +388,16 @@ const styles = StyleSheet.create({
   },
 
   fieldGroup: { gap: spacing.sm },
+  kmInput: {
+    ...typography.headlineSm,
+    color: colors.ink,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
   textarea: {
     borderRadius: radius.card,
     borderWidth: 1,

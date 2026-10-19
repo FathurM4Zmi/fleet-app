@@ -6,6 +6,7 @@ import {
   BottomBar,
   Button,
   Card,
+  EmptyState,
   ProgressRing,
   Screen,
   ScreenBody,
@@ -13,11 +14,43 @@ import {
   Text,
   TrendChart,
 } from '@/components/ui';
-import { dnaSummary } from '@/data/fixtures';
+import { toDna } from '@/data/adapters';
+import { useDna } from '@/hooks/api/useDriverData';
 import { formatRecency, scoreTone } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
 
 export default function DnaScreen() {
+  const query = useDna();
+  const dnaSummary = query.data ? toDna(query.data) : undefined;
+
+  if (query.loading && !dnaSummary) {
+    return (
+      <Screen>
+        <ScreenHeader title="DNA Saya" onBack />
+        <ScreenBody>
+          <Card>
+            <Text variant="bodyMd" color="textSecondary">
+              Memuat skor DNA…
+            </Text>
+          </Card>
+        </ScreenBody>
+      </Screen>
+    );
+  }
+
+  if (!dnaSummary) {
+    return (
+      <Screen>
+        <ScreenHeader title="DNA Saya" onBack />
+        <EmptyState
+          icon="error"
+          title="DNA belum tersedia"
+          description={query.error?.message ?? 'Coba muat ulang beberapa saat lagi.'}
+        />
+      </Screen>
+    );
+  }
+
   const tone = scoreTone(dnaSummary.score);
   const ringColor = tone === 'success' ? colors.success : colors.warning;
 

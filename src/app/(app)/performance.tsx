@@ -5,13 +5,16 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import {
   Card,
+  EmptyState,
   Screen,
   ScreenBody,
   ScreenHeader,
+  Skeleton,
   Text,
   TrendChart,
 } from '@/components/ui';
-import { performanceKpis, performanceScore, performanceTrend } from '@/data/fixtures';
+import { toPerformance } from '@/data/adapters';
+import { usePerformance } from '@/hooks/api/useDriverData';
 import type { PerformanceKpi } from '@/data/types';
 import { colors, radius, spacing } from '@/theme';
 
@@ -24,6 +27,35 @@ const PERIODS: { label: string; value: Period }[] = [
 
 export default function PerformanceScreen() {
   const [period, setPeriod] = useState<Period>('week');
+  const query = usePerformance();
+  const performance = query.data ? toPerformance(query.data) : undefined;
+  const performanceKpis = performance?.kpis ?? [];
+  const performanceTrend = performance?.trend ?? [];
+  const performanceScore = performance?.score ?? { value: 0, max: 100, fleetAverage: 0, fleetDelta: 0, verified: false };
+
+  if (query.loading && !performance) {
+    return (
+      <Screen>
+        <ScreenHeader title="Kinerja Saya" onBack />
+        <View style={{ padding: spacing.gutter }}>
+          <Skeleton width="100%" height={88} />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (query.error && !performance) {
+    return (
+      <Screen>
+        <ScreenHeader title="Kinerja Saya" onBack />
+        <EmptyState
+          icon="error"
+          title="Gagal memuat kinerja"
+          description={query.error.message}
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen>

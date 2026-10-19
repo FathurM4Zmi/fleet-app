@@ -5,8 +5,10 @@ import Svg, { Circle, G, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { Icon } from '@/components/Icon';
 import { BottomBar, Button, EmptyState, Screen, ScreenBody, ScreenHeader, Text } from '@/components/ui';
-import { routeOptions } from '@/data/fixtures';
+import { toRouteOption } from '@/data/adapters';
+import { useTripRoutes } from '@/hooks/api/useDriverData';
 import { useTrip } from '@/hooks/useTrip';
+import { tripOpsApi } from '@/lib/api/endpoints';
 import { colors, radius, shadows, spacing } from '@/theme';
 import type { RouteOption } from '@/data/types';
 
@@ -19,7 +21,31 @@ const STATUS_TONE = {
 export default function SelectRouteScreen() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const { trip } = useTrip(tripId);
-  const [selected, setSelected] = useState(routeOptions[0]?.key ?? 'tol');
+  const query = useTripRoutes(tripId);
+  const routeOptions = (query.data ?? []).map(toRouteOption);
+  const [picked, setPicked] = useState<string | undefined>(undefined);
+  const [applying, setApplying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const selected =
+    picked ??
+    routeOptions.find((option) => option.recommended)?.key ??
+    routeOptions[0]?.key ??
+    '';
+
+  const apply = async () => {
+    if (!trip || !selected || applying) return;
+    setApplying(true);
+    setError(null);
+    try {
+      await tripOpsApi.selectRoute(trip.id, selected);
+      router.replace(`/trip/${trip.id}/route`);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Gagal menerapkan rute.');
+    } finally {
+      setApplying(false);
+    }
+  };
 
   if (!trip) {
     return (
@@ -83,10 +109,24 @@ export default function SelectRouteScreen() {
               key={option.key}
               option={option}
               selected={option.key === selected}
-              onSelect={() => setSelected(option.key)}
+              onSelect={() => setPicked(option.key)}
             />
           ))}
         </View>
+
+        {routeOptions.length === 0 ? (
+          <EmptyState
+            icon="route"
+            title="Belum ada saran rute"
+            description={query.error?.message ?? 'Dispatcher belum menyiapkan alternatif rute untuk trip ini.'}
+          />
+        ) : null}
+
+        {error ? (
+          <Text variant="caption" color="critical" align="center">
+            {error}
+          </Text>
+        ) : null}
 
         {/* Assumption note */}
         <View style={styles.note}>
@@ -102,9 +142,10 @@ export default function SelectRouteScreen() {
         <View style={styles.footerRow}>
           <Button label="Batal" variant="secondary" onPress={() => router.back()} style={styles.footerGhost} />
           <Button
-            label="Terapkan Rute"
+            label={applying ? 'Menerapkan…' : 'Terapkan Rute'}
             icon="navigation"
-            onPress={() => router.replace(`/trip/${trip.id}/route`)}
+            disabled={!selected || applying}
+            onPress={apply}
             style={styles.footerPrimary}
           />
         </View>

@@ -1,4 +1,4 @@
-import type { DvirItem } from '../types';
+import type { DvirItem } from './types';
 
 interface ChecklistSeed {
   group: string;

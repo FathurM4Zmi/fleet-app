@@ -6,7 +6,7 @@ related: [[README]] [[BRD-Mobile]] [[PRD-Mobile-Driver-App]] [[RELASI-MOBILE-DES
 
 # GenZys FleetOps Mobile — Quick Reference
 
-App: `fleet-app` (Flutter) · Persona: **R6 Driver** · 23 layar driver-facing (cakupan M01–M22).
+App: `fleet-app` (React Native / Expo SDK 57) · Persona: **R6 Driver** · 23 layar driver-facing (cakupan M01–M22).
 Detail: `fleet-app/docs/` (BRD-Mobile + PRD/FRD per layar). Peta relasi + traceability dua arah mobile↔desktop: `RELASI-MOBILE-DESKTOP.md`.
 Rantai dokumen: **BRD induk** (`BR-xxx`/`BRL-xxx`) → **BRD-Mobile** (`MBR-xxx`/`MBRL-xxx`) → PRD-MOB → FRD-MOB (mirror `FRD-Mxx-xx` desktop) → folder BE.
 

@@ -1,9 +1,10 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import { BottomBar, Button, Card, Screen, ScreenBody, ScreenHeader, Text } from '@/components/ui';
-import { settlementHistory, settlementLines, settlementSummary } from '@/data/fixtures';
+import { BottomBar, Button, Card, EmptyState, Screen, ScreenBody, ScreenHeader, Text } from '@/components/ui';
+import { toSettlement } from '@/data/adapters';
 import type { SettlementStep, SettlementStepState } from '@/data/types';
+import { useSettlement } from '@/hooks/api/useDriverData';
 import { colors, radius, spacing } from '@/theme';
 
 const STEPS: SettlementStep[] = [
@@ -20,6 +21,25 @@ const STEP_LABEL_COLOR: Record<SettlementStepState, 'secondary' | 'primary' | 't
 };
 
 export default function SettlementScreen() {
+  const query = useSettlement(3);
+  const data = query.data ? toSettlement(query.data) : undefined;
+
+  if (!data) {
+    return (
+      <Screen>
+        <ScreenHeader title="Settlement" onBack />
+        <EmptyState
+          icon="error"
+          title="Settlement belum tersedia"
+          description={query.error?.message ?? 'Memuat data settlement…'}
+        />
+      </Screen>
+    );
+  }
+
+  const { summary: settlementSummary, lines: settlementLines, history: settlementHistory } = data;
+  const steps = data.steps.length > 0 ? data.steps : STEPS;
+
   return (
     <Screen>
       <ScreenHeader
@@ -69,7 +89,7 @@ export default function SettlementScreen() {
             <View style={styles.rail} />
             <View style={styles.railFill} />
 
-            {STEPS.map((step) => {
+            {steps.map((step) => {
               const done = step.state === 'done';
               const active = step.state === 'active';
 

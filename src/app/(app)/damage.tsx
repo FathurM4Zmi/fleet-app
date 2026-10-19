@@ -13,7 +13,11 @@ import {
   Text,
 } from '@/components/ui';
 import { capturePhoto } from '@/lib/photo';
-import { useAppStore } from '@/store/app';
+import { useVehicle } from '@/hooks/api/useDriverData';
+import { ApiError } from '@/lib/api/client';
+import { safetyApi } from '@/lib/api/endpoints';
+import { enqueue } from '@/lib/offline/queue';
+import { uploadImage } from '@/lib/upload';
 import { colors, radius, shadows, spacing, typography } from '@/theme';
 
 const CATEGORIES = ['Mesin', 'Rem', 'Ban', 'Kelistrikan', 'Body', 'Lainnya'] as const;
@@ -29,17 +33,21 @@ const SEVERITY_TONE: Record<(typeof SEVERITIES)[number], { bg: string; border: s
 };
 
 export default function DamageReportScreen() {
-  const { state, dispatch } = useAppStore();
-  const vehicle = state.vehicles[0];
+  const vehicleQuery = useVehicle();
+  const vehicle = vehicleQuery.data;
 
   const [category, setCategory] = useState<string>('Mesin');
   const [severity, setSeverity] = useState<(typeof SEVERITIES)[number]>('Rendah');
+  const requiresPhoto = severity === 'Tinggi' || severity === 'Berhenti Layanan';
   const [description, setDescription] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const requiresPhoto = severity === 'Tinggi' || severity === 'Berhenti Layanan';
-  const canSubmit = description.trim().length > 0 && (!requiresPhoto || photos.length > 0);
+  // Backend requires at least one photo for every damage report (audit evidence).
+  const canSubmit =
+    Boolean(vehicle) && description.trim().length > 0 && photos.length > 0 && !saving;
 
   const addPhoto = async () => {
     if (photos.length >= MAX_PHOTOS) return;
@@ -47,19 +55,50 @@ export default function DamageReportScreen() {
     if (uri) setPhotos((current) => [...current, uri]);
   };
 
-  const submit = () => {
-    if (!canSubmit) return;
-    dispatch({
-      type: 'damage/report',
-      report: {
-        vehicleId: vehicle?.id ?? 'veh-001',
+  const submit = async () => {
+    if (!canSubmit || !vehicle) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const photoPaths: string[] = [];
+      for (const uri of photos) {
+        try {
+          photoPaths.push(await uploadImage(uri, 'kerusakan'));
+        } catch {
+          photoPaths.push(uri);
+        }
+      }
+
+      const payload = {
+        vehicleId: vehicle.vehicleId,
         category,
         severity,
         description: description.trim(),
-        photoUris: photos,
-      },
-    });
-    setSubmitted(true);
+        photoPaths,
+      };
+
+      try {
+        await safetyApi.reportDamage(payload);
+      } catch (caught) {
+        if (caught instanceof ApiError && caught.isNetworkError) {
+          await enqueue({
+            kind: 'damage',
+            label: `Kerusakan ${category}`,
+            path: '/api/driver/damage',
+            method: 'POST',
+            body: payload,
+          });
+        } else {
+          throw caught;
+        }
+      }
+
+      setSubmitted(true);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Gagal mengirim laporan kerusakan.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -222,6 +261,11 @@ export default function DamageReportScreen() {
       </ScreenBody>
 
       <BottomBar>
+        {error ? (
+          <Text variant="caption" color="critical" align="center">
+            {error}
+          </Text>
+        ) : null}
         {submitted ? (
           <View style={styles.savedRow}>
             <Icon name="cloudDone" size={20} color={colors.success} />
@@ -231,7 +275,7 @@ export default function DamageReportScreen() {
           </View>
         ) : (
           <Button
-            label="Kirim Laporan"
+            label={saving ? 'Mengirim…' : 'Kirim Laporan'}
             iconAfter="send"
             disabled={!canSubmit}
             onPress={submit}

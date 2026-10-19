@@ -1,13 +1,11 @@
 import { router } from 'expo-router';
-import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { Button, Card, Screen, ScreenBody, ScreenHeader, Text } from '@/components/ui';
-import { complianceChecklist, complianceDocuments, complianceProgress, incidents } from '@/data/fixtures';
-import type { DocumentStatus, IncidentRecord } from '@/data/types';
-import { formatDate } from '@/lib/format';
-import { useAppStore } from '@/store/app';
+import { toChecklist, toComplianceDocuments, toIncidents } from '@/data/adapters';
+import type { DocumentStatus } from '@/data/types';
+import { useCompliance, useDocuments } from '@/hooks/api/useDriverData';
 import { colors, radius, spacing } from '@/theme';
 
 const DOC_ICON: Record<string, IconName> = {
@@ -23,22 +21,18 @@ const DOC_TONE: Record<DocumentStatus, { fg: string; bg: string }> = {
 };
 
 export default function ComplianceScreen() {
-  const { state } = useAppStore();
-  const percent = Math.round((complianceProgress.done / complianceProgress.total) * 100);
+  const complianceQuery = useCompliance();
+  const documentsQuery = useDocuments();
 
-  // Newly filed reports (M16) appear above the seeded history.
-  const history = useMemo<IncidentRecord[]>(
-    () => [
-      ...state.incidentReports.map((report) => ({
-        key: report.id,
-        date: formatDate(report.submittedAt),
-        title: report.category,
-        status: 'Menunggu Tinjauan',
-      })),
-      ...incidents,
-    ],
-    [state.incidentReports],
-  );
+  const complianceDocuments = toComplianceDocuments(documentsQuery.data ?? []);
+  const complianceChecklist = complianceQuery.data ? toChecklist(complianceQuery.data) : [];
+  const incidents = complianceQuery.data ? toIncidents(complianceQuery.data) : [];
+
+  const done = complianceChecklist.filter((item) => item.done).length;
+  const complianceProgress = { done, total: complianceChecklist.length };
+  const percent = complianceChecklist.length
+    ? Math.round((done / complianceChecklist.length) * 100)
+    : 0;
 
   return (
     <Screen>
@@ -138,7 +132,7 @@ export default function ComplianceScreen() {
         </Text>
 
         <Card padded={false} shadow>
-          {history.map((incident, index) => (
+          {incidents.map((incident, index) => (
             <View key={incident.key}>
               <Pressable
                 accessibilityRole="button"
@@ -161,7 +155,7 @@ export default function ComplianceScreen() {
                 </View>
               </Pressable>
 
-              {index < history.length - 1 ? <View style={styles.rowDivider} /> : null}
+              {index < incidents.length - 1 ? <View style={styles.rowDivider} /> : null}
             </View>
           ))}
         </Card>

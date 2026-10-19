@@ -11,14 +11,14 @@ import {
   ScreenBody,
   SegmentedControl,
   Text,
+  TextField,
 } from '@/components/ui';
-import { useAuth } from '@/store/app';
+import { ApiError } from '@/lib/api/client';
+import { useAuth } from '@/store/auth';
 import { colors, radius, spacing } from '@/theme';
 
 /** Wrong-PIN attempts allowed before the account locks (FRD-MOB-LOGIN-03). */
 const MAX_ATTEMPTS = 5;
-/** Prototype credential — the real flow validates against the backend. */
-const DEMO_PIN = '123456';
 
 type Method = 'pin' | 'otp' | 'qr';
 
@@ -29,37 +29,42 @@ const METHODS = [
 ];
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { loginWithPin } = useAuth();
   const [method, setMethod] = useState<Method>('pin');
+  const [identifier, setIdentifier] = useState('');
   const [pin, setPin] = useState('');
   const [attemptsLeft, setAttemptsLeft] = useState(MAX_ATTEMPTS);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const locked = attemptsLeft === 0;
-  const canSubmit = pin.length === 6 && !locked;
+  const canSubmit = identifier.trim().length >= 3 && pin.length === 6 && !locked && !busy;
 
   /**
    * `candidate` comes straight from `PinInput.onComplete`, which fires inside the
    * same text-change handler that queued `setPin`. Reading the `pin` state there
    * would still yield the pre-keystroke value, so the completed PIN is passed in.
    */
-  const handleSubmit = (candidate: string = pin) => {
-    if (locked) return;
-
-    if (candidate === DEMO_PIN) {
-      setError(null);
-      login('drv-001');
-      return;
+  const handleSubmit = async (candidate: string = pin) => {
+    if (locked || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await loginWithPin(identifier, candidate);
+    } catch (caught) {
+      const apiError = caught instanceof ApiError ? caught : null;
+      const remaining = Math.max(0, attemptsLeft - 1);
+      setAttemptsLeft(remaining);
+      setPin('');
+      setError(
+        apiError?.status === 423 || remaining === 0
+          ? 'Akun terkunci sementara. Hubungi supervisor untuk membuka.'
+          : (apiError?.message ??
+            `PIN atau kode salah. Sisa ${remaining} kesempatan sebelum sistem terkunci otomatis.`),
+      );
+    } finally {
+      setBusy(false);
     }
-
-    const remaining = attemptsLeft - 1;
-    setAttemptsLeft(remaining);
-    setPin('');
-    setError(
-      remaining === 0
-        ? 'Akun terkunci sementara. Hubungi supervisor untuk membuka.'
-        : `PIN atau kode salah. Sisa ${remaining} kesempatan sebelum sistem terkunci otomatis.`,
-    );
   };
 
   return (
@@ -98,8 +103,26 @@ export default function LoginScreen() {
         {method === 'pin' ? (
           <Card style={styles.panel}>
             <View style={styles.panelHead}>
-              <Text variant="titleMd">Masukkan PIN 6 digit</Text>
+              <Text variant="titleMd">Masuk dengan PIN</Text>
             </View>
+
+            <TextField
+              label="Nomor lisensi atau telepon"
+              placeholder="Contoh: B1234567 atau 0812xxxxxxx"
+              value={identifier}
+              onChangeText={(next) => {
+                setIdentifier(next);
+                if (error) setError(null);
+              }}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              leftIcon="profile"
+              returnKeyType="next"
+            />
+
+            <Text variant="labelMd" color="textSecondary">
+              PIN 6 digit
+            </Text>
 
             <PinInput
               value={pin}
@@ -119,13 +142,9 @@ export default function LoginScreen() {
                 </Text>
               </Pressable>
               <Text variant="caption" color="textSecondary">
-                Kirim ulang dalam <Text variant="labelLg">0:42</Text>
+                Sisa {attemptsLeft} kesempatan
               </Text>
             </View>
-
-            <Text variant="micro" color="textMuted" style={styles.demoHint}>
-              PIN demo untuk prototipe: {DEMO_PIN}
-            </Text>
           </Card>
         ) : null}
 
@@ -133,13 +152,28 @@ export default function LoginScreen() {
           <Card style={styles.panel}>
             <Text variant="titleMd">Masuk dengan kode OTP</Text>
             <Text variant="bodyMd" color="textSecondary" style={styles.panelBody}>
-              Kami akan mengirim 6 digit kode ke nomor terdaftar +62 812-••••-7890. Kode berlaku
-              15 menit dan hanya dapat dipakai sekali.
+              Kami akan mengirim 6 digit kode ke nomor terdaftar. Kode berlaku 15 menit dan hanya
+              dapat dipakai sekali.
             </Text>
+            <TextField
+              label="Nomor lisensi atau telepon"
+              placeholder="Contoh: B1234567 atau 0812xxxxxxx"
+              value={identifier}
+              onChangeText={setIdentifier}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              leftIcon="profile"
+            />
             <Button
               label="Kirim kode OTP"
               icon="chat"
-              onPress={() => router.push('/(auth)/otp')}
+              onPress={() => {
+                if (!identifier.trim()) {
+                  setError('Isi nomor lisensi atau telepon terlebih dahulu.');
+                  return;
+                }
+                router.push({ pathname: '/(auth)/otp', params: { identifier: identifier.trim() } });
+              }}
             />
           </Card>
         ) : null}

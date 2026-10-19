@@ -7,14 +7,15 @@ import {
   BottomBar,
   Button,
   Card,
+  EmptyState,
   ProgressRing,
   Screen,
   ScreenBody,
   ScreenHeader,
   Text,
 } from '@/components/ui';
-import { vehicleDetail } from '@/data/fixtures';
-import { useAppStore } from '@/store/app';
+import { toVehicle, toVehicleDetail, toVehicleDocument } from '@/data/adapters';
+import { useVehicle, useVehicleDocuments } from '@/hooks/api/useDriverData';
 import { colors, radius, spacing } from '@/theme';
 import type { DocumentStatus } from '@/data/types';
 
@@ -31,9 +32,31 @@ const DOC_ICON: Record<string, IconName> = {
 };
 
 export default function VehicleScreen() {
-  const { state } = useAppStore();
-  const detail = vehicleDetail;
-  const vehicle = state.vehicles.find((entry) => entry.id === detail.vehicleId);
+  const vehicleQuery = useVehicle();
+  const documentsQuery = useVehicleDocuments(vehicleQuery.data?.vehicleId);
+  const detail = vehicleQuery.data
+    ? toVehicleDetail(
+        vehicleQuery.data,
+        (documentsQuery.data ?? []).map(toVehicleDocument),
+      )
+    : undefined;
+  const vehicle = vehicleQuery.data ? toVehicle(vehicleQuery.data) : undefined;
+
+  if (!detail || !vehicle) {
+    return (
+      <Screen>
+        <ScreenHeader title="Kendaraan Saya" onBack />
+        <EmptyState
+          icon="truck"
+          title="Belum ada kendaraan"
+          description={
+            vehicleQuery.error?.message ??
+            'Belum ada unit yang ditugaskan. Hubungi dispatcher untuk penugasan.'
+          }
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen>

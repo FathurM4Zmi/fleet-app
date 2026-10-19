@@ -11,9 +11,13 @@ import {
   ScreenHeader,
   Text,
 } from '@/components/ui';
-import { INCIDENT_CATEGORIES, INCIDENT_SEVERITIES } from '@/data/fixtures';
+import { INCIDENT_CATEGORIES, INCIDENT_SEVERITIES } from '@/data/constants';
+import { useVehicle } from '@/hooks/api/useDriverData';
+import { ApiError } from '@/lib/api/client';
+import { safetyApi } from '@/lib/api/endpoints';
+import { enqueue } from '@/lib/offline/queue';
 import { capturePhoto } from '@/lib/photo';
-import { useAppStore } from '@/store/app';
+import { uploadImage } from '@/lib/upload';
 import { colors, radius, shadows, spacing, typography } from '@/theme';
 
 const MAX_CHRONOLOGY = 500;
@@ -29,7 +33,8 @@ const SEVERITY_TONE: Record<Severity, { bg: string; border: string; fg: string }
 };
 
 export default function IncidentReportScreen() {
-  const { dispatch } = useAppStore();
+  const vehicleQuery = useVehicle();
+  const vehicle = vehicleQuery.data;
 
   const [category, setCategory] = useState<string>(INCIDENT_CATEGORIES[0]);
   const [severity, setSeverity] = useState<Severity>('Ringan');
@@ -38,13 +43,17 @@ export default function IncidentReportScreen() {
   const [description, setDescription] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Photo evidence is mandatory (FRD-MOB-CMP-04), as is the narrative.
   const canSubmit =
+    Boolean(vehicle) &&
     location.trim().length > 0 &&
     chronology.trim().length > 0 &&
     description.trim().length > 0 &&
-    photos.length > 0;
+    photos.length > 0 &&
+    !saving;
 
   const addPhoto = async () => {
     if (photos.length >= MAX_PHOTOS) return;
@@ -52,20 +61,53 @@ export default function IncidentReportScreen() {
     if (uri) setPhotos((current) => [...current, uri]);
   };
 
-  const submit = () => {
-    if (!canSubmit) return;
-    dispatch({
-      type: 'incident/report',
-      report: {
+  const submit = async () => {
+    if (!canSubmit || !vehicle) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const photoPaths: string[] = [];
+      for (const uri of photos) {
+        try {
+          photoPaths.push(await uploadImage(uri, 'insiden'));
+        } catch {
+          photoPaths.push(uri);
+        }
+      }
+
+      const payload = {
+        vehicleId: vehicle.vehicleId,
         category,
         severity,
         location: location.trim(),
         chronology: chronology.trim(),
         description: description.trim(),
-        photoUris: photos,
-      },
-    });
-    setSubmitted(true);
+        occurredAt: new Date().toISOString(),
+        photoPaths,
+      };
+
+      try {
+        await safetyApi.reportIncident(payload);
+      } catch (caught) {
+        if (caught instanceof ApiError && caught.isNetworkError) {
+          await enqueue({
+            kind: 'incident',
+            label: `Insiden ${category}`,
+            path: '/api/driver/incidents',
+            method: 'POST',
+            body: payload,
+          });
+        } else {
+          throw caught;
+        }
+      }
+
+      setSubmitted(true);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Gagal mengirim laporan insiden.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -271,6 +313,11 @@ export default function IncidentReportScreen() {
       </ScreenBody>
 
       <BottomBar>
+        {error ? (
+          <Text variant="caption" color="critical" align="center">
+            {error}
+          </Text>
+        ) : null}
         {submitted ? (
           <>
             <View style={styles.savedRow}>
@@ -288,7 +335,7 @@ export default function IncidentReportScreen() {
           </>
         ) : (
           <Button
-            label="Kirim Laporan"
+            label={saving ? 'Mengirim…' : 'Kirim Laporan'}
             iconAfter="send"
             disabled={!canSubmit}
             onPress={submit}

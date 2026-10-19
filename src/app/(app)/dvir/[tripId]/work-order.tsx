@@ -55,7 +55,7 @@ export default function DvirWorkOrderScreen() {
   const timeline: { label: string; sub?: string; time: string; tone: Tone; icon: IconName | null }[] = [
     {
       label: 'DVIR terkirim',
-      sub: `Pengemudi: ${driver.name}`,
+      sub: `Pengemudi: ${driver?.name ?? 'Pengemudi'}`,
       time: formatTime(submittedAt),
       tone: 'info',
       icon: 'check',

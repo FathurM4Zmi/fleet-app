@@ -1,5 +1,4 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,11 +13,12 @@ import {
   Skeleton,
   Text,
 } from '@/components/ui';
-import { vehicleById } from '@/data/fixtures';
+import { toDriver, toVehicle } from '@/data/adapters';
+import { useDna, useHome, useVehicle } from '@/hooks/api/useDriverData';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useTrips } from '@/hooks/useTrips';
 import { formatDate, formatKm, formatWindow, scoreTone } from '@/lib/format';
-import { useAppStore } from '@/store/app';
+import { emptyDriver } from '@/store/app';
 import { colors, radius, shadows, spacing } from '@/theme';
 
 const greeting = (): string => {
@@ -35,24 +35,19 @@ const daysUntil = (iso: string): number =>
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { state } = useAppStore();
+  const home = useHome();
+  const dna = useDna();
+  const vehicleQuery = useVehicle();
   const { unreadCount } = useNotifications();
   const { upcoming, active, accept } = useTrips();
-  const [loading, setLoading] = useState(true);
 
-  // Stand-in for the first server fetch: the design calls for skeletons, not a
-  // spinner (PRD-MOB-Home).
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 700);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const driver = state.driver;
+  const driver = home.data ? toDriver(home.data.profile, dna.data?.score ?? 0) : emptyDriver;
+  const loading = home.loading;
   const newTasks = upcoming.filter((item) => item.status === 'assigned');
   // New assignments get their own card below, so the "next trip" card prefers
   // a trip the driver has already accepted.
   const trip = active[0] ?? upcoming.find((item) => item.status === 'accepted') ?? (newTasks.length > 0 ? undefined : upcoming[0]);
-  const vehicle = trip ? vehicleById(trip.vehicleId) : undefined;
+  const vehicle = vehicleQuery.data ? toVehicle(vehicleQuery.data) : undefined;
   const dnaTone = scoreTone(driver.dnaScore);
   const licenseDays = daysUntil(driver.licenseExpiry);
   const firstName = driver.name.split(' ')[0];
@@ -298,21 +293,23 @@ export default function HomeScreen() {
             </View>
 
             {/* Document reminder */}
-            <View style={styles.reminder}>
-              <View style={styles.reminderLeft}>
-                <View style={styles.reminderIcon}>
-                  <Icon name="warning" size={20} color={colors.warning} />
+            {driver.licenseExpiry && licenseDays <= 60 ? (
+              <View style={styles.reminder}>
+                <View style={styles.reminderLeft}>
+                  <View style={styles.reminderIcon}>
+                    <Icon name="warning" size={20} color={colors.warning} />
+                  </View>
+                  <Text variant="bodyMd" style={styles.reminderText}>
+                    SIM Anda akan kedaluwarsa dalam {licenseDays} hari ({formatDate(driver.licenseExpiry)})
+                  </Text>
                 </View>
-                <Text variant="bodyMd" style={styles.reminderText}>
-                  SIM Anda akan kedaluwarsa dalam {licenseDays} hari ({formatDate(driver.licenseExpiry)})
-                </Text>
+                <Pressable onPress={() => router.navigate('/profile')} accessibilityRole="button">
+                  <Text variant="labelMd" color="warning">
+                    Perbarui ›
+                  </Text>
+                </Pressable>
               </View>
-              <Pressable onPress={() => router.navigate('/profile')} accessibilityRole="button">
-                <Text variant="labelMd" color="warning">
-                  Perbarui ›
-                </Text>
-              </Pressable>
-            </View>
+            ) : null}
           </>
         )}
       </ScreenBody>

@@ -1,18 +1,34 @@
 import { createContext, useContext, useMemo, useReducer, type ReactNode } from 'react';
 
-import { currentDriver, notifications, trips, vehicles } from '@/data/fixtures';
-import { createId, nowIso } from '@/lib/id';
-import type { AuthSession } from '@/data/types';
+import type { Driver } from '@/data/types';
 import { appReducer, type AppAction, type AppState } from './reducers';
+
+/**
+ * Local draft store. Server data is fetched per screen through
+ * `src/hooks/api/useDriverData.ts`; this store only holds in-progress forms
+ * (DVIR checklist, POD, fuel, damage, incident) that must survive navigation.
+ */
+export const emptyDriver: Driver = {
+  id: '',
+  name: 'Driver',
+  initials: 'DR',
+  phone: '—',
+  employeeId: '—',
+  site: '—',
+  licenseNo: '—',
+  licenseExpiry: '',
+  status: 'active',
+  dnaScore: 0,
+};
 
 const initialState: AppState = {
   session: null,
-  driver: currentDriver,
-  vehicles,
-  trips,
+  driver: emptyDriver,
+  vehicles: [],
+  trips: [],
   dvir: [],
   pods: [],
-  notifications,
+  notifications: [],
   fuelLogs: [],
   odometerCorrections: [],
   damageReports: [],
@@ -39,26 +55,4 @@ export function useAppStore(): AppStoreValue {
     throw new Error('useAppStore must be used inside <AppStoreProvider>');
   }
   return value;
-}
-
-/** Session slice plus the two actions auth screens need. */
-export function useAuth() {
-  const { state, dispatch } = useAppStore();
-
-  return useMemo(
-    () => ({
-      session: state.session,
-      isAuthenticated: state.session !== null,
-      login: (driverId: string) => {
-        const session: AuthSession = {
-          driverId,
-          token: createId('tok'),
-          issuedAt: nowIso(),
-        };
-        dispatch({ type: 'auth/login', session });
-      },
-      logout: () => dispatch({ type: 'auth/logout' }),
-    }),
-    [state.session, dispatch],
-  );
 }

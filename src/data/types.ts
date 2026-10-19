@@ -1,8 +1,8 @@
 /**
- * Domain types for the FleetOps Driver app.
+ * View models for the FleetOps Driver app.
  *
- * All data in this build is synthetic (see `src/data/fixtures`). Field names
- * mirror the module map in `docs/` so a real backend can be dropped in later.
+ * These shapes are produced by `src/data/adapters.ts` from the API DTOs in
+ * `src/lib/api/types.ts`; screens never consume raw wire objects.
  */
 
 export type DriverStatus = 'active' | 'inactive';
@@ -76,6 +76,9 @@ export interface Trip {
   /** ISO datetime. */
   scheduledAt: string;
   vehicleId: string;
+  /** Plate/model come from the trip response so list cards avoid a second fetch. */
+  vehiclePlate?: string;
+  vehicleModel?: string;
   driverId: string;
   recipient: TripRecipient;
   /** Handover instruction shown to the driver, e.g. gate number. */
@@ -225,6 +228,7 @@ export interface CoachingMilestone {
 }
 
 export interface CoachingPlan {
+  id: string;
   title: string;
   description: string;
   /** e.g. `25 Apr`. */

@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import { Screen, ScreenHeader, Text } from '@/components/ui';
-import { fuelCardAccount, fuelTransactions } from '@/data/fixtures';
+import { EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
+import { toFuelCard, toFuelTransaction } from '@/data/adapters';
+import { useFuelCard, useFuelTransactions } from '@/hooks/api/useDriverData';
 import { formatNumber } from '@/lib/format';
 import { colors, radius, shadows, spacing } from '@/theme';
 import type { FuelTransaction, FuelTxnStatus } from '@/data/types';
@@ -24,9 +25,13 @@ const TXN_TONE: Record<FuelTxnStatus, { bg: string; fg: string; border: string }
 
 export default function FuelCardScreen() {
   const [filter, setFilter] = useState<FilterKey>('all');
+  const cardQuery = useFuelCard();
+  const txnQuery = useFuelTransactions(50);
 
-  const card = fuelCardAccount;
-  const usagePercent = Math.round((card.used / card.limit) * 100);
+  const card = cardQuery.data ? toFuelCard(cardQuery.data) : undefined;
+  const fuelTransactions = (txnQuery.data ?? []).map(toFuelTransaction);
+
+  const usagePercent = card && card.limit > 0 ? Math.round((card.used / card.limit) * 100) : 0;
 
   const visible = useMemo(
     () =>
@@ -35,14 +40,29 @@ export default function FuelCardScreen() {
         if (filter === 'pending') return txn.status !== 'reconciled';
         return txn.status === 'reconciled';
       }),
-    [filter],
+    [fuelTransactions, filter],
   );
+
+  if (!card) {
+    return (
+      <Screen>
+        <ScreenHeader title="Kartu BBM" onBack />
+        <EmptyState
+          icon="fuel"
+          title="Belum ada kartu BBM"
+          description={
+            cardQuery.error?.message ?? 'Kartu BBM belum diterbitkan untuk akun Anda. Hubungi admin armada.'
+          }
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
       <ScreenHeader
         title="Kartu BBM"
-        subtitle="B 9021 KYD • Budi Santoso"
+        subtitle={card.holder}
         onBack
         right={
           <Pressable accessibilityRole="button" accessibilityLabel="Bantuan" hitSlop={8}>

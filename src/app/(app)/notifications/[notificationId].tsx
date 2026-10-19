@@ -13,11 +13,10 @@ import {
   ScreenHeader,
   Text,
 } from '@/components/ui';
-import { vehicleById } from '@/data/fixtures';
 import { formatRelative } from '@/lib/format';
 import { useNotifications } from '@/hooks/useNotifications';
 import { colors, radius, spacing } from '@/theme';
-import type { NotificationSeverity, NotificationTone } from '@/data/types';
+import type { NotificationSeverity } from '@/data/types';
 
 const SEVERITY: Record<NotificationSeverity, { hero: string; icon: IconName; headline: string }> = {
   critical: { hero: colors.critical, icon: 'warning', headline: 'Keputusan otomatis' },
@@ -25,22 +24,14 @@ const SEVERITY: Record<NotificationSeverity, { hero: string; icon: IconName; hea
   info: { hero: colors.primaryContainer, icon: 'info', headline: 'Informasi' },
 };
 
-const NODE_TONE: Record<NotificationTone, string> = {
-  critical: colors.critical,
-  warning: colors.warning,
-  info: colors.primaryContainer,
-  success: colors.success,
-};
-
 export default function NotificationDetailScreen() {
   const { notificationId } = useLocalSearchParams<{ notificationId: string }>();
-  const { notifications, detailFor, markRead } = useNotifications();
+  const { notifications, markRead } = useNotifications();
 
   const notification = useMemo(
     () => notifications.find((entry) => entry.id === notificationId),
     [notifications, notificationId],
   );
-  const detail = useMemo(() => detailFor(notificationId), [detailFor, notificationId]);
 
   useEffect(() => {
     if (notification && !notification.readAt) markRead(notification.id);
@@ -59,9 +50,7 @@ export default function NotificationDetailScreen() {
     );
   }
 
-  const vehicle = detail?.vehicleId ? vehicleById(detail.vehicleId) : undefined;
   const tone = SEVERITY[notification.severity];
-  const timeline = detail?.timeline ?? [];
 
   return (
     <Screen>
@@ -98,143 +87,18 @@ export default function NotificationDetailScreen() {
           </View>
         </View>
 
-        {/* Vehicle */}
-        {vehicle ? (
-          <Card shadow style={styles.vehicleCard}>
-            <View style={styles.vehicleRow}>
-              <View style={styles.vehicleIcon}>
-                <Icon name="truck" size={26} color={colors.secondary} />
-              </View>
-              <View style={styles.flex}>
-                <Text variant="headlineSm">{vehicle.plate}</Text>
-                <Text variant="labelMd" color="secondary" numberOfLines={1}>
-                  {vehicle.model} • {vehicle.type} • Depo Site Jkt 1
-                </Text>
-              </View>
-              <View style={styles.blockedBadge}>
-                <View style={styles.blockedDot} />
-                <Text variant="labelSm" color="onErrorContainer">
-                  Diblokir
-                </Text>
-              </View>
-            </View>
-          </Card>
-        ) : null}
-
         {/* Explanation */}
         <Card shadow style={styles.section}>
-          <Text variant="bodyBold">
-            {detail?.impact
-              ? 'Kendaraan Anda dinonaktifkan dari assignment sampai defect diperbaiki.'
-              : notification.body}
-          </Text>
-
-          {detail?.detectedNote || detail?.defect ? (
-            <View style={styles.explanationBody}>
-              {detail.detectedNote ? (
-                <View style={styles.detectedRow}>
-                  <Icon name="schedule" size={20} color={colors.secondary} />
-                  <Text variant="labelLg" color="secondary" style={styles.flex}>
-                    {detail.detectedNote}
-                  </Text>
-                </View>
-              ) : null}
-
-              {detail.defect ? (
-                <View style={styles.defectRow}>
-                  <Icon name="cancel" size={20} color={colors.critical} />
-                  <Text variant="labelLg" color="critical" style={styles.flex}>
-                    Defect: {detail.defect}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-          ) : null}
+          <Text variant="bodyBold">{notification.body}</Text>
         </Card>
-
-        {/* Work order */}
-        {detail?.workOrder ? (
-          <View style={styles.section}>
-            <Text variant="labelMd" color="textSecondary" style={[styles.upper, styles.sectionTitle]}>
-              WORK ORDER
-            </Text>
-            <Card shadow>
-              <View style={styles.woRow}>
-                <View style={styles.woIcon}>
-                  <Icon name="workOrder" size={22} color={colors.warning} />
-                </View>
-                <View style={styles.flex}>
-                  <Text variant="bodyBold">{detail.workOrder.code}</Text>
-                  <Text variant="labelMd" color="secondary" style={styles.woNote}>
-                    {detail.workOrder.note}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.woFoot}>
-                <Text variant="labelMd" color="secondary">
-                  Status Tiket
-                </Text>
-                <View style={styles.woStatus}>
-                  <Text variant="labelMd" color={colors.warning}>
-                    {detail.workOrder.statusLabel}
-                  </Text>
-                </View>
-              </View>
-            </Card>
-          </View>
-        ) : null}
-
-        {/* Impact */}
-        {detail?.impact ? (
-          <View style={styles.impact}>
-            <Icon name="warning" size={22} color="#B45309" />
-            <Text variant="labelLg" color="#78350F" style={styles.flex}>
-              {detail.impact}
-            </Text>
-          </View>
-        ) : null}
-
-        {/* Timeline */}
-        {timeline.length > 0 ? (
-          <View style={styles.section}>
-            <Text variant="labelMd" color="textSecondary" style={[styles.upper, styles.sectionTitle]}>
-              AKTIVITAS
-            </Text>
-            <Card shadow>
-              <View style={styles.timeline}>
-                <View style={styles.timelineRail} />
-                {timeline.map((node) => (
-                  <View key={node.key} style={styles.nodeRow}>
-                    <View
-                      style={[styles.nodeDot, { borderColor: NODE_TONE[node.tone] }]}
-                    >
-                      <View style={[styles.nodeDotFill, { backgroundColor: NODE_TONE[node.tone] }]} />
-                    </View>
-                    <View style={styles.flex}>
-                      <Text variant="labelLg">{node.label}</Text>
-                      <Text variant="labelMd" color="secondary">
-                        {node.note}
-                      </Text>
-                    </View>
-                    <Text variant="labelMd" color="secondary">
-                      {node.time}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </Card>
-          </View>
-        ) : null}
       </ScreenBody>
 
       <BottomBar>
-        {detail?.workOrder ? (
-          <Button label="Lihat Work Order" iconAfter="forward" onPress={() => router.push('/vehicle')} />
-        ) : detail?.documentKey ? (
+        {notification.tripId ? (
           <Button
-            label="Lihat Dokumen"
+            label="Lihat Trip"
             iconAfter="forward"
-            onPress={() => router.push(`/documents/${detail.documentKey}`)}
+            onPress={() => router.push(`/trip/${notification.tripId}`)}
           />
         ) : null}
         <Pressable

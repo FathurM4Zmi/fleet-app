@@ -13,7 +13,8 @@ import {
   ScreenHeader,
   Text,
 } from '@/components/ui';
-import { documentDetailByKey } from '@/data/fixtures';
+import { toDocumentDetail } from '@/data/adapters';
+import { useDocument } from '@/hooks/api/useDriverData';
 import { colors, radius, spacing } from '@/theme';
 import type { DocumentStatus } from '@/data/types';
 
@@ -25,7 +26,8 @@ const STATUS_TONE: Record<DocumentStatus, 'success' | 'warning' | 'critical'> = 
 
 export default function DocumentDetailScreen() {
   const { documentKey } = useLocalSearchParams<{ documentKey: string }>();
-  const document = documentDetailByKey(documentKey);
+  const query = useDocument(documentKey);
+  const document = query.data ? toDocumentDetail(query.data) : undefined;
 
   if (!document) {
     return (
@@ -34,7 +36,7 @@ export default function DocumentDetailScreen() {
         <EmptyState
           icon="document"
           title="Dokumen tidak ditemukan"
-          description="Dokumen ini mungkin sudah tidak terdaftar."
+          description={query.error?.message ?? 'Dokumen ini mungkin sudah tidak terdaftar.'}
         />
       </Screen>
     );

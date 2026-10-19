@@ -13,17 +13,19 @@ import {
   ScreenHeader,
   Text,
 } from '@/components/ui';
+import { toOdometerCorrection } from '@/data/adapters';
+import { useOdometerCorrections } from '@/hooks/api/useDriverData';
+import { mediaUrl } from '@/lib/api/config';
 import { formatDateTime, formatKm } from '@/lib/format';
-import { useAppStore } from '@/store/app';
 import { colors, radius, spacing } from '@/theme';
 
 export default function OdometerSubmittedScreen() {
-  const { state } = useAppStore();
+  const query = useOdometerCorrections();
 
-  const correction = useMemo(
-    () => state.odometerCorrections[state.odometerCorrections.length - 1],
-    [state.odometerCorrections],
-  );
+  const correction = useMemo(() => {
+    const list = (query.data ?? []).map(toOdometerCorrection);
+    return list.sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0];
+  }, [query.data]);
 
   if (!correction) {
     return (
@@ -157,7 +159,11 @@ export default function OdometerSubmittedScreen() {
               <View style={styles.evidenceGrid}>
                 {correction.photoUris.map((uri, index) => (
                   <View key={uri} style={styles.evidenceTile}>
-                    <Image source={{ uri }} style={styles.evidenceImage} resizeMode="cover" />
+                    <Image
+                      source={{ uri: mediaUrl(uri) ?? uri }}
+                      style={styles.evidenceImage}
+                      resizeMode="cover"
+                    />
                     <View style={styles.evidenceBadge}>
                       <Icon name="success" size={10} color={colors.onPrimary} />
                       <Text variant="labelSm" color={colors.onPrimary}>

@@ -1,7 +1,9 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
+import { toTrip } from '@/data/adapters';
 import type { Trip, TripStatus } from '@/data/types';
-import { useAppStore } from '@/store/app';
+import { tripApi } from '@/lib/api/endpoints';
+import { useApiQuery } from '@/hooks/api/useApiQuery';
 
 export interface TripBuckets {
   /** Assigned or accepted — needs a driver decision or a start. */
@@ -19,27 +21,46 @@ const bucketOf = (status: TripStatus): keyof TripBuckets => {
 };
 
 export function useTrips() {
-  const { state, dispatch } = useAppStore();
+  const query = useApiQuery(() => tripApi.list({ take: 100 }), []);
+  const { refetch } = query;
+  const trips = useMemo(() => (query.data ?? []).map(toTrip), [query.data]);
 
-  return useMemo(() => {
-    const buckets: TripBuckets = { upcoming: [], active: [], history: [] };
-    for (const trip of state.trips) {
-      buckets[bucketOf(trip.status)].push(trip);
-    }
+  const buckets = useMemo(() => {
+    const result: TripBuckets = { upcoming: [], active: [], history: [] };
+    for (const trip of trips) result[bucketOf(trip.status)].push(trip);
 
     const bySchedule = (a: Trip, b: Trip) => a.scheduledAt.localeCompare(b.scheduledAt);
-    buckets.upcoming.sort(bySchedule);
-    buckets.active.sort(bySchedule);
-    buckets.history.sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt));
+    result.upcoming.sort(bySchedule);
+    result.active.sort(bySchedule);
+    result.history.sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt));
+    return result;
+  }, [trips]);
 
-    return {
-      trips: state.trips,
-      ...buckets,
-      /** The trip surfaced on the home screen. */
-      nextTrip: buckets.active[0] ?? buckets.upcoming[0],
-      accept: (tripId: string) => dispatch({ type: 'trip/setStatus', tripId, status: 'accepted' }),
-      reject: (tripId: string, reason: string) =>
-        dispatch({ type: 'trip/reject', tripId, reason }),
-    };
-  }, [state.trips, dispatch]);
+  const accept = useCallback(
+    async (tripId: string) => {
+      await tripApi.accept(tripId);
+      await refetch();
+    },
+    [refetch],
+  );
+
+  const reject = useCallback(
+    async (tripId: string, reason: string) => {
+      await tripApi.decline(tripId, reason);
+      await refetch();
+    },
+    [refetch],
+  );
+
+  return {
+    trips,
+    ...buckets,
+    nextTrip: buckets.active[0] ?? buckets.upcoming[0],
+    loading: query.loading,
+    refreshing: query.refreshing,
+    error: query.error,
+    refetch: query.refetch,
+    accept,
+    reject,
+  };
 }

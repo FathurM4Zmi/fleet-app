@@ -1,18 +1,24 @@
 import { useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Circle, G, Path, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Polyline } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { Card, EmptyState, Screen, ScreenBody, Text } from '@/components/ui';
-import { tripEtaSummary, tripRouteStops, tripTelemetry } from '@/data/fixtures';
+import { useTripTracking } from '@/hooks/api/useDriverData';
 import { useTrip } from '@/hooks/useTrip';
+import { addHours, estimatedDurationHours, formatTime } from '@/lib/format';
 import { colors, radius, shadows, spacing } from '@/theme';
+
+const MAP_WIDTH = 340;
+const MAP_HEIGHT = 180;
 
 export default function TripRouteScreen() {
   const insets = useSafeAreaInsets();
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const { trip, vehicle } = useTrip(tripId);
+  const trackingQuery = useTripTracking(tripId);
+  const tracking = trackingQuery.data;
 
   if (!trip) {
     return (
@@ -35,6 +41,10 @@ export default function TripRouteScreen() {
     );
   }
 
+  const etaIso = addHours(trip.scheduledAt, estimatedDurationHours(trip.distanceKm));
+  const remainingKm = Math.max(0, Math.round(trip.distanceKm * 0.4));
+  const speed = tracking?.speed ?? 0;
+
   return (
     <Screen>
       <View style={[styles.darkBar, { paddingTop: insets.top }]}>
@@ -45,32 +55,36 @@ export default function TripRouteScreen() {
           Posisi Trip
         </Text>
         <View style={styles.gpsPill}>
-          <View style={styles.gpsDot} />
-          <Text variant="labelSm" color="#6EE7B7">
-            {tripTelemetry.gpsLabel}
+          <View style={[styles.gpsDot, !tracking?.isLive && styles.gpsDotStale]} />
+          <Text variant="labelSm" color={tracking?.isLive ? '#6EE7B7' : '#FCD34D'}>
+            {tracking?.isLive ? 'GPS AKTIF' : 'SINYAL TERAKHIR'}
           </Text>
         </View>
       </View>
 
       <ScreenBody bottomPadding={spacing.xxl} style={styles.body}>
-        {/* Map */}
         <View style={styles.map}>
-          <RouteMap />
-          <View style={styles.recenter}>
-            <Icon name="recenter" size={22} color="#374151" />
+          <TrailMap trail={tracking?.trail ?? []} />
+          <View style={styles.mapFooter}>
+            <Text variant="labelSm" color="textSecondary">
+              {tracking?.latitude != null && tracking?.longitude != null
+                ? `${tracking.latitude.toFixed(5)}, ${tracking.longitude.toFixed(5)}`
+                : 'Koordinat belum tersedia'}
+            </Text>
+            <Text variant="labelSm" color="textMuted">
+              {tracking?.lastSeenAt ? `Terakhir ${formatTime(tracking.lastSeenAt)} WIB` : 'Menunggu telemetri'}
+            </Text>
           </View>
         </View>
 
-        {/* ETA bar */}
         <View style={styles.etaBar}>
-          <EtaCell label="ETA" value={tripEtaSummary.eta} />
+          <EtaCell label="ETA" value={formatTime(etaIso)} />
           <View style={styles.etaDivider} />
-          <EtaCell label="Sisa Jarak" value={`${tripEtaSummary.remainingKm} km`} highlight />
+          <EtaCell label="Sisa Jarak" value={`${remainingKm} km`} highlight />
           <View style={styles.etaDivider} />
-          <EtaCell label="Sisa Waktu" value={`${tripEtaSummary.remainingMinutes} mnt`} />
+          <EtaCell label="Kecepatan" value={`${Math.round(speed)} km/h`} />
         </View>
 
-        {/* Telemetry */}
         <View style={styles.sectionHead}>
           <Text variant="labelMd" color="textSecondary" style={styles.upper}>
             TELEMETRIK
@@ -81,106 +95,32 @@ export default function TripRouteScreen() {
         </View>
 
         <Card shadow>
-          <View style={styles.telemetryRow}>
-            <View style={styles.telemetryLabel}>
-              <Icon name="fuel" size={20} color="textSecondary" />
-              <Text variant="caption" color="textSecondary">
-                Level BBM
-              </Text>
-            </View>
-            <Text variant="labelLg">{tripTelemetry.fuelPercent}%</Text>
-          </View>
-          <View style={styles.fuelTrack}>
-            <View style={[styles.fuelFill, { width: `${tripTelemetry.fuelPercent}%` }]} />
-          </View>
-
+          <TelemetryRow icon="speed" label="Kecepatan" value={`${Math.round(speed)} km/h`} />
           <View style={styles.divider} />
-          <TelemetryRow icon="speed" label="Kecepatan" value={`${tripTelemetry.speedKmh} km/h`} />
-
+          <TelemetryRow
+            icon="sensors"
+            label="Titik jejak 6 jam"
+            value={`${tracking?.trail.length ?? 0} titik`}
+          />
           <View style={styles.divider} />
-          <View style={styles.telemetryRow}>
-            <View style={styles.telemetryLabel}>
-              <Icon name="power" size={20} color="textSecondary" />
-              <Text variant="caption" color="textSecondary">
-                Ignition
-              </Text>
-            </View>
-            <View style={styles.onChip}>
-              <View style={styles.onDot} />
-              <Text variant="labelSm" color="success">
-                {tripTelemetry.ignition}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-          <View style={styles.telemetryRow}>
-            <View style={styles.telemetryLabel}>
-              <Icon name="sensors" size={20} color="textSecondary" />
-              <Text variant="caption" color="textSecondary">
-                Last update
-              </Text>
-            </View>
-            <View style={styles.onChip}>
-              <View style={styles.onDot} />
-              <Text variant="labelSm" color="success">
-                {tripTelemetry.lastUpdate}
-              </Text>
-            </View>
-          </View>
+          <TelemetryRow
+            icon="schedule"
+            label="Posisi terakhir"
+            value={tracking?.lastSeenAt ? `${formatTime(tracking.lastSeenAt)} WIB` : '—'}
+          />
         </Card>
 
-        {/* Stops */}
-        <View style={styles.sectionHead}>
-          <Text variant="labelMd" color="textSecondary" style={styles.upper}>
-            TITIK ANTAR
+        {trackingQuery.error ? (
+          <Text variant="caption" color="critical" align="center">
+            {trackingQuery.error.message}
           </Text>
-          <Text variant="labelSm" color="primaryContainer">
-            Manifest #DO-8831
-          </Text>
-        </View>
+        ) : null}
 
-        <Card shadow>
-          {tripRouteStops.map((stop, index) => (
-            <View key={stop.key}>
-              <View style={styles.stopRow}>
-                <View
-                  style={[
-                    styles.stopBadge,
-                    { backgroundColor: stop.tone === 'done' ? colors.primaryContainer : colors.critical },
-                  ]}
-                >
-                  <Text variant="labelSm" color={colors.onPrimary}>
-                    {stop.index}
-                  </Text>
-                </View>
-                <View style={styles.flex}>
-                  <Text variant="bodyBold">{stop.name}</Text>
-                  <View
-                    style={[
-                      styles.stopChip,
-                      stop.tone === 'done' ? styles.stopChipDone : styles.stopChipNext,
-                    ]}
-                  >
-                    <Text
-                      variant="labelSm"
-                      color={stop.tone === 'done' ? colors.success : '#1D4ED8'}
-                    >
-                      {stop.note}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              {index < tripRouteStops.length - 1 ? <View style={styles.stopRail} /> : null}
-            </View>
-          ))}
-        </Card>
-
-        {/* Safety note */}
-        <View style={styles.safetyNote}>
-          <Icon name="shield" size={16} color={colors.textMuted} />
-          <Text variant="labelSm" color="textMuted">
-            Lokasi dikirim berkala untuk keamanan perjalanan Anda.
+        <View style={styles.note}>
+          <Icon name="info" size={20} color="#1D4ED8" />
+          <Text variant="caption" color="textSecondary" style={styles.flex}>
+            Posisi berasal dari telematika kendaraan. Bila titik tidak bergerak lebih dari 10 menit,
+            perangkat mungkin kehilangan sinyal.
           </Text>
         </View>
       </ScreenBody>
@@ -188,20 +128,79 @@ export default function TripRouteScreen() {
   );
 }
 
-function EtaCell({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
+/** Draws the real GPS trail; shows a neutral grid when no points exist. */
+function TrailMap({ trail }: { trail: { latitude: number; longitude: number }[] }) {
+  if (trail.length < 2) {
+    return (
+      <View style={styles.mapEmpty}>
+        <Icon name="map" size={40} color={colors.textMuted} />
+        <Text variant="labelMd" color="textMuted">
+          Belum ada jejak posisi
+        </Text>
+      </View>
+    );
+  }
+
+  const lats = trail.map((point) => point.latitude);
+  const lngs = trail.map((point) => point.longitude);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+  const latSpan = maxLat - minLat || 1e-6;
+  const lngSpan = maxLng - minLng || 1e-6;
+
+  const pad = 16;
+  const points = trail
+    .map((point) => {
+      const x = pad + ((point.longitude - minLng) / lngSpan) * (MAP_WIDTH - pad * 2);
+      const y = MAP_HEIGHT - pad - ((point.latitude - minLat) / latSpan) * (MAP_HEIGHT - pad * 2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
+
+  const last = trail[trail.length - 1];
+  const lastX = pad + ((last.longitude - minLng) / lngSpan) * (MAP_WIDTH - pad * 2);
+  const lastY = MAP_HEIGHT - pad - ((last.latitude - minLat) / latSpan) * (MAP_HEIGHT - pad * 2);
+
+  return (
+    <Svg width="100%" height={MAP_HEIGHT} viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}>
+      <Polyline
+        points={points}
+        fill="none"
+        stroke={colors.primaryContainer}
+        strokeWidth={4}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle cx={lastX} cy={lastY} r={7} fill={colors.primaryContainer} />
+      <Circle cx={lastX} cy={lastY} r={3} fill="#FFFFFF" />
+    </Svg>
+  );
+}
+
+function EtaCell({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <View style={styles.etaCell}>
-      <Text variant="labelSm" color="textSecondary" style={styles.upper}>
+      <Text variant="labelSm" color="textMuted" style={styles.upper}>
         {label}
       </Text>
-      <Text variant="headlineSm" color={highlight ? 'primaryContainer' : 'ink'}>
+      <Text variant="titleMd" color={highlight ? 'primaryContainer' : 'ink'}>
         {value}
       </Text>
     </View>
   );
 }
 
-function TelemetryRow({ icon, label, value }: { icon: 'speed' | 'fuel'; label: string; value: string }) {
+function TelemetryRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: 'speed' | 'sensors' | 'schedule';
+  label: string;
+  value: string;
+}) {
   return (
     <View style={styles.telemetryRow}>
       <View style={styles.telemetryLabel}>
@@ -215,160 +214,67 @@ function TelemetryRow({ icon, label, value }: { icon: 'speed' | 'fuel'; label: s
   );
 }
 
-function RouteMap() {
-  return (
-    <Svg viewBox="0 0 390 290" width="100%" height="100%">
-      <Rect fill="#E8ECF0" width="390" height="290" />
-
-      {/* Zone patches */}
-      <Path d="M 0 0 L 140 0 L 130 90 L 0 70 Z" fill="#E1E6EB" />
-      <Path d="M 180 0 L 390 0 L 390 110 L 260 80 Z" fill="#E2E7ED" />
-      <Path d="M 270 140 L 390 160 L 390 290 L 250 290 Z" fill="#DFE5EC" />
-      <Path d="M 0 160 L 120 180 L 110 290 L 0 290 Z" fill="#E1E7EE" />
-      <Rect fill="#D7E5D9" opacity="0.8" rx="6" width="58" height="42" x="28" y="18" />
-      <Rect fill="#D7E5D9" opacity="0.8" rx="8" width="70" height="48" x="295" y="195" />
-
-      {/* Roads */}
-      <Path d="M -20 120 L 410 115" stroke="#D1D9E0" strokeLinecap="round" strokeWidth="6" />
-      <Path d="M -20 220 L 410 230" stroke="#D1D9E0" strokeLinecap="round" strokeWidth="5" />
-      <Path d="M 145 -10 L 135 305" stroke="#D1D9E0" strokeLinecap="round" strokeWidth="7" />
-      <Path d="M 285 -10 L 275 305" stroke="#D1D9E0" strokeLinecap="round" strokeWidth="6" />
-
-      {/* Highway + active route */}
-      <Path
-        d="M 48 55 C 90 95, 120 140, 205 148 C 265 155, 310 195, 345 235"
-        stroke="#FFFFFF"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="10"
-        fill="none"
-      />
-      <Path
-        d="M 52 58 C 90 95, 120 140, 205 148 C 265 155, 310 195, 342 232"
-        stroke="#1B4DFF"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="5"
-        fill="none"
-      />
-      <Path
-        d="M 52 58 C 90 95, 120 140, 185 146"
-        stroke="#93C5FD"
-        strokeDasharray="3 3"
-        strokeLinecap="round"
-        strokeWidth="2"
-        fill="none"
-      />
-
-      {/* Origin */}
-      <G x={52} y={58}>
-        <Circle r="14" fill="#1B4DFF" stroke="#FFFFFF" strokeWidth="2.5" />
-        <SvgText fill="#FFFFFF" fontFamily="Inter" fontSize="11" fontWeight="700" textAnchor="middle" x="0" y="4">
-          1
-        </SvgText>
-        <Rect fill="rgba(255,255,255,0.95)" rx="4" width="76" height="20" x="18" y="-10" />
-        <SvgText fill="#111827" fontFamily="Inter" fontSize="10" fontWeight="700" textAnchor="middle" x="56" y="4">
-          Kelapa Gading
-        </SvgText>
-      </G>
-
-      {/* Live vehicle */}
-      <G x={205} y={148}>
-        <Circle r="18" fill="#EA580C" opacity="0.25" />
-        <Circle r="11" fill="#EA580C" stroke="#FFFFFF" strokeWidth="2.5" />
-        <Rect fill="#111827" rx="8" width="52" height="20" x="-26" y="-36" />
-        <SvgText fill="#FFFFFF" fontFamily="Inter" fontSize="10" fontWeight="700" textAnchor="middle" x="0" y="-22">
-          54 km/h
-        </SvgText>
-      </G>
-
-      {/* Destination */}
-      <G x={342} y={232}>
-        <Circle r="14" fill="#DC2626" stroke="#FFFFFF" strokeWidth="2.5" />
-        <SvgText fill="#FFFFFF" fontFamily="Inter" fontSize="11" fontWeight="700" textAnchor="middle" x="0" y="4">
-          2
-        </SvgText>
-        <Rect fill="rgba(255,255,255,0.95)" rx="4" width="76" height="20" x="-38" y="16" />
-        <SvgText fill="#111827" fontFamily="Inter" fontSize="10" fontWeight="700" textAnchor="middle" x="0" y="30">
-          Cikarang Barat
-        </SvgText>
-      </G>
-    </Svg>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  upper: { textTransform: 'uppercase' },
-
   darkBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.gutter,
     paddingBottom: spacing.sm,
-    backgroundColor: '#111827',
+    backgroundColor: colors.ink,
   },
-  darkBack: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  darkSpacer: { width: 44 },
+  darkBack: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  darkSpacer: { width: 40 },
   gpsPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs + 2,
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: spacing.xs,
+    gap: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(6,78,59,0.8)',
-    borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.4)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
-  gpsDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#10B981' },
-
-  body: { paddingTop: 0 },
-  map: { height: 290, marginHorizontal: -spacing.gutter, backgroundColor: '#E9EDF2', overflow: 'hidden' },
-  recenter: {
-    position: 'absolute',
-    bottom: spacing.md,
-    right: spacing.md,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+  gpsDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#34D399' },
+  gpsDotStale: { backgroundColor: '#FCD34D' },
+  body: { paddingHorizontal: spacing.gutter },
+  map: {
+    marginTop: spacing.md,
+    borderRadius: radius.card,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceLow,
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+  },
+  mapEmpty: { height: MAP_HEIGHT, alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
+  mapFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    ...shadows.card,
+    borderTopWidth: 1,
+    borderTopColor: colors.divider,
   },
-
   etaBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: -spacing.gutter,
-    marginBottom: spacing.md,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    marginTop: spacing.md,
     paddingVertical: spacing.md,
+    borderRadius: radius.card,
+    backgroundColor: colors.surface,
+    ...shadows.card,
   },
-  etaCell: { flex: 1, alignItems: 'center', gap: 2 },
+  etaCell: { flex: 1, alignItems: 'center', gap: 4 },
   etaDivider: { width: 1, height: 32, backgroundColor: colors.divider },
-
   sectionHead: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
-
+  upper: { letterSpacing: 0.8 },
   telemetryRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -376,58 +282,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   telemetryLabel: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  fuelTrack: {
-    height: 6,
-    borderRadius: radius.pill,
-    backgroundColor: '#F3F4F6',
-    overflow: 'hidden',
-    marginTop: spacing.xs,
-  },
-  fuelFill: { height: '100%', borderRadius: radius.pill, backgroundColor: '#10B981' },
-  divider: { height: 1, backgroundColor: '#F1F5F9' },
-  onChip: {
+  divider: { height: 1, backgroundColor: colors.divider },
+  note: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs + 2,
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-    backgroundColor: colors.successContainer,
-  },
-  onDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.success },
-
-  stopRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  stopBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stopChip: {
-    alignSelf: 'flex-start',
-    marginTop: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
-  },
-  stopChipDone: { backgroundColor: colors.successContainer },
-  stopChipNext: { backgroundColor: '#E6EDFD' },
-  stopRail: {
-    marginLeft: spacing.lg,
-    marginVertical: spacing.xs,
-    height: 28,
-    borderLeftWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: '#D1D5DB',
-  },
-
-  safetyNote: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: spacing.sm,
     marginTop: spacing.lg,
-    paddingBottom: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    backgroundColor: colors.infoContainer,
   },
 });

@@ -11,61 +11,95 @@ import {
   ScreenHeader,
   Text,
 } from '@/components/ui';
-import { vehicleById } from '@/data/fixtures';
+import { toVehicle } from '@/data/adapters';
+import { useVehicle } from '@/hooks/api/useDriverData';
 import { useTrips } from '@/hooks/useTrips';
+import { ApiError } from '@/lib/api/client';
+import { fuelApi } from '@/lib/api/endpoints';
 import { formatKm, formatNumber } from '@/lib/format';
+import { enqueue } from '@/lib/offline/queue';
 import { capturePhoto } from '@/lib/photo';
-import { useAppStore } from '@/store/app';
+import { uploadImage } from '@/lib/upload';
 import { colors, radius, shadows, spacing, typography } from '@/theme';
 
-/** The most recent odometer reading on record for the selected unit. */
-const LAST_ODOMETER = 148_320;
-
 export default function FuelLogScreen() {
-  const { state, dispatch } = useAppStore();
   const { nextTrip } = useTrips();
-
-  const vehicleId = nextTrip?.vehicleId ?? 'veh-001';
+  const vehicleQuery = useVehicle();
   const vehicle = useMemo(
-    () => state.vehicles.find((entry) => entry.id === vehicleId) ?? vehicleById('veh-001'),
-    [state.vehicles, vehicleId],
+    () => (vehicleQuery.data ? toVehicle(vehicleQuery.data) : undefined),
+    [vehicleQuery.data],
   );
+  const vehicleId = vehicle?.id ?? nextTrip?.vehicleId ?? '';
 
   const [liters, setLiters] = useState('45');
-  const [odometer, setOdometer] = useState('148450');
+  const [odometer, setOdometer] = useState(() => String(vehicle?.odometerKm ?? 0));
   const [price, setPrice] = useState('14500');
-  const [station, setStation] = useState('SPBU Pertamina 31.12902 MT Haryono');
+  const [station, setStation] = useState('');
   const [receiptUri, setReceiptUri] = useState<string | undefined>();
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  const lastOdometer = vehicle?.odometerKm ?? 0;
   const litersValue = Number(liters) || 0;
   const odometerValue = Number(odometer) || 0;
   const priceValue = Number(price) || 0;
 
   const total = litersValue * priceValue;
   const litersInvalid = litersValue <= 0;
-  const odometerDecreased = odometerValue > 0 && odometerValue < LAST_ODOMETER;
-  const canSubmit = !litersInvalid && odometerValue > 0 && priceValue > 0 && !odometerDecreased;
+  const odometerDecreased = lastOdometer > 0 && odometerValue > 0 && odometerValue < lastOdometer;
+  const canSubmit =
+    !litersInvalid &&
+    odometerValue > 0 &&
+    priceValue > 0 &&
+    !odometerDecreased &&
+    Boolean(receiptUri) &&
+    Boolean(vehicleId);
 
   const takeReceipt = async () => {
     const uri = await capturePhoto();
     if (uri) setReceiptUri(uri);
   };
 
-  const handleSave = () => {
-    if (!canSubmit) return;
-    dispatch({
-      type: 'fuel/save',
-      log: {
+  const handleSave = async () => {
+    if (!canSubmit || !receiptUri || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const receiptPath = await uploadImage(receiptUri, 'bbm');
+      const payload = {
         vehicleId,
         liters: litersValue,
+        amount: total,
         odometerKm: odometerValue,
-        pricePerLiter: priceValue,
-        station: station.trim(),
-        receiptUri,
-      },
-    });
-    setSubmitted(true);
+        station: station.trim() || null,
+        receiptPath,
+        tripId: nextTrip?.id ?? null,
+        notes: null,
+      };
+
+      try {
+        await fuelApi.submit(payload);
+      } catch (caught) {
+        if (caught instanceof ApiError && caught.isNetworkError) {
+          await enqueue({
+            kind: 'fuel',
+            label: `BBM ${litersValue} L`,
+            path: '/api/driver/fuel',
+            method: 'POST',
+            body: payload,
+          });
+        } else {
+          throw caught;
+        }
+      }
+
+      setSubmitted(true);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Gagal menyimpan catatan BBM.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -142,7 +176,7 @@ export default function FuelLogScreen() {
               ODOMETER (KM) <Text color="critical">*</Text>
             </Text>
             <Text variant="labelMd" color="secondary">
-              Terakhir: {formatKm(LAST_ODOMETER)}
+              Terakhir: {formatKm(lastOdometer)}
             </Text>
           </View>
           <View style={[styles.inputShell, odometerDecreased && styles.inputShellWarning]}>
@@ -168,7 +202,7 @@ export default function FuelLogScreen() {
               </View>
               <View style={styles.bannerActionRow}>
                 <Pressable
-                  onPress={() => setOdometer(String(LAST_ODOMETER))}
+                  onPress={() => setOdometer(String(lastOdometer))}
                   accessibilityRole="button"
                   style={styles.bannerAction}
                 >
@@ -304,6 +338,11 @@ export default function FuelLogScreen() {
       </ScreenBody>
 
       <BottomBar>
+        {error ? (
+          <Text variant="caption" color="critical" align="center">
+            {error}
+          </Text>
+        ) : null}
         {submitted ? (
           <View style={styles.savedRow}>
             <Icon name="cloudDone" size={20} color={colors.success} />
@@ -312,7 +351,12 @@ export default function FuelLogScreen() {
             </Text>
           </View>
         ) : (
-          <Button label="Simpan Catatan" icon="save" disabled={!canSubmit} onPress={handleSave} />
+          <Button
+            label={saving ? 'Menyimpan…' : 'Simpan Catatan'}
+            icon="save"
+            disabled={!canSubmit || saving}
+            onPress={handleSave}
+          />
         )}
       </BottomBar>
     </Screen>

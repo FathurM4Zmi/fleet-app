@@ -3,8 +3,11 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { Card, Screen, ScreenBody, ScreenHeader, Text } from '@/components/ui';
-import { ACTIVITY_FILTERS, activityDay, activityEntries } from '@/data/fixtures';
+import { ACTIVITY_FILTERS } from '@/data/constants';
+import { toActivity } from '@/data/adapters';
 import type { ActivityCategory, ActivityTone } from '@/data/types';
+import { useActivity } from '@/hooks/api/useDriverData';
+import { formatDayDate } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
 
 const CATEGORY_ICON: Record<ActivityCategory, IconName> = {
@@ -25,6 +28,9 @@ type Filter = ActivityCategory | 'all';
 
 export default function ActivityScreen() {
   const [filter, setFilter] = useState<Filter>('all');
+  const query = useActivity(30, 100);
+  const activityEntries = (query.data ?? []).map(toActivity);
+  const activityDay = formatDayDate(new Date().toISOString());
 
   const visible =
     filter === 'all'

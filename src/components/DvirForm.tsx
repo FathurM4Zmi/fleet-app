@@ -55,10 +55,24 @@ export function DvirForm({ tripId, type }: DvirFormProps) {
   const odometerKm = Number(odometerText) || 0;
   const deltaKm = vehicle ? odometerKm - vehicle.odometerKm : 0;
 
-  const handleSubmit = () => {
-    submit();
-    const result = failureCount > 0 ? 'failed' : 'success';
-    router.replace(`/dvir/${tripId}/submitted?result=${result}&type=${type}`);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!vehicle || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await submit(vehicle.id);
+      const result = failureCount > 0 ? 'failed' : 'success';
+      router.replace(`/dvir/${tripId}/submitted?result=${result}&type=${type}`);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : 'Gagal mengirim inspeksi. Coba lagi.',
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -216,6 +230,14 @@ export function DvirForm({ tripId, type }: DvirFormProps) {
             Laporan DVIR terkirim untuk ditinjau.
           </Text>
         </View>
+        {submitError ? (
+          <View style={styles.errorBanner} accessibilityLiveRegion="polite">
+            <Icon name="error" size={18} color={colors.critical} />
+            <Text variant="caption" color="critical" style={styles.flex}>
+              {submitError}
+            </Text>
+          </View>
+        ) : null}
         <View style={styles.footerRow}>
           <Button
             label="Simpan Draft"
@@ -225,9 +247,9 @@ export function DvirForm({ tripId, type }: DvirFormProps) {
             onPress={() => router.back()}
           />
           <Button
-            label="Kirim Laporan"
+            label={submitting ? 'Mengirim…' : 'Kirim Laporan'}
             iconAfter="forward"
-            disabled={!canSubmit}
+            disabled={!canSubmit || submitting}
             style={styles.flex}
             onPress={handleSubmit}
           />
@@ -640,4 +662,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   footerRow: { flexDirection: 'row', gap: spacing.md },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: radius.input,
+    borderWidth: 1,
+    borderColor: colors.critical,
+    backgroundColor: colors.criticalContainer,
+  },
 });

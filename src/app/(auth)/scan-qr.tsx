@@ -1,11 +1,12 @@
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
 import { Button, Text } from '@/components/ui';
-import { useAuth } from '@/store/app';
+import { useAuth } from '@/store/auth';
 import { colors, radius, spacing } from '@/theme';
 
 const RETICLE = 236;
@@ -13,9 +14,12 @@ const SCAN_TRAVEL = RETICLE - 16;
 
 export default function ScanQrScreen() {
   const insets = useSafeAreaInsets();
-  const { login } = useAuth();
-  const [torchOn, setTorchOn] = useState(true);
+  const { loginWithQr } = useAuth();
+  const [permission, requestPermission] = useCameraPermissions();
+  const [torchOn, setTorchOn] = useState(false);
   const [detected, setDetected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const submitting = useRef(false);
   const [scanLine] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
@@ -39,13 +43,35 @@ export default function ScanQrScreen() {
     return () => loop.stop();
   }, [scanLine]);
 
-  const handleDetected = () => {
+  const handleBarcodeScanned = async ({ data }: { data: string }) => {
+    if (submitting.current || detected || !data) return;
+    submitting.current = true;
     setDetected(true);
-    login('drv-001');
+    setError(null);
+    try {
+      await loginWithQr(data);
+      router.replace('/(app)');
+    } catch (cause) {
+      setDetected(false);
+      setError(
+        cause instanceof Error ? cause.message : 'QR tidak dikenali. Minta kode baru ke supervisor.',
+      );
+      submitting.current = false;
+    }
   };
 
   return (
     <View style={styles.screen}>
+      {permission?.granted ? (
+        <CameraView
+          style={StyleSheet.absoluteFill}
+          facing="back"
+          enableTorch={torchOn}
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          onBarcodeScanned={detected ? undefined : handleBarcodeScanned}
+        />
+      ) : null}
+
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <Pressable
           onPress={() => router.back()}
@@ -143,10 +169,19 @@ export default function ScanQrScreen() {
         </View>
 
         <View style={[styles.sheetFoot, { paddingBottom: insets.bottom + spacing.sm }]}>
-          <Button
-            label={detected ? 'Lanjutkan' : 'Simulasikan pemindaian QR'}
-            onPress={handleDetected}
-          />
+          {error ? (
+            <Text variant="labelMd" color="critical" style={styles.errorText}>
+              {error}
+            </Text>
+          ) : null}
+
+          {permission?.granted ? (
+            <Text variant="labelMd" color="secondary" align="center">
+              {detected ? 'Memverifikasi QR…' : 'Arahkan kamera ke QR supervisor'}
+            </Text>
+          ) : (
+            <Button label="Izinkan kamera" onPress={() => requestPermission()} />
+          )}
           <Button
             label="Ganti ke login PIN"
             variant="ghost"
@@ -260,5 +295,6 @@ const styles = StyleSheet.create({
   warningText: { flex: 1, gap: 2 },
   warningBody: { color: colors.critical },
   manualBlock: { gap: spacing.sm },
+  errorText: { marginBottom: spacing.xs },
   sheetFoot: { gap: spacing.sm },
 });

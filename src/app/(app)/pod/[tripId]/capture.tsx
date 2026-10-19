@@ -26,6 +26,8 @@ export default function PodCaptureScreen() {
   const [recipientName, setRecipientName] = useState(trip?.recipient.name ?? '');
   const [scannedCode, setScannedCode] = useState(trip?.code ?? '');
   const [capturedAt] = useState(() => new Date().toISOString());
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   if (!trip) {
     return (
@@ -45,10 +47,18 @@ export default function PodCaptureScreen() {
     if (uri) setPhotoUris((current) => [...current, uri]);
   };
 
-  const handleSave = () => {
-    if (!ready) return;
-    save({ photoUris, hasSignature, recipientName: recipientName.trim(), scannedCode });
-    router.replace(`/pod/${trip.id}/success`);
+  const handleSave = async () => {
+    if (!ready || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await save({ photoUris, hasSignature, recipientName: recipientName.trim(), scannedCode });
+      router.replace(`/pod/${trip.id}/success`);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Gagal mengirim POD. Coba lagi.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -244,10 +254,15 @@ export default function PodCaptureScreen() {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
+        {saveError ? (
+          <Text variant="caption" color="critical" align="center">
+            {saveError}
+          </Text>
+        ) : null}
         <Button
-          label="Simpan Bukti"
+          label={saving ? 'Mengirim…' : 'Simpan Bukti'}
           icon="success"
-          disabled={!ready}
+          disabled={!ready || saving}
           onPress={handleSave}
         />
       </View>
