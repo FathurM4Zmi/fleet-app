@@ -150,9 +150,6 @@ export default function OdometerSubmittedScreen() {
                     {correction.photoUris.length} foto bukti odometer
                   </Text>
                 </View>
-                <Text variant="labelSm" color="secondary" style={styles.upper}>
-                  Tersimpan
-                </Text>
               </View>
               <View style={styles.evidenceGrid}>
                 {correction.photoUris.map((uri, index) => (

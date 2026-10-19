@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/Icon';
 import {
@@ -145,7 +145,9 @@ export default function TripDetailScreen() {
                 size="md"
                 icon="phone"
                 style={styles.recipientButton}
-                onPress={() => undefined}
+                onPress={() =>
+                  Linking.openURL(`tel:${trip.recipient.phone.replace(/[^+\d]/g, '')}`)
+                }
               />
               <Button
                 label="Chat"
@@ -153,7 +155,7 @@ export default function TripDetailScreen() {
                 size="md"
                 icon="chatBubble"
                 style={styles.recipientButton}
-                onPress={() => undefined}
+                onPress={() => router.push(`/trip/${trip.id}/chat`)}
               />
             </View>
           </Card>

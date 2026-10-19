@@ -33,6 +33,7 @@ export interface AppState {
 export type AppAction =
   | { type: 'auth/login'; session: AuthSession }
   | { type: 'auth/logout' }
+  | { type: 'driver/update'; patch: Partial<Pick<Driver, 'name' | 'phone' | 'initials'>> }
   | { type: 'trip/setStatus'; tripId: string; status: TripStatus }
   | { type: 'trip/completeEvent'; tripId: string; eventId: string }
   | { type: 'trip/reject'; tripId: string; reason: string }
@@ -107,6 +108,9 @@ export function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'auth/logout':
       return { ...state, session: null };
+
+    case 'driver/update':
+      return { ...state, driver: { ...state.driver, ...action.patch } };
 
     case 'trip/setStatus':
       return {

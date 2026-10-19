@@ -15,6 +15,7 @@ import {
   Text,
 } from '@/components/ui';
 import { vehicleById } from '@/data/fixtures';
+import type { Trip, Vehicle } from '@/data/types';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useTrips } from '@/hooks/useTrips';
 import { formatDate, formatKm, formatWindow, scoreTone } from '@/lib/format';
@@ -127,13 +128,11 @@ export default function HomeScreen() {
 
             {/* New incoming tasks */}
             {newTasks.length > 0 ? (
-              <Card shadow style={styles.newTasksCard}>
-                <View style={styles.newTasksHead}>
-                  <View style={styles.newTasksTitle}>
-                    <View style={styles.newTasksDot} />
-                    <Text variant="titleMd">Tugas Baru Masuk</Text>
-                    <Badge label={`${newTasks.length} baru`} tone="info" />
-                  </View>
+              <View style={styles.newTasksSection}>
+                <View style={styles.sectionHeadRow}>
+                  <Text variant="labelMd" color="textMuted" style={styles.upper}>
+                    TUGAS BARU MASUK ({newTasks.length})
+                  </Text>
                   <Pressable
                     onPress={() => router.navigate('/inbox')}
                     accessibilityRole="button"
@@ -145,121 +144,29 @@ export default function HomeScreen() {
                   </Pressable>
                 </View>
 
-                {newTasks.slice(0, 3).map((item) => (
-                  <View key={item.id} style={styles.newTaskRow}>
-                    <View style={styles.newTaskInfo}>
-                      <Text variant="labelMd" numberOfLines={1}>
-                        {item.destination}
-                      </Text>
-                      <Text variant="labelSm" color="textSecondary" numberOfLines={1}>
-                        {formatWindow(item.scheduledAt, item.distanceKm)} • {formatKm(item.distanceKm)}
-                      </Text>
-                    </View>
-                    <View style={styles.newTaskActions}>
-                      <Pressable
-                        onPress={() => router.push(`/trip/${item.id}/reject`)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Tolak tugas ke ${item.destination}`}
-                        style={({ pressed }) => [styles.newTaskReject, pressed && styles.tilePressed]}
-                      >
-                        <Text variant="labelMd" color="critical">
-                          Tolak
-                        </Text>
-                      </Pressable>
-                      <Pressable
-                        onPress={() => accept(item.id)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Terima tugas ke ${item.destination}`}
-                        style={({ pressed }) => [styles.newTaskAccept, pressed && styles.tilePressed]}
-                      >
-                        <Text variant="labelMd" color="onPrimary">
-                          Terima
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </View>
+                {newTasks.slice(0, 2).map((item) => (
+                  <TripSummaryCard
+                    key={item.id}
+                    trip={item}
+                    vehicle={vehicleById(item.vehicleId)}
+                    kicker={`#${item.code}`}
+                    onReject={() => router.push(`/trip/${item.id}/reject`)}
+                    onAccept={() => accept(item.id)}
+                  />
                 ))}
-              </Card>
+              </View>
             ) : null}
 
             {/* Next trip */}
             {trip ? (
-              <Card shadow style={styles.tripCard}>
-                <View style={styles.tripHead}>
-                  <Text variant="labelMd" color="textMuted" style={styles.upper}>
-                    TRIP BERIKUTNYA
-                  </Text>
-                  <Badge
-                    label={trip.status === 'in_progress' ? 'Dalam Perjalanan' : 'Menunggu Konfirmasi'}
-                    tone={trip.status === 'in_progress' ? 'warning' : 'info'}
-                  />
-                </View>
-
-                <View style={styles.tripTitle}>
-                  <Text variant="labelMd" color="textSecondary">
-                    Lokasi Bongkar Muat
-                  </Text>
-                  <Text variant="headlineMd">{trip.destination}</Text>
-                </View>
-
-                <View style={styles.tripMeta}>
-                  <View style={styles.metaCol}>
-                    <View style={styles.metaLabel}>
-                      <Icon name="schedule" size={18} color={colors.textSecondary} />
-                      <Text variant="labelSm" color="textMuted">
-                        WAKTU
-                      </Text>
-                    </View>
-                    <Text variant="labelMd">
-                      {formatWindow(trip.scheduledAt, trip.distanceKm)}
-                    </Text>
-                  </View>
-
-                  <View style={[styles.metaCol, styles.metaColMid]}>
-                    <View style={styles.metaLabel}>
-                      <Icon name="truck" size={18} color={colors.textSecondary} />
-                      <Text variant="labelSm" color="textMuted">
-                        ARMADA
-                      </Text>
-                    </View>
-                    <Text variant="labelMd">{vehicle?.plate ?? '—'}</Text>
-                  </View>
-
-                  <View style={styles.metaCol}>
-                    <View style={styles.metaLabel}>
-                      <Icon name="gps" size={18} color={colors.textSecondary} />
-                      <Text variant="labelSm" color="textMuted">
-                        JARAK
-                      </Text>
-                    </View>
-                    <Text variant="labelMd">{formatKm(trip.distanceKm)}</Text>
-                  </View>
-                </View>
-
-                {trip.status === 'assigned' ? (
-                  <View style={styles.tripActions}>
-                    <Button
-                      label="Tolak"
-                      variant="secondary"
-                      onPress={() => router.push(`/trip/${trip.id}/reject`)}
-                      style={styles.tripAction}
-                    />
-                    <Button
-                      label="Terima"
-                      onPress={() => accept(trip.id)}
-                      style={styles.tripAction}
-                    />
-                  </View>
-                ) : (
-                  <View style={styles.tripActions}>
-                    <Button
-                      label="Buka Trip Aktif"
-                      iconAfter="forward"
-                      onPress={() => router.push(`/trip/${trip.id}/execution`)}
-                    />
-                  </View>
-                )}
-              </Card>
+              <TripSummaryCard
+                trip={trip}
+                vehicle={vehicle}
+                kicker="TRIP BERIKUTNYA"
+                onReject={() => router.push(`/trip/${trip.id}/reject`)}
+                onAccept={() => accept(trip.id)}
+                onOpen={() => router.push(`/trip/${trip.id}/execution`)}
+              />
             ) : newTasks.length > 0 ? null : (
               <Card shadow>
                 <Text variant="titleMd">Tidak ada trip aktif</Text>
@@ -317,6 +224,95 @@ export default function HomeScreen() {
         )}
       </ScreenBody>
     </Screen>
+  );
+}
+
+/** Trip summary card, matching the Stitch "Beranda" card 1:1. */
+function TripSummaryCard({
+  trip,
+  vehicle,
+  kicker,
+  onAccept,
+  onReject,
+  onOpen,
+}: {
+  trip: Trip;
+  vehicle?: Vehicle;
+  kicker: string;
+  onAccept?: () => void;
+  onReject?: () => void;
+  onOpen?: () => void;
+}) {
+  const assigned = trip.status === 'assigned';
+  const inProgress = trip.status === 'in_progress';
+
+  return (
+    <Card shadow style={styles.tripCard}>
+      <View style={styles.tripHead}>
+        <Text variant="labelMd" color="textMuted" style={styles.upper}>
+          {kicker}
+        </Text>
+        <Badge
+          label={inProgress ? 'Dalam Perjalanan' : assigned ? 'Menunggu Konfirmasi' : 'Dikonfirmasi'}
+          tone={inProgress ? 'warning' : 'info'}
+        />
+      </View>
+
+      <View style={styles.tripTitle}>
+        <Text variant="labelMd" color="textSecondary">
+          Lokasi Bongkar Muat
+        </Text>
+        <Text variant="headlineMd">{trip.destination}</Text>
+      </View>
+
+      <View style={styles.tripMeta}>
+        <View style={styles.metaCol}>
+          <View style={styles.metaLabel}>
+            <Icon name="schedule" size={18} color={colors.textSecondary} />
+            <Text variant="labelSm" color="textMuted">
+              WAKTU
+            </Text>
+          </View>
+          <Text variant="labelMd">{formatWindow(trip.scheduledAt, trip.distanceKm)}</Text>
+        </View>
+
+        <View style={[styles.metaCol, styles.metaColMid]}>
+          <View style={styles.metaLabel}>
+            <Icon name="truck" size={18} color={colors.textSecondary} />
+            <Text variant="labelSm" color="textMuted">
+              ARMADA
+            </Text>
+          </View>
+          <Text variant="labelMd">{vehicle?.plate ?? '—'}</Text>
+        </View>
+
+        <View style={styles.metaCol}>
+          <View style={styles.metaLabel}>
+            <Icon name="gps" size={18} color={colors.textSecondary} />
+            <Text variant="labelSm" color="textMuted">
+              JARAK
+            </Text>
+          </View>
+          <Text variant="labelMd">{formatKm(trip.distanceKm)}</Text>
+        </View>
+      </View>
+
+      {assigned && onAccept ? (
+        <View style={styles.tripActions}>
+          <Button
+            label="Tolak"
+            variant="secondary"
+            onPress={onReject}
+            style={styles.tripAction}
+          />
+          <Button label="Terima" onPress={onAccept} style={styles.tripAction} />
+        </View>
+      ) : (
+        <View style={styles.tripActions}>
+          <Button label="Buka Trip Aktif" iconAfter="forward" onPress={onOpen} />
+        </View>
+      )}
+    </Card>
   );
 }
 
@@ -400,45 +396,12 @@ const styles = StyleSheet.create({
   dnaText: { flex: 1, paddingRight: spacing.sm },
   dnaSub: { marginTop: spacing.xs },
   tripCard: { marginTop: spacing.lg },
-  newTasksCard: { marginTop: spacing.lg, gap: spacing.md },
-  newTasksHead: {
+  newTasksSection: { marginTop: spacing.xl, gap: spacing.md },
+  sectionHeadRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
-  },
-  newTasksTitle: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
-  newTasksDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.critical },
-  newTaskRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.input,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    backgroundColor: colors.canvas,
-  },
-  newTaskInfo: { flex: 1, gap: 2 },
-  newTaskActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  newTaskReject: {
-    height: 36,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  newTaskAccept: {
-    height: 36,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primaryContainer,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   tripHead: {
     flexDirection: 'row',

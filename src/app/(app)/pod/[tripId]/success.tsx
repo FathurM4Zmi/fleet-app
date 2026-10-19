@@ -86,28 +86,6 @@ export default function PodSuccessScreen() {
           </View>
         </View>
 
-        {/* Sync banner */}
-        <View style={styles.syncBanner}>
-          <View style={styles.syncIcon}>
-            <Icon name="cloudDone" size={20} color={colors.success} />
-          </View>
-          <View style={styles.flex}>
-            <View style={styles.rowBetween}>
-              <Text variant="labelLg" color={colors.success}>
-                Tersinkron • Dikirim ke sistem
-              </Text>
-              <View style={styles.autoChip}>
-                <Text variant="labelSm" color={colors.success}>
-                  OTOMATIS
-                </Text>
-              </View>
-            </View>
-            <Text variant="micro" color="#2E6855" style={styles.bannerBody}>
-              Pelanggan telah diberi tahu otomatis melalui email &amp; SMS konfirmasi.
-            </Text>
-          </View>
-        </View>
-
         {/* Summary */}
         <Card>
           <View style={styles.rowBetween}>
@@ -167,16 +145,6 @@ export default function PodSuccessScreen() {
             trailing={<Icon name="success" size={16} color={colors.success} />}
           />
         </Card>
-
-        {/* Online notice */}
-        <View style={styles.online}>
-          <View style={styles.onlineIcon}>
-            <Icon name="online" size={16} color={colors.success} />
-          </View>
-          <Text variant="micro" color={colors.success} style={styles.flex}>
-            Terkirim online &amp; terenkripsi. Sudah tersinkron ke server pusat secara realtime.
-          </Text>
-        </View>
 
         {/* Timeline */}
         <Card>

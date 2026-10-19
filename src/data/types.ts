@@ -56,6 +56,8 @@ export interface TripRecipient {
   name: string;
   role: string;
   initials: string;
+  /** Contact number used by the call/chat actions. */
+  phone: string;
 }
 
 export interface Trip {

@@ -139,10 +139,6 @@ export default function ActivityScreen() {
           </View>
           <Icon name="expand" size={22} color={colors.textSecondary} />
         </Pressable>
-
-        <Text variant="labelSm" color="textMuted" align="center" style={styles.footer}>
-          Tersinkronisasi otomatis dengan server armada LogiFleet
-        </Text>
       </ScreenBody>
     </Screen>
   );

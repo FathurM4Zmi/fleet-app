@@ -137,15 +137,6 @@ export default function NotificationsScreen() {
             );
           })
         )}
-
-        <View style={styles.syncBadgeWrap}>
-          <View style={styles.syncBadge}>
-            <View style={styles.syncDot} />
-            <Text variant="labelSm" color="onSurfaceVariant">
-              Semua notifikasi tersinkron • Online
-            </Text>
-          </View>
-        </View>
       </ScrollView>
     </Screen>
   );

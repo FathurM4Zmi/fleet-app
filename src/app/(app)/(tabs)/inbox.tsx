@@ -143,7 +143,6 @@ export default function InboxScreen() {
               trip={trip}
               vehicle={vehicleById(trip.vehicleId)}
               hasPod={state.pods.some((pod) => pod.tripId === trip.id)}
-              online={trip.id === 'trp-1039'}
               onPress={() => router.push(`/trip/${trip.id}`)}
               onAccept={() => accept(trip.id)}
               onReject={() => router.push(`/trip/${trip.id}/reject`)}

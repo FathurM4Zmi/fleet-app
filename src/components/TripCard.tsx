@@ -19,8 +19,6 @@ export interface TripCardProps {
   vehicle?: Vehicle;
   /** Shown for completed trips that already carry a POD. */
   hasPod?: boolean;
-  /** Renders the online-sync confirmation strip. */
-  online?: boolean;
   onPress?: () => void;
   onAccept?: () => void;
   onReject?: () => void;
@@ -33,7 +31,6 @@ export function TripCard({
   trip,
   vehicle,
   hasPod = false,
-  online = false,
   onPress,
   onAccept,
   onReject,
@@ -45,15 +42,6 @@ export function TripCard({
 
   return (
     <Card padded={false} style={styles.card}>
-      {online ? (
-        <View style={styles.onlineStrip}>
-          <Icon name="online" size={18} color={colors.success} />
-          <Text variant="labelMd" color="success" style={styles.onlineText}>
-            Terhubung online. Data trip diperbarui otomatis.
-          </Text>
-        </View>
-      ) : null}
-
       <View style={styles.body}>
         <View style={styles.headRow}>
           <Text variant="labelMd" color="textSecondary">

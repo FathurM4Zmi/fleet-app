@@ -165,13 +165,6 @@ export default function ComplianceScreen() {
             </View>
           ))}
         </Card>
-
-        <View style={styles.syncFooter}>
-          <Icon name="cloudDone" size={15} color={colors.success} />
-          <Text variant="labelSm" color="textSecondary">
-            Data tersinkronisasi 1 menit yang lalu
-          </Text>
-        </View>
       </ScreenBody>
     </Screen>
   );

@@ -1,4 +1,12 @@
 export { currentDriver } from './driver';
+export {
+  supervisor,
+  supervisorMessages,
+  supervisorQuickReplies,
+  supervisorTopics,
+  supervisorCallLogs,
+  supervisorAutoReplies,
+} from './supervisor';
 export { vehicles, vehicleById } from './vehicles';
 export { trips, tripById } from './trips';
 export { notifications } from './notifications';

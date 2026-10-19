@@ -1,9 +1,10 @@
 import { router, type Href } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
-import { Badge, Card, Screen, Text } from '@/components/ui';
+import { Badge, Button, Card, Screen, Sheet, Text, TextField } from '@/components/ui';
 import { vehicleById } from '@/data/fixtures';
 import { formatDate, scoreTone } from '@/lib/format';
 import { useAppStore } from '@/store/app';
@@ -23,8 +24,33 @@ interface MenuEntry {
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  const { state } = useAppStore();
+  const { state, dispatch } = useAppStore();
   const driver = state.driver;
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [draftName, setDraftName] = useState(driver.name);
+  const [draftPhone, setDraftPhone] = useState(driver.phone);
+
+  const canSaveEdit = draftName.trim().length > 1 && draftPhone.trim().length >= 8;
+
+  const openEdit = () => {
+    setDraftName(driver.name);
+    setDraftPhone(driver.phone);
+    setEditOpen(true);
+  };
+
+  const saveEdit = () => {
+    if (!canSaveEdit) return;
+    const name = draftName.trim();
+    const initials = name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase();
+    dispatch({ type: 'driver/update', patch: { name, phone: draftPhone.trim(), initials } });
+    setEditOpen(false);
+  };
 
   const vehicle = vehicleById('veh-001');
   const dnaTone = scoreTone(driver.dnaScore);
@@ -105,6 +131,14 @@ export default function ProfileScreen() {
       value: 'Skor 88',
       href: '/safety',
     },
+    {
+      key: 'supervisor',
+      icon: 'headset',
+      iconColor: colors.primary,
+      label: 'Hubungi Supervisor',
+      value: 'Chat & telepon',
+      href: '/supervisor',
+    },
   ];
 
   const documents = [
@@ -139,7 +173,7 @@ export default function ProfileScreen() {
       <View style={[styles.topBar, { paddingTop: insets.top + spacing.sm }]}>
         <View style={styles.topBarRow}>
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => (router.canGoBack() ? router.back() : router.navigate('/'))}
             accessibilityRole="button"
             accessibilityLabel="Kembali"
             hitSlop={8}
@@ -148,14 +182,7 @@ export default function ProfileScreen() {
             <Icon name="back" size={24} color={colors.onSurface} />
           </Pressable>
           <Text variant="headlineSm">Profil Driver</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Pengaturan"
-            hitSlop={8}
-            style={styles.topBarButton}
-          >
-            <Icon name="settings" size={24} color={colors.onSurfaceVariant} />
-          </Pressable>
+          <View style={styles.topBarButton} />
         </View>
       </View>
 
@@ -180,7 +207,12 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             </View>
-            <Pressable accessibilityRole="button" style={styles.editButton}>
+            <Pressable
+              onPress={openEdit}
+              accessibilityRole="button"
+              accessibilityLabel="Edit profil"
+              style={({ pressed }) => [styles.editButton, pressed && styles.menuRowPressed]}
+            >
               <Icon name="edit" size={14} color={colors.onSurface} />
               <Text variant="labelMd">Edit</Text>
             </Pressable>
@@ -305,8 +337,8 @@ export default function ProfileScreen() {
         <View style={styles.note}>
           <Icon name="lock" size={18} color={colors.secondary} />
           <Text variant="caption" color="secondary" style={styles.noteText}>
-            Data ini hanya dapat diubah oleh administrator. SIM berlaku sampai{' '}
-            {formatDate(driver.licenseExpiry)}.
+            Nama dan nomor HP dapat Anda perbarui sendiri. Data lain hanya dapat diubah
+            administrator. SIM berlaku sampai {formatDate(driver.licenseExpiry)}.
           </Text>
         </View>
 
@@ -321,6 +353,35 @@ export default function ProfileScreen() {
           </Text>
         </Pressable>
       </ScrollView>
+
+      <Sheet
+        visible={editOpen}
+        onClose={() => setEditOpen(false)}
+        title="Edit Profil"
+        description="Perbarui data yang tampil di akun Anda."
+      >
+        <TextField
+          label="Nama lengkap"
+          value={draftName}
+          onChangeText={setDraftName}
+          leftIcon="idCard"
+          placeholder="Nama lengkap"
+        />
+        <TextField
+          label="Nomor HP"
+          value={draftPhone}
+          onChangeText={setDraftPhone}
+          leftIcon="phone"
+          keyboardType="phone-pad"
+          placeholder="08xx-xxxx-xxxx"
+        />
+        <Button
+          label="Simpan Perubahan"
+          icon="save"
+          disabled={!canSaveEdit}
+          onPress={saveEdit}
+        />
+      </Sheet>
     </Screen>
   );
 }

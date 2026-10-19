@@ -1,6 +1,15 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Animated, Easing, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Animated,
+  Easing,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
 import Svg, { Circle, G, Path, Polygon, Rect, Text as SvgText } from 'react-native-svg';
 
 import { Icon, type IconName } from '@/components/Icon';
@@ -203,25 +212,18 @@ export default function TripExecutionScreen() {
               size="md"
               icon="phone"
               style={styles.flex}
-              onPress={() => undefined}
+              onPress={() =>
+                Linking.openURL(`tel:${trip.recipient.phone.replace(/[^+\d]/g, '')}`)
+              }
             />
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Kirim pesan"
               style={styles.chatButton}
-              onPress={() => undefined}
+              onPress={() => router.push(`/trip/${trip.id}/chat`)}
             >
               <Icon name="chatBubble" size={22} color={colors.primaryContainer} />
             </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.syncRow}>
-          <View style={styles.syncChip}>
-            <View style={styles.syncDot} />
-            <Text variant="labelMd" color="success">
-              Tersinkron
-            </Text>
           </View>
         </View>
       </ScrollView>

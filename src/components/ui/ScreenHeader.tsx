@@ -20,7 +20,13 @@ export interface ScreenHeaderProps {
 
 export function ScreenHeader({ title, subtitle, onBack, right, borderless = false }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
-  const handleBack = typeof onBack === 'function' ? onBack : () => router.back();
+  const handleBack =
+    typeof onBack === 'function'
+      ? onBack
+      : () => {
+          if (router.canGoBack()) router.back();
+          else router.replace('/(app)/(tabs)');
+        };
 
   return (
     <View
