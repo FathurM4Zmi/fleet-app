@@ -2,7 +2,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
 
 import { Icon } from '@/components/Icon';
 import { Button, Card, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
@@ -22,7 +21,6 @@ export default function PodCaptureScreen() {
   const insets = useSafeAreaInsets();
 
   const [photoUris, setPhotoUris] = useState<string[]>([]);
-  const [hasSignature, setHasSignature] = useState(false);
   const [recipientName, setRecipientName] = useState(trip?.recipient.name ?? '');
   const [scannedCode, setScannedCode] = useState(trip?.code ?? '');
   const [capturedAt] = useState(() => new Date().toISOString());
@@ -39,7 +37,9 @@ export default function PodCaptureScreen() {
   }
 
   // Validate the local draft, not the stored POD (which does not exist yet).
-  const ready = (photoUris.length > 0 || hasSignature) && recipientName.trim().length > 0;
+  // Photo evidence is mandatory: the backend accepts a signature file, but the
+  // app has no signature pad yet, so a signature alone would be lost.
+  const ready = photoUris.length > 0 && recipientName.trim().length > 0;
 
   const addPhoto = async () => {
     if (photoUris.length >= MAX_PHOTOS) return;
@@ -52,7 +52,7 @@ export default function PodCaptureScreen() {
     setSaving(true);
     setSaveError(null);
     try {
-      await save({ photoUris, hasSignature, recipientName: recipientName.trim(), scannedCode });
+      await save({ photoUris, recipientName: recipientName.trim(), scannedCode });
       router.replace(`/pod/${trip.id}/success`);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Gagal mengirim POD. Coba lagi.');
@@ -107,7 +107,7 @@ export default function PodCaptureScreen() {
           <View style={styles.rowBetween}>
             <Text variant="labelLg">Foto barang ({photoUris.length})</Text>
             <Text variant="labelMd" color="textSecondary">
-              Maks. {MAX_PHOTOS} foto
+              Wajib, maks. {MAX_PHOTOS} foto
             </Text>
           </View>
           <View style={styles.photoGrid}>
@@ -144,60 +144,6 @@ export default function PodCaptureScreen() {
               </Pressable>
             ) : null}
           </View>
-        </View>
-
-        {/* Signature */}
-        <View style={styles.section}>
-          <View style={styles.rowBetween}>
-            <Text variant="labelLg">Tanda tangan penerima</Text>
-            {hasSignature ? (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => setHasSignature(false)}
-                style={styles.resetRow}
-              >
-                <Icon name="refresh" size={15} color={colors.primaryContainer} />
-                <Text variant="labelMd" color="primaryContainer">
-                  Ulangi
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Area tanda tangan"
-            onPress={() => setHasSignature(true)}
-            style={[styles.signature, hasSignature && styles.signatureActive]}
-          >
-            {hasSignature ? (
-              <Svg viewBox="0 0 260 70" width="100%" height={80}>
-                <Path
-                  d="M12 48C34 22 55 12 68 28C76 38 78 52 92 46C108 40 120 18 135 24C148 30 144 54 162 48C182 42 205 20 220 32C232 42 238 48 248 45"
-                  stroke="#141B2B"
-                  strokeWidth="2.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  fill="none"
-                />
-                <Path d="M50 44L110 44" stroke="#141B2B" strokeWidth="2.2" strokeLinecap="round" />
-                <Path
-                  d="M152 26C158 14 170 12 172 24C174 34 164 42 168 50"
-                  stroke="#141B2B"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  fill="none"
-                />
-              </Svg>
-            ) : (
-              <Text variant="micro" color="textMuted">
-                Ketuk untuk tanda tangan di area ini
-              </Text>
-            )}
-            <View style={styles.signatureBaseline} />
-            <View style={styles.signatureGlyph}>
-              <Icon name="signature" size={18} color={colors.textMuted} />
-            </View>
-          </Pressable>
         </View>
 
         {/* Inputs */}

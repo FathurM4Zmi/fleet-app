@@ -27,18 +27,30 @@ export default function RejectTripScreen() {
   const [reason, setReason] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [showError, setShowError] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const canSubmit = Boolean(reason) || note.trim().length > 0;
 
-  const handleSubmit = () => {
-    if (!canSubmit) {
+  const handleSubmit = async () => {
+    if (!canSubmit || submitting) {
       setShowError(true);
       return;
     }
     const detail = note.trim();
     const summary = reason ?? 'Lainnya';
-    reject(detail ? `${summary} — ${detail}` : summary);
-    router.back();
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await reject(detail ? `${summary} — ${detail}` : summary);
+      router.back();
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : 'Gagal mengirim penolakan. Coba lagi.',
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -69,9 +81,11 @@ export default function RejectTripScreen() {
           <View style={[styles.alert, showError && styles.alertStrong]}>
             <Icon name="warning" size={18} color={colors.critical} />
             <Text variant="labelMd" color="critical" style={styles.flex}>
-              {showError && !canSubmit
-                ? 'Pilih alasan atau tulis catatan terlebih dahulu.'
-                : 'Alasan penolakan wajib diisi.'}
+              {submitError
+                ? submitError
+                : showError && !canSubmit
+                  ? 'Pilih alasan atau tulis catatan terlebih dahulu.'
+                  : 'Alasan penolakan wajib diisi.'}
             </Text>
           </View>
 
@@ -139,8 +153,14 @@ export default function RejectTripScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <Button label="Kirim Penolakan" variant="destructive" icon="cancel" onPress={handleSubmit} />
-          <Button label="Batal" variant="secondary" onPress={() => router.back()} />
+          <Button
+            label={submitting ? 'Mengirim…' : 'Kirim Penolakan'}
+            variant="destructive"
+            icon="cancel"
+            disabled={submitting}
+            onPress={() => void handleSubmit()}
+          />
+          <Button label="Batal" variant="secondary" disabled={submitting} onPress={() => router.back()} />
         </View>
       </View>
     </Screen>

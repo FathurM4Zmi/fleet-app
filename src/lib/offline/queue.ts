@@ -105,12 +105,21 @@ export async function flushOutbox(): Promise<number> {
         await remove(item.id);
       } catch (error) {
         const apiError = error as ApiError;
+        const isAuthFailure =
+          apiError instanceof ApiError && (apiError.status === 401 || apiError.status === 403);
         const permanent =
           apiError instanceof ApiError &&
           apiError.status >= 400 &&
           apiError.status < 500 &&
+          apiError.status !== 401 &&
+          apiError.status !== 403 &&
           apiError.status !== 408 &&
           apiError.status !== 429;
+        if (isAuthFailure) {
+          // Keep the evidence: the session can be restored by logging in again.
+          await markFailed(item.id, apiError.message ?? 'Sesi berakhir');
+          break;
+        }
         if (permanent || item.attempts + 1 >= MAX_ATTEMPTS) {
           await remove(item.id);
         } else {

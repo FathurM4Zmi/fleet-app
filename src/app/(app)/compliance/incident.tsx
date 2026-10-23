@@ -68,11 +68,8 @@ export default function IncidentReportScreen() {
     try {
       const photoPaths: string[] = [];
       for (const uri of photos) {
-        try {
-          photoPaths.push(await uploadImage(uri, 'insiden'));
-        } catch {
-          photoPaths.push(uri);
-        }
+        // A local file:// URI is not valid server evidence; fail instead.
+        photoPaths.push(await uploadImage(uri, 'insiden'));
       }
 
       const payload = {

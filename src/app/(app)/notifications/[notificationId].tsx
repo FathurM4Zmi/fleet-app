@@ -34,7 +34,7 @@ export default function NotificationDetailScreen() {
   );
 
   useEffect(() => {
-    if (notification && !notification.readAt) markRead(notification.id);
+    if (notification && !notification.readAt) void markRead(notification.id).catch(() => undefined);
   }, [notification, markRead]);
 
   if (!notification) {

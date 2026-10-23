@@ -62,11 +62,8 @@ export default function DamageReportScreen() {
     try {
       const photoPaths: string[] = [];
       for (const uri of photos) {
-        try {
-          photoPaths.push(await uploadImage(uri, 'kerusakan'));
-        } catch {
-          photoPaths.push(uri);
-        }
+        // Local URIs are rejected by the server as evidence; abort instead.
+        photoPaths.push(await uploadImage(uri, 'kerusakan'));
       }
 
       const payload = {

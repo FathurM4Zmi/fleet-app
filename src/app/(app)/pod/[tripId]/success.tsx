@@ -120,16 +120,6 @@ export default function PodSuccessScreen() {
           <SummaryRow
             label="Penerima"
             value={pod.recipientName}
-            trailing={
-              pod.hasSignature ? (
-                <View style={styles.ttdChip}>
-                  <Icon name="signature" size={13} color={colors.primaryContainer} />
-                  <Text variant="labelSm" color="primaryContainer">
-                    Ttd
-                  </Text>
-                </View>
-              ) : undefined
-            }
             divider
           />
           <SummaryRow label="Waktu" value={time} divider />

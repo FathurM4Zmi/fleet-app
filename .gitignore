@@ -45,3 +45,4 @@ yarn-error.*
 # AI tools & local cache
 .claude/
 .codebuddy/
+.opencode/

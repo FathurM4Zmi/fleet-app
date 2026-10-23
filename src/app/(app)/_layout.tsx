@@ -1,4 +1,7 @@
 import { Stack } from 'expo-router';
+import { View } from 'react-native';
+
+import { OfflineBanner } from '@/components/OfflineBanner';
 
 /**
  * `(tabs)` is the anchor, so every pushed screen (trip detail, DVIR, POD)
@@ -11,7 +14,9 @@ export const unstable_settings = {
 
 export default function AppLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <View style={{ flex: 1 }}>
+      <OfflineBanner />
+      <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="performance" />
       <Stack.Screen name="dna" />
@@ -28,7 +33,6 @@ export default function AppLayout() {
       <Stack.Screen name="vehicle/odometer/submitted" />
       <Stack.Screen name="damage" />
       <Stack.Screen name="safety" />
-      <Stack.Screen name="supervisor" />
       <Stack.Screen name="notifications/[notificationId]" />
       <Stack.Screen name="documents/[documentKey]" />
       <Stack.Screen name="trip/[tripId]/index" />
@@ -46,6 +50,7 @@ export default function AppLayout() {
       <Stack.Screen name="dvir/[tripId]/history" />
       <Stack.Screen name="pod/[tripId]/capture" />
       <Stack.Screen name="pod/[tripId]/success" />
-    </Stack>
+      </Stack>
+    </View>
   );
 }

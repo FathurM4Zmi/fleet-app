@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/Icon';
 import {
@@ -26,7 +26,7 @@ const HERO_STATUS: Record<TripStatus, string> = {
 
 export default function TripDetailScreen() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
-  const { trip, vehicle, setStatus, completeEvent } = useTrip(tripId);
+  const { trip, vehicle, setStatus } = useTrip(tripId);
 
   if (!trip) {
     return (
@@ -220,8 +220,16 @@ export default function TripDetailScreen() {
             <Button
               label="Terima Tugas"
               onPress={() => {
-                setStatus('accepted');
-                completeEvent('Konfirmasi driver');
+                void (async () => {
+                  try {
+                    await setStatus('accepted');
+                  } catch (error) {
+                    Alert.alert(
+                      'Gagal menerima tugas',
+                      error instanceof Error ? error.message : 'Periksa koneksi lalu coba lagi.',
+                    );
+                  }
+                })();
               }}
               style={styles.footerButton}
             />

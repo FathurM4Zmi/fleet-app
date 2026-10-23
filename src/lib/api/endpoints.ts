@@ -1,3 +1,4 @@
+import { AUTH_TIMEOUT_MS } from './config';
 import { apiRequest } from './client';
 import type {
   ActivityEntry,
@@ -45,21 +46,29 @@ export const authApi = {
       method: 'POST',
       body: { identifier, pin },
       anonymous: true,
+      timeoutMs: AUTH_TIMEOUT_MS,
     }),
   requestOtp: (identifier: string) =>
     apiRequest<OtpRequestResult>(`${AUTH}/otp/request`, {
       method: 'POST',
       body: { identifier },
       anonymous: true,
+      timeoutMs: AUTH_TIMEOUT_MS,
     }),
   verifyOtp: (identifier: string, code: string) =>
     apiRequest<LoginResponse>(`${AUTH}/otp/verify`, {
       method: 'POST',
       body: { identifier, code },
       anonymous: true,
+      timeoutMs: AUTH_TIMEOUT_MS,
     }),
   loginQr: (token: string) =>
-    apiRequest<LoginResponse>(`${AUTH}/qr`, { method: 'POST', body: { token }, anonymous: true }),
+    apiRequest<LoginResponse>(`${AUTH}/qr`, {
+      method: 'POST',
+      body: { token },
+      anonymous: true,
+      timeoutMs: AUTH_TIMEOUT_MS,
+    }),
   changePin: (currentPin: string, newPin: string) =>
     apiRequest<void>(`${AUTH}/pin/change`, { method: 'POST', body: { currentPin, newPin } }),
 };

@@ -29,11 +29,21 @@ export class ApiError extends Error {
 }
 
 export type TokenProvider = () => Promise<string | null>;
+export type UnauthorizedHandler = () => void;
 
 let tokenProvider: TokenProvider = async () => null;
+let unauthorizedHandler: UnauthorizedHandler | null = null;
 
 export function setTokenProvider(provider: TokenProvider) {
   tokenProvider = provider;
+}
+
+/**
+ * Registered by `AuthProvider`: a 401 means the stored session is no longer
+ * valid, so the app clears it and returns to the login stack.
+ */
+export function setUnauthorizedHandler(handler: UnauthorizedHandler | null) {
+  unauthorizedHandler = handler;
 }
 
 interface RequestOptions {
@@ -43,6 +53,8 @@ interface RequestOptions {
   signal?: AbortSignal;
   /** Skip the bearer header (login endpoints). */
   anonymous?: boolean;
+  /** Overrides `API_TIMEOUT_MS` for calls that must fail fast (auth). */
+  timeoutMs?: number;
 }
 
 function buildUrl(path: string, query?: RequestOptions['query']) {
@@ -73,9 +85,13 @@ async function parseError(response: Response): Promise<ApiError> {
   }
 }
 
+function notifyUnauthorized(status: number) {
+  if (status === 401) unauthorizedHandler?.();
+}
+
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? API_TIMEOUT_MS);
   const abortFromCaller = () => controller.abort();
   options.signal?.addEventListener('abort', abortFromCaller);
 
@@ -94,7 +110,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
       signal: controller.signal,
     });
 
-    if (!response.ok) throw await parseError(response);
+    if (!response.ok) {
+      const error = await parseError(response);
+      notifyUnauthorized(error.status);
+      throw error;
+    }
     if (response.status === 204) return undefined as T;
 
     const text = await response.text();
@@ -114,23 +134,44 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 /**
  * Multipart upload for DVIR / POD / fuel receipt photos.
  * The backend returns the relative path that is stored in `photoPaths`.
+ *
+ * Uses the same timeout and error mapping as `apiRequest` so a stalled upload
+ * cannot hang the form forever.
  */
 export async function apiUpload(
   path: string,
   file: { uri: string; name: string; type: string },
   field = 'file',
 ): Promise<{ path: string; url: string }> {
-  const form = new FormData();
-  // React Native accepts the `{ uri, name, type }` shape directly.
-  form.append(field, file as unknown as Blob);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
-  const token = await tokenProvider();
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    body: form,
-  });
+  try {
+    const form = new FormData();
+    // React Native accepts the `{ uri, name, type }` shape directly.
+    form.append(field, file as unknown as Blob);
 
-  if (!response.ok) throw await parseError(response);
-  return (await response.json()) as { path: string; url: string };
+    const token = await tokenProvider();
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: form,
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const error = await parseError(response);
+      notifyUnauthorized(error.status);
+      throw error;
+    }
+    return (await response.json()) as { path: string; url: string };
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    if ((error as Error)?.name === 'AbortError') {
+      throw new ApiError(0, 'Unggahan melebihi batas waktu. Periksa koneksi.');
+    }
+    throw new ApiError(0, 'Tidak dapat mengunggah foto. Periksa koneksi.');
+  } finally {
+    clearTimeout(timeout);
+  }
 }

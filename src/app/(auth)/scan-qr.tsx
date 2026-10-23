@@ -50,7 +50,7 @@ export default function ScanQrScreen() {
     setError(null);
     try {
       await loginWithQr(data);
-      router.replace('/(app)');
+      router.replace('/(app)/(tabs)');
     } catch (cause) {
       setDetected(false);
       setError(

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
@@ -41,6 +41,22 @@ export default function InboxScreen() {
   const { accept, trips } = useTrips();
   const tasks = useTasks({ take: 100 });
   const [filter, setFilter] = useState<FilterKey>('all');
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
+
+  const handleAccept = async (tripId: string) => {
+    if (acceptingId) return;
+    setAcceptingId(tripId);
+    try {
+      await accept(tripId);
+    } catch (error) {
+      Alert.alert(
+        'Gagal menerima tugas',
+        error instanceof Error ? error.message : 'Periksa koneksi lalu coba lagi.',
+      );
+    } finally {
+      setAcceptingId(null);
+    }
+  };
 
   const deliveredTrips = useMemo(
     () => new Set((tasks.data ?? []).filter((task) => task.tripId).map((task) => task.tripId as string)),
@@ -159,7 +175,7 @@ export default function InboxScreen() {
               }
               hasPod={deliveredTrips.has(trip.id)}
               onPress={() => router.push(`/trip/${trip.id}`)}
-              onAccept={() => accept(trip.id)}
+              onAccept={() => void handleAccept(trip.id)}
               onReject={() => router.push(`/trip/${trip.id}/reject`)}
               primaryLabel={trip.status === 'in_progress' ? 'Buka Rute' : undefined}
               onPrimary={() => router.push(`/trip/${trip.id}/execution`)}

@@ -50,6 +50,8 @@ export default function HomeScreen() {
   const trip = active[0] ?? upcoming.find((item) => item.status === 'accepted') ?? (newTasks.length > 0 ? undefined : upcoming[0]);
   const vehicle = vehicleQuery.data ? toVehicle(vehicleQuery.data) : undefined;
   const dnaTone = scoreTone(driver.dnaScore);
+  const dnaLabel =
+    dnaTone === 'success' ? 'Baik' : dnaTone === 'warning' ? 'Cukup' : 'Perlu perhatian';
   const licenseDays = daysUntil(driver.licenseExpiry);
   const firstName = driver.name.split(' ')[0];
 
@@ -110,7 +112,7 @@ export default function HomeScreen() {
               <View style={styles.dnaText}>
                 <Text variant="headlineSm">Skor Kesehatan Driver</Text>
                 <Text variant="bodyMd" color="secondary" style={styles.dnaSub}>
-                  Baik • 3 poin naik bulan ini
+                  {dnaLabel} • Skor {Math.round(driver.dnaScore)}/100
                 </Text>
               </View>
               <ProgressRing

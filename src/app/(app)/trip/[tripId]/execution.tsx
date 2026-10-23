@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
+  Alert,
   Animated,
   Easing,
   Linking,
@@ -26,6 +27,7 @@ export default function TripExecutionScreen() {
   const { trip, vehicle, completeEvent } = useTrip(tripId);
 
   const [note, setNote] = useState('');
+  const [arriving, setArriving] = useState(false);
 
   if (!trip) {
     return (
@@ -48,9 +50,20 @@ export default function TripExecutionScreen() {
   const remainingKm = Math.max(0, Math.round(trip.distanceKm * (arrived ? 0 : 0.4)));
   const etaLabel = arrived ? 'Tiba' : `Est. ${formatTime(etaIso)} WIB`;
 
-  const handleArrive = () => {
-    completeEvent('Tiba di tujuan');
-    router.push(`/pod/${trip.id}/capture`);
+  const handleArrive = async () => {
+    if (arriving) return;
+    setArriving(true);
+    try {
+      await completeEvent('Tiba di tujuan');
+      router.push(`/pod/${trip.id}/capture`);
+    } catch (error) {
+      Alert.alert(
+        'Gagal menyelesaikan trip',
+        error instanceof Error ? error.message : 'Periksa koneksi lalu coba lagi.',
+      );
+    } finally {
+      setArriving(false);
+    }
   };
 
   return (
@@ -232,10 +245,10 @@ export default function TripExecutionScreen() {
 
       <View style={styles.footer}>
         <Button
-          label={arrived ? 'Lanjut ke POD' : 'Sampai di Titik'}
+          label={arriving ? 'Menyimpan…' : arrived ? 'Lanjut ke POD' : 'Sampai di Titik'}
           icon="pin"
-          disabled={completed}
-          onPress={handleArrive}
+          disabled={completed || arriving}
+          onPress={() => void handleArrive()}
         />
       </View>
     </Screen>

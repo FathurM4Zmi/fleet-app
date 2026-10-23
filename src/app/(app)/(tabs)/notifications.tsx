@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
@@ -40,8 +40,19 @@ export default function NotificationsScreen() {
   );
 
   const open = (entry: Notification) => {
-    markRead(entry.id);
+    void markRead(entry.id).catch(() => undefined);
     router.push(`/notifications/${entry.id}`);
+  };
+
+  const handleMarkAll = async () => {
+    try {
+      await markAllRead();
+    } catch (error) {
+      Alert.alert(
+        'Gagal menandai notifikasi',
+        error instanceof Error ? error.message : 'Coba lagi.',
+      );
+    }
   };
 
   return (
@@ -57,7 +68,7 @@ export default function NotificationsScreen() {
             </Text>
           </View>
           <Pressable
-            onPress={markAllRead}
+            onPress={() => void handleMarkAll()}
             disabled={unreadCount === 0}
             accessibilityRole="button"
             style={styles.markAll}

@@ -29,9 +29,24 @@ function inferBaseUrl(): string {
   return `http://127.0.0.1:${API_PORT}`;
 }
 
-export const API_BASE_URL = (process.env.EXPO_PUBLIC_API_URL ?? inferBaseUrl()).replace(/\/+$/, '');
+/** Empty/whitespace values must fall back, not become a relative URL. */
+const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+
+if (!configuredUrl && !__DEV__) {
+  throw new Error(
+    'EXPO_PUBLIC_API_URL wajib diisi untuk build produksi. Set variabel ini di profil EAS.',
+  );
+}
+
+export const API_BASE_URL = (configuredUrl || inferBaseUrl()).replace(/\/+$/, '');
 
 export const API_TIMEOUT_MS = 20_000;
+
+/**
+ * Login must fail fast: the driver is standing at the gate and a 20s spinner
+ * feels like a hang. Auth calls get a shorter budget than data requests.
+ */
+export const AUTH_TIMEOUT_MS = 10_000;
 
 /** Absolute URL for a stored evidence path (`uploads/...`). */
 export function mediaUrl(path: string | null | undefined): string | undefined {

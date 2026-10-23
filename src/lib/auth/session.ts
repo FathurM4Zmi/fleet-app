@@ -44,16 +44,33 @@ export interface StoredSession {
 
 let cachedToken: string | null = null;
 
+/** A stored token past its `expiresAt` must never be treated as a session. */
+function isExpired(expiresAt: string | null | undefined): boolean {
+  if (!expiresAt) return false;
+  const timestamp = new Date(expiresAt).getTime();
+  if (!Number.isFinite(timestamp)) return true;
+  return timestamp <= Date.now();
+}
+
 export async function loadSession(): Promise<StoredSession | null> {
   const [token, rawProfile] = await Promise.all([read(TOKEN_KEY), read(PROFILE_KEY)]);
   if (!token || !rawProfile) {
     cachedToken = null;
     return null;
   }
-  cachedToken = token;
   try {
-    return { token, ...(JSON.parse(rawProfile) as Omit<StoredSession, 'token'>) };
+    const session: StoredSession = {
+      token,
+      ...(JSON.parse(rawProfile) as Omit<StoredSession, 'token'>),
+    };
+    if (isExpired(session.expiresAt)) {
+      await clearSession();
+      return null;
+    }
+    cachedToken = token;
+    return session;
   } catch {
+    cachedToken = null;
     return null;
   }
 }

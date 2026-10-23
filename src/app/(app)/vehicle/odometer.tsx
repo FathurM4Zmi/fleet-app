@@ -66,11 +66,8 @@ export default function OdometerCorrectionScreen() {
       const photoPaths: string[] = [];
       for (const uri of [odometerPhoto, supportPhoto]) {
         if (!uri) continue;
-        try {
-          photoPaths.push(await uploadImage(uri, 'odometer'));
-        } catch {
-          photoPaths.push(uri);
-        }
+        // Never store a local file:// path on the server.
+        photoPaths.push(await uploadImage(uri, 'odometer'));
       }
 
       const payload = { requestedKm, reason: reason.trim(), photoPaths };

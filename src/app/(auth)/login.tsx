@@ -1,5 +1,6 @@
+import NetInfo from '@react-native-community/netinfo';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
@@ -14,6 +15,7 @@ import {
   TextField,
 } from '@/components/ui';
 import { ApiError } from '@/lib/api/client';
+import { API_BASE_URL } from '@/lib/api/config';
 import { useAuth } from '@/store/auth';
 import { colors, radius, spacing } from '@/theme';
 
@@ -35,7 +37,11 @@ export default function LoginScreen() {
   const [pin, setPin] = useState('');
   const [attemptsLeft, setAttemptsLeft] = useState(MAX_ATTEMPTS);
   const [busy, setBusy] = useState(false);
+  // Guards against a second auto-submit landing before `busy` re-renders, which
+  // would send two login requests and burn two attempts on one wrong PIN.
+  const submitting = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<'network' | 'auth' | 'locked' | 'server' | 'input' | null>(null);
 
   const locked = attemptsLeft === 0;
   const canSubmit = identifier.trim().length >= 3 && pin.length === 6 && !locked && !busy;
@@ -46,23 +52,68 @@ export default function LoginScreen() {
    * would still yield the pre-keystroke value, so the completed PIN is passed in.
    */
   const handleSubmit = async (candidate: string = pin) => {
-    if (locked || busy) return;
+    if (locked || busy || submitting.current) return;
+
+    // Auto-submit from `PinInput` can fire before the identifier is filled in.
+    // Validate here so the button and the auto-submit share one rule set.
+    if (identifier.trim().length < 3) {
+      setErrorKind('input');
+      setError('Isi nomor lisensi atau telepon terlebih dahulu.');
+      return;
+    }
+    if (candidate.length !== 6) return;
+
+    submitting.current = true;
     setBusy(true);
     setError(null);
     try {
+      // Fail instantly in airplane mode instead of waiting for the timeout.
+      const net = await NetInfo.fetch();
+      if (net.isConnected === false) {
+        throw new ApiError(0, 'Tidak ada koneksi internet. Sambungkan perangkat lalu coba lagi.');
+      }
       await loginWithPin(identifier, candidate);
     } catch (caught) {
       const apiError = caught instanceof ApiError ? caught : null;
+
+      // Status 0 means the request never reached the server (offline, timeout).
+      // That is not a wrong PIN, so the attempt counter must not move and the
+      // entered PIN is kept so the driver can retry with one tap.
+      if (!apiError || apiError.isNetworkError) {
+        setErrorKind('network');
+        setError(apiError?.message ?? 'Tidak dapat terhubung ke server. Periksa koneksi lalu coba lagi.');
+        return;
+      }
+
+      // 423 = the server has locked the account (FRD-MOB-LOGIN-03).
+      if (apiError.status === 423) {
+        setPin('');
+        setAttemptsLeft(0);
+        setErrorKind('locked');
+        setError(apiError.message);
+        return;
+      }
+
+      // Only a real 401 is a rejected credential. Other statuses (400/500) are
+      // server-side problems and should not lock the driver out. Keep the PIN
+      // for a retry; it is only wiped when the server rejects it.
+      if (apiError.status !== 401) {
+        setErrorKind('server');
+        setError(apiError.message);
+        return;
+      }
+
+      setPin('');
       const remaining = Math.max(0, attemptsLeft - 1);
       setAttemptsLeft(remaining);
-      setPin('');
+      setErrorKind(remaining === 0 ? 'locked' : 'auth');
       setError(
-        apiError?.status === 423 || remaining === 0
+        remaining === 0
           ? 'Akun terkunci sementara. Hubungi supervisor untuk membuka.'
-          : (apiError?.message ??
-            `PIN atau kode salah. Sisa ${remaining} kesempatan sebelum sistem terkunci otomatis.`),
+          : `PIN salah. Sisa ${remaining} kesempatan sebelum akun terkunci sementara.`,
       );
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   };
@@ -108,11 +159,14 @@ export default function LoginScreen() {
 
             <TextField
               label="Nomor lisensi atau telepon"
-              placeholder="Contoh: B1234567 atau 0812xxxxxxx"
+              placeholder="Masukkan nomor lisensi atau telepon"
               value={identifier}
               onChangeText={(next) => {
                 setIdentifier(next);
-                if (error) setError(null);
+                if (error) {
+                  setError(null);
+                  setErrorKind(null);
+                }
               }}
               autoCapitalize="characters"
               autoCorrect={false}
@@ -128,11 +182,14 @@ export default function LoginScreen() {
               value={pin}
               onChange={(next) => {
                 setPin(next);
-                if (error) setError(null);
+                if (error) {
+                  setError(null);
+                  setErrorKind(null);
+                }
               }}
               onComplete={handleSubmit}
               autoFocus
-              hasError={Boolean(error)}
+              hasError={errorKind === 'auth' || errorKind === 'locked'}
             />
 
             <View style={styles.panelMeta}>
@@ -157,7 +214,7 @@ export default function LoginScreen() {
             </Text>
             <TextField
               label="Nomor lisensi atau telepon"
-              placeholder="Contoh: B1234567 atau 0812xxxxxxx"
+              placeholder="Masukkan nomor lisensi atau telepon"
               value={identifier}
               onChangeText={setIdentifier}
               autoCapitalize="characters"
@@ -199,33 +256,34 @@ export default function LoginScreen() {
             <Icon name="error" size={20} color={colors.critical} />
             <View style={styles.alertBody}>
               <Text variant="labelMd" color="critical">
-                {locked ? 'Akun terkunci' : 'PIN atau kode salah'}
+                {errorKind === 'network'
+                  ? 'Koneksi gagal'
+                  : errorKind === 'locked'
+                    ? 'Akun terkunci'
+                    : errorKind === 'server'
+                      ? 'Tidak dapat masuk'
+                      : errorKind === 'input'
+                        ? 'Data belum lengkap'
+                        : 'PIN salah'}
               </Text>
               <Text variant="caption" color="onErrorContainer">
                 {error}
               </Text>
+              {__DEV__ && errorKind === 'network' ? (
+                <Text variant="micro" color="textSecondary">
+                  Server: {API_BASE_URL}
+                </Text>
+              ) : null}
             </View>
           </View>
         ) : null}
-
-        <View style={styles.telemetry}>
-          <View style={styles.telemetryLeft}>
-            <Icon name="sync" size={20} color={colors.secondary} />
-            <View>
-              <Text variant="labelSm" color="textSecondary">
-                STATUS TELEMATIKA
-              </Text>
-              <Text variant="labelMd">Terminal Truk JKT-04 • Daring</Text>
-            </View>
-          </View>
-          <View style={styles.onlineDot} />
-        </View>
       </ScreenBody>
 
       <View style={styles.footer}>
         <Button
           label="Masuk"
           iconAfter="forward"
+          loading={busy}
           disabled={!canSubmit}
           onPress={() => handleSubmit()}
         />

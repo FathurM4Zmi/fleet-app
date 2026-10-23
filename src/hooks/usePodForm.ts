@@ -29,7 +29,6 @@ export function usePodForm(tripId: string | undefined) {
   const save = useCallback(
     async (draft: {
       photoUris: string[];
-      hasSignature: boolean;
       recipientName: string;
       scannedCode?: string;
     }) => {
@@ -40,27 +39,30 @@ export function usePodForm(tripId: string | undefined) {
       const geo = (await currentPosition()) ?? FALLBACK_GEO;
       const capturedAt = new Date().toISOString();
 
+      // Never enqueue a local file URI: the server stores the string as-is and
+      // the evidence would be unreadable. A failed upload aborts the submission.
       const photoPaths: string[] = [];
       for (const uri of draft.photoUris) {
-        try {
-          photoPaths.push(await uploadImage(uri, 'pod'));
-        } catch {
-          photoPaths.push(uri);
-        }
+        photoPaths.push(await uploadImage(uri, 'pod'));
       }
 
       const notes = [draft.recipientName, draft.scannedCode].filter(Boolean).join(' • ');
       const payload = {
         photoPath: photoPaths[0] ?? null,
         signaturePath: null,
-        notes: photoPaths.length > 0 ? notes || null : notes || 'Ditandatangani penerima',
+        notes: notes || null,
         latitude: geo.lat,
         longitude: geo.lng,
         capturedAt,
       };
 
+      // Starting the task is a separate state transition: queueing only the POD
+      // while the task is still "Assigned" would fail with 409 on retry.
+      if (task.status === 'Assigned') {
+        await taskApi.start(task.id);
+      }
+
       try {
-        if (task.status === 'Assigned') await taskApi.start(task.id);
         await taskApi.deliver(task.id, payload);
         await taskQuery.refetch();
       } catch (error) {
@@ -82,7 +84,7 @@ export function usePodForm(tripId: string | undefined) {
         pod: {
           tripId,
           photoUris: photoPaths,
-          hasSignature: draft.hasSignature,
+          hasSignature: false,
           recipientName: draft.recipientName,
           scannedCode: draft.scannedCode,
           geo,

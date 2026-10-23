@@ -29,13 +29,9 @@ export function useDvirForm(tripId: string | undefined, inspectionType: 'pre' | 
       for (const item of items) {
         let photoPath: string | undefined;
         if (item.photoUri) {
-          try {
-            photoPath = await uploadImage(item.photoUri, 'dvir');
-          } catch {
-            // Keep the local URI so the queued request still carries the evidence
-            // once connectivity returns; the upload is retried with the payload.
-            photoPath = item.photoUri;
-          }
+          // A local file:// URI is not valid server evidence; fail the submit
+          // instead of storing an unreadable path.
+          photoPath = await uploadImage(item.photoUri, 'dvir');
         }
         checklist.push({
           id: item.id,

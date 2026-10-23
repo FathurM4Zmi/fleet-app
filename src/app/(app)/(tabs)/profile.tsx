@@ -1,6 +1,6 @@
 import { router, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
@@ -123,7 +123,7 @@ export default function ProfileScreen() {
       icon: 'fuelCard',
       iconColor: colors.primary,
       label: 'Kartu BBM',
-      value: 'Sisa Rp 1.240.000',
+      value: 'Lihat kartu',
       href: '/fuel-card',
     },
     {
@@ -131,7 +131,7 @@ export default function ProfileScreen() {
       icon: 'truck',
       iconColor: colors.onSurfaceVariant,
       label: 'Kendaraan Saya',
-      value: 'B 9021 KYD',
+      value: vehicle?.plate ?? 'Lihat kendaraan',
       href: '/vehicle',
     },
     {
@@ -139,16 +139,8 @@ export default function ProfileScreen() {
       icon: 'shield',
       iconColor: colors.success,
       label: 'Peristiwa Safety',
-      value: 'Skor 88',
+      value: 'Lihat riwayat',
       href: '/safety',
-    },
-    {
-      key: 'supervisor',
-      icon: 'headset',
-      iconColor: colors.primary,
-      label: 'Hubungi Supervisor',
-      value: 'Chat & telepon',
-      href: '/supervisor',
     },
   ];
 
@@ -356,7 +348,14 @@ export default function ProfileScreen() {
 
         <Pressable
           onPress={() => {
-            void logout();
+            Alert.alert(
+              'Keluar dari akun?',
+              'Data yang belum terkirim tetap disimpan di perangkat dan akan dikirim saat Anda masuk kembali.',
+              [
+                { text: 'Batal', style: 'cancel' },
+                { text: 'Keluar', style: 'destructive', onPress: () => void logout() },
+              ],
+            );
           }}
           accessibilityRole="button"
           style={styles.logout}

@@ -1,10 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { setTokenProvider } from '@/lib/api/client';
+import { setTokenProvider, setUnauthorizedHandler } from '@/lib/api/client';
 import { authApi } from '@/lib/api/endpoints';
 import type { LoginResponse } from '@/lib/api/types';
 import { clearSession, currentToken, loadSession, saveSession, type StoredSession } from '@/lib/auth/session';
-import { clearOutbox } from '@/lib/offline/queue';
 
 type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
@@ -38,6 +37,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
+  }, []);
+
+  // A 401 from any request means the token is no longer valid. Drop it and let
+  // the protected stack send the driver back to login.
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      void clearSession();
+      setSession(null);
+      setStatus('anonymous');
+    });
+    return () => setUnauthorizedHandler(null);
   }, []);
 
   const persist = useCallback(async (response: LoginResponse) => {
@@ -80,7 +90,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    await Promise.all([clearSession(), clearOutbox()]);
+    // Pending offline items are intentionally kept: dropping them on logout
+    // would silently lose submitted evidence. They flush on the next login.
+    await clearSession();
     setSession(null);
     setStatus('anonymous');
   }, []);

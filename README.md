@@ -14,7 +14,12 @@ npx expo start --android
 npx expo start --ios
 npx tsc --noEmit        # typecheck
 npx expo lint           # lint
+npm test                # unit tests (Jest + React Native Testing Library)
 ```
+
+Untuk build EAS, `EXPO_PUBLIC_API_URL` **wajib** diisi (mis. lewat environment
+variable di profil EAS). Build produksi akan gagal cepat bila variabel ini kosong
+agar aplikasi tidak diam-diam menembak `localhost`.
 
 `EXPO_PUBLIC_API_URL` adalah satu-satunya konfigurasi backend. Bila kosong:
 
