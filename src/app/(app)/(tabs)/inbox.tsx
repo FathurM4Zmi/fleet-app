@@ -26,7 +26,7 @@ const matches = (trip: Trip, filter: FilterKey): boolean => {
     case 'new':
       return trip.status === 'assigned';
     case 'active':
-      return trip.status === 'accepted' || trip.status === 'in_progress';
+      return trip.status === 'accepted' || trip.status === 'in_progress' || trip.status === 'arrived';
     case 'done':
       return trip.status === 'completed';
     case 'cancelled':
@@ -68,7 +68,7 @@ export default function InboxScreen() {
     for (const trip of trips) {
       map.all += 1;
       if (trip.status === 'assigned') map.new += 1;
-      if (trip.status === 'accepted' || trip.status === 'in_progress') map.active += 1;
+      if (trip.status === 'accepted' || trip.status === 'in_progress' || trip.status === 'arrived') map.active += 1;
       if (trip.status === 'completed') map.done += 1;
       if (trip.status === 'rejected') map.cancelled += 1;
     }
@@ -177,7 +177,7 @@ export default function InboxScreen() {
               onPress={() => router.push(`/trip/${trip.id}`)}
               onAccept={() => void handleAccept(trip.id)}
               onReject={() => router.push(`/trip/${trip.id}/reject`)}
-              primaryLabel={trip.status === 'in_progress' ? 'Buka Rute' : undefined}
+              primaryLabel={trip.status === 'in_progress' || trip.status === 'arrived' ? 'Buka Rute' : undefined}
               onPrimary={() => router.push(`/trip/${trip.id}/execution`)}
             />
           ))

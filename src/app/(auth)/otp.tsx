@@ -21,13 +21,25 @@ export default function OtpScreen() {
   const [code, setCode] = useState('');
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Development builds get the code back from the API (SMTP/WhatsApp is
+  // simulated), so show it instead of leaving the driver stuck.
+  const [devCode, setDevCode] = useState<string | null>(null);
 
   const requestCode = useCallback(async () => {
     try {
-      await authApi.requestOtp(identifier);
+      const result = await authApi.requestOtp(identifier);
+      setDevCode(result.devCode ?? null);
       setSecondsLeft(RESEND_SECONDS);
       setError(null);
+      // A false 'sent' flag is the anti-enumeration answer for an unknown or
+      // inactive account, so the copy must stay neutral.
+      setNotice(
+        result.sent
+          ? null
+          : 'Jika nomor terdaftar, kode OTP sudah dikirim. Hubungi dispatcher bila kode tidak diterima.',
+      );
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Gagal mengirim kode OTP.');
     }
@@ -125,6 +137,40 @@ export default function OtpScreen() {
           />
         </View>
 
+        {devCode ? (
+          <Pressable
+            onPress={() => {
+              setCode(devCode);
+              setError(null);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Isi kode OTP development"
+            style={styles.devCard}
+          >
+            <Icon name="info" size={18} color={colors.primaryContainer} />
+            <View style={styles.devBody}>
+              <Text variant="labelMd" color="primaryContainer">
+                Kode OTP (mode development)
+              </Text>
+              <Text variant="headlineSm" color="primaryContainer">
+                {devCode}
+              </Text>
+              <Text variant="micro" color="textSecondary">
+                Ketuk untuk mengisi otomatis. Kode ini tidak dikirim di build produksi.
+              </Text>
+            </View>
+          </Pressable>
+        ) : null}
+
+        {notice ? (
+          <View style={styles.notice} accessibilityLiveRegion="polite">
+            <Icon name="info" size={18} color={colors.textSecondary} />
+            <Text variant="caption" color="textSecondary" style={styles.noticeText}>
+              {notice}
+            </Text>
+          </View>
+        ) : null}
+
         {error ? (
           <View style={styles.alert} accessibilityLiveRegion="polite">
             <Icon name="error" size={20} color={colors.critical} />
@@ -165,7 +211,7 @@ export default function OtpScreen() {
         <View style={styles.trustCard}>
           <Icon name="verified" size={20} color={colors.textSecondary} />
           <Text variant="micro" color="textSecondary" style={styles.trustText}>
-            Kode berlaku 15 menit dan hanya dapat dipakai sekali demi keamanan akun pengemudi.
+            Kode berlaku 5 menit dan hanya dapat dipakai sekali demi keamanan akun pengemudi.
           </Text>
         </View>
 
@@ -244,6 +290,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2',
   },
   alertBody: { flex: 1, gap: 2 },
+  devCard: {
+    flexDirection: 'row',
+    gap: spacing.sm + 2,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.input,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+    backgroundColor: '#EEF2FF',
+  },
+  devBody: { flex: 1, gap: 2 },
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.input,
+    borderWidth: 1,
+    borderColor: colors.outlineVariant,
+    backgroundColor: colors.surfaceLow,
+  },
+  noticeText: { flex: 1 },
   resendRow: {
     flexDirection: 'row',
     alignItems: 'center',

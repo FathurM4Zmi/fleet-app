@@ -53,7 +53,10 @@ export default function CoachingUpdateScreen() {
     setSaving(true);
     setError(null);
     try {
-      await insightApi.updateCoaching(coachingPlan.id, 'Completed');
+      // Saving progress must NOT close the plan: the backend only returns a
+      // Pending/InProgress plan, so sending 'Completed' here made the whole
+      // coaching screen fall back to "Belum ada rencana coaching".
+      await insightApi.updateCoaching(coachingPlan.id, 'InProgress');
       router.back();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Gagal menyimpan progres.');

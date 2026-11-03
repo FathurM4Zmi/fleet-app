@@ -11,6 +11,7 @@ export type TripStatusWire =
   | 'Assigned'
   | 'Acknowledged'
   | 'InProgress'
+  | 'Arrived'
   | 'Completed'
   | 'Cancelled'
   | 'Settled'
@@ -50,6 +51,8 @@ export interface DriverTrip {
   scheduledEnd: string;
   status: TripStatusWire;
   actualStartAt: string | null;
+  /** Set when the driver taps "Sampai di Titik" (status `Arrived`). */
+  arrivedAt: string | null;
   actualEndAt: string | null;
   actualDistanceKm: number | null;
   declineReason: string | null;
@@ -170,6 +173,11 @@ export interface RouteOption {
   statusTone: string;
   recommended: boolean;
   selected: boolean;
+  /** Route geometry — used by the map preview. */
+  originLat?: number;
+  originLng?: number;
+  destLat?: number;
+  destLng?: number;
 }
 
 export interface TripWarning {

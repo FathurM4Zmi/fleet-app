@@ -1,9 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Circle, G, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { Icon } from '@/components/Icon';
+import { MapCanvas } from '@/components/MapCanvas';
 import { BottomBar, Button, EmptyState, Screen, ScreenBody, ScreenHeader, Text } from '@/components/ui';
 import { toRouteOption } from '@/data/adapters';
 import { useTripRoutes } from '@/hooks/api/useDriverData';
@@ -76,7 +76,9 @@ export default function SelectRouteScreen() {
       <ScreenBody bottomPadding={140}>
         {/* Map preview */}
         <View style={styles.map}>
-          <RoutePreview />
+          <RoutePreview
+            option={routeOptions.find((candidate) => candidate.key === selected) ?? routeOptions[0]}
+          />
           <View style={styles.mapChipTopLeft}>
             <View style={styles.mapDotGreen} />
             <Text variant="labelSm" color="secondary" style={styles.upper}>
@@ -242,72 +244,27 @@ function RouteCard({
   );
 }
 
-function RoutePreview() {
+function RoutePreview({ option }: { option?: RouteOption }) {
+  const origin =
+    option?.originLat != null && option?.originLng != null
+      ? { latitude: option.originLat, longitude: option.originLng }
+      : null;
+  const destination =
+    option?.destLat != null && option?.destLng != null
+      ? { latitude: option.destLat, longitude: option.destLng }
+      : null;
+
   return (
-    <Svg viewBox="0 0 358 180" width="100%" height="100%">
-      <Rect fill="#E8EDF5" width="358" height="180" />
-      <Path d="M-10 40 Q 90 60 180 30 T 370 70" stroke="#CBD5E1" strokeLinecap="round" strokeWidth="6" fill="none" />
-      <Path d="M40 190 Q 70 110 130 90 T 320 20" stroke="#CBD5E1" strokeLinecap="round" strokeWidth="5" fill="none" />
-      <Path d="M190 -10 L 210 190" stroke="#E2E8F0" strokeWidth="4" fill="none" />
-      <Path d="M80 -10 L 90 190" stroke="#E2E8F0" strokeWidth="4" fill="none" />
-
-      {/* Alternative routes */}
-      <Path
-        d="M 46 130 C 60 170, 200 170, 260 120 S 300 70, 312 48"
-        stroke="#CBD5E1"
-        strokeLinecap="round"
-        strokeWidth="3"
-        fill="none"
-      />
-      <Path
-        d="M 46 130 C 80 80, 160 110, 220 70 S 280 60, 312 48"
-        stroke="#9CA3AF"
-        strokeDasharray="5 4"
-        strokeLinecap="round"
-        strokeWidth="3.5"
-        fill="none"
-      />
-
-      {/* Selected route */}
-      <Path
-        d="M 46 130 C 90 140, 140 60, 230 46 S 290 50, 312 48"
-        stroke="#1B4DFF"
-        strokeOpacity="0.25"
-        strokeLinecap="round"
-        strokeWidth="7"
-        fill="none"
-      />
-      <Path
-        d="M 46 130 C 90 140, 140 60, 230 46 S 290 50, 312 48"
-        stroke="#1B4DFF"
-        strokeLinecap="round"
-        strokeWidth="4.5"
-        fill="none"
-      />
-
-      {/* Live vehicle */}
-      <G x={185} y={48}>
-        <Circle r="8" fill="#1B4DFF" fillOpacity="0.2" />
-        <Circle r="5" fill="#1B4DFF" />
-        <Circle r="2" fill="#FFFFFF" />
-      </G>
-
-      {/* Origin */}
-      <G x={46} y={130}>
-        <Circle r="10" fill="#1B4DFF" stroke="#FFFFFF" strokeWidth="2" />
-        <SvgText fill="#FFFFFF" fontFamily="Inter" fontSize="9" fontWeight="700" textAnchor="middle" x="0" y="3.5">
-          1
-        </SvgText>
-      </G>
-
-      {/* Destination */}
-      <G x={312} y={48}>
-        <Circle r="10" fill="#BA1A1A" stroke="#FFFFFF" strokeWidth="2" />
-        <SvgText fill="#FFFFFF" fontFamily="Inter" fontSize="9" fontWeight="700" textAnchor="middle" x="0" y="3.5">
-          2
-        </SvgText>
-      </G>
-    </Svg>
+    <MapCanvas
+      points={origin && destination ? [origin, destination] : []}
+      markers={[
+        ...(origin ? [{ ...origin, color: colors.primaryContainer }] : []),
+        ...(destination ? [{ ...destination, color: colors.error }] : []),
+      ]}
+      height={180}
+      rounded={false}
+      emptyLabel="Rute belum tersedia"
+    />
   );
 }
 

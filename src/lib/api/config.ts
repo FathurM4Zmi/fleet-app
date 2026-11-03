@@ -43,6 +43,12 @@ export const API_BASE_URL = (configuredUrl || inferBaseUrl()).replace(/\/+$/, ''
 export const API_TIMEOUT_MS = 20_000;
 
 /**
+ * Photos are a few megabytes each, so an upload gets a much larger budget than
+ * a JSON call. Anything shorter fails on a busy mobile network.
+ */
+export const UPLOAD_TIMEOUT_MS = 60_000;
+
+/**
  * Login must fail fast: the driver is standing at the gate and a 20s spinner
  * feels like a hang. Auth calls get a shorter budget than data requests.
  */

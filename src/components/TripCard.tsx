@@ -10,6 +10,7 @@ const STATUS: Record<TripStatus, { label: string; tone: BadgeTone; icon: IconNam
   assigned: { label: 'Baru', tone: 'info', icon: 'assignment' },
   accepted: { label: 'Dikonfirmasi', tone: 'info', icon: 'success' },
   in_progress: { label: 'Dikerjakan', tone: 'warning', icon: 'truck' },
+  arrived: { label: 'Tiba di Tujuan', tone: 'warning', icon: 'location' },
   completed: { label: 'Selesai', tone: 'success', icon: 'success' },
   rejected: { label: 'Dibatalkan', tone: 'critical', icon: 'close' },
 };

@@ -91,6 +91,7 @@ const TRIP_STATUS: Record<string, TripStatus> = {
   Assigned: 'assigned',
   Acknowledged: 'accepted',
   InProgress: 'in_progress',
+  Arrived: 'arrived',
   Completed: 'completed',
   Settled: 'completed',
   Cancelled: 'rejected',
@@ -121,8 +122,8 @@ export function toTrip(dto: DriverTripWire): Trip {
     {
       id: 'arrived',
       label: 'Tiba di tujuan',
-      at: dto.actualEndAt ?? dto.scheduledEnd,
-      done: Boolean(dto.actualEndAt),
+      at: dto.arrivedAt ?? dto.actualEndAt ?? dto.scheduledEnd,
+      done: Boolean(dto.arrivedAt) || Boolean(dto.actualEndAt),
     },
   ];
 
@@ -610,6 +611,10 @@ export function toRouteOption(dto: RouteOptionWire): RouteOption {
       : lower(dto.statusTone) === 'warning' ? 'warning'
       : 'neutral',
     recommended: dto.recommended,
+    originLat: dto.originLat,
+    originLng: dto.originLng,
+    destLat: dto.destLat,
+    destLng: dto.destLng,
   };
 }
 

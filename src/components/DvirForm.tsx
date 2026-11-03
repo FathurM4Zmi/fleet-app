@@ -294,11 +294,7 @@ function ChecklistRow({
     <Card style={failed ? styles.rowFailed : undefined}>
       <View style={styles.rowHeader}>
         <View style={styles.rowLabel}>
-          {failed ? (
-            <Icon name="error" size={20} color={colors.critical} />
-          ) : (
-            <View style={styles.rowBullet} />
-          )}
+          {failed ? <Icon name="error" size={20} color={colors.critical} /> : null}
           <Text variant={failed ? 'bodyBold' : 'titleMd'} numberOfLines={1} style={styles.flex}>
             {item.label}
           </Text>
@@ -532,13 +528,6 @@ const styles = StyleSheet.create({
   rowFailed: { borderWidth: 2, borderColor: '#F4B5B5' },
   rowHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   rowLabel: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
-  rowBullet: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: colors.textMuted,
-  },
   toggle: {
     flexDirection: 'row',
     alignItems: 'center',

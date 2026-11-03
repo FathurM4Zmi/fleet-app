@@ -1,17 +1,17 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Circle, Polyline } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
+import { MapCanvas } from '@/components/MapCanvas';
 import { Card, EmptyState, Screen, ScreenBody, Text } from '@/components/ui';
 import { useTripTracking } from '@/hooks/api/useDriverData';
+import { useLiveLocation } from '@/hooks/useLiveLocation';
 import { useTrip } from '@/hooks/useTrip';
 import { addHours, estimatedDurationHours, formatTime } from '@/lib/format';
 import { colors, radius, shadows, spacing } from '@/theme';
 
-const MAP_WIDTH = 340;
-const MAP_HEIGHT = 180;
+const MAP_HEIGHT = 220;
 
 export default function TripRouteScreen() {
   const insets = useSafeAreaInsets();
@@ -19,6 +19,7 @@ export default function TripRouteScreen() {
   const { trip, vehicle } = useTrip(tripId);
   const trackingQuery = useTripTracking(tripId);
   const tracking = trackingQuery.data;
+  const live = useLiveLocation();
 
   if (!trip) {
     return (
@@ -49,6 +50,8 @@ export default function TripRouteScreen() {
   const etaIso = addHours(trip.scheduledAt, estimatedDurationHours(trip.distanceKm));
   const remainingKm = Math.max(0, Math.round(trip.distanceKm * 0.4));
   const speed = tracking?.speed ?? 0;
+  const gpsLive = Boolean(live.coords) || Boolean(tracking?.isLive);
+  const position = live.coords ?? tracking;
 
   return (
     <Screen>
@@ -65,20 +68,20 @@ export default function TripRouteScreen() {
           Posisi Trip
         </Text>
         <View style={styles.gpsPill}>
-          <View style={[styles.gpsDot, !tracking?.isLive && styles.gpsDotStale]} />
-          <Text variant="labelSm" color={tracking?.isLive ? '#6EE7B7' : '#FCD34D'}>
-            {tracking?.isLive ? 'GPS AKTIF' : 'SINYAL TERAKHIR'}
+          <View style={[styles.gpsDot, !gpsLive && styles.gpsDotStale]} />
+          <Text variant="labelSm" color={gpsLive ? '#6EE7B7' : '#FCD34D'}>
+            {gpsLive ? 'GPS AKTIF' : 'SINYAL TERAKHIR'}
           </Text>
         </View>
       </View>
 
       <ScreenBody bottomPadding={spacing.xxl} style={styles.body}>
         <View style={styles.map}>
-          <TrailMap trail={tracking?.trail ?? []} />
+          <TrailMap trail={tracking?.trail ?? []} live={live.coords} height={MAP_HEIGHT} />
           <View style={styles.mapFooter}>
             <Text variant="labelSm" color="textSecondary">
-              {tracking?.latitude != null && tracking?.longitude != null
-                ? `${tracking.latitude.toFixed(5)}, ${tracking.longitude.toFixed(5)}`
+              {position?.latitude != null && position?.longitude != null
+                ? `${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`
                 : 'Koordinat belum tersedia'}
             </Text>
             <Text variant="labelSm" color="textMuted">
@@ -138,54 +141,32 @@ export default function TripRouteScreen() {
   );
 }
 
-/** Draws the real GPS trail; shows a neutral grid when no points exist. */
-function TrailMap({ trail }: { trail: { latitude: number; longitude: number }[] }) {
-  if (trail.length < 2) {
-    return (
-      <View style={styles.mapEmpty}>
-        <Icon name="map" size={40} color={colors.textMuted} />
-        <Text variant="labelMd" color="textMuted">
-          Belum ada jejak posisi
-        </Text>
-      </View>
-    );
-  }
-
-  const lats = trail.map((point) => point.latitude);
-  const lngs = trail.map((point) => point.longitude);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-  const latSpan = maxLat - minLat || 1e-6;
-  const lngSpan = maxLng - minLng || 1e-6;
-
-  const pad = 16;
-  const points = trail
-    .map((point) => {
-      const x = pad + ((point.longitude - minLng) / lngSpan) * (MAP_WIDTH - pad * 2);
-      const y = MAP_HEIGHT - pad - ((point.latitude - minLat) / latSpan) * (MAP_HEIGHT - pad * 2);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
-
-  const last = trail[trail.length - 1];
-  const lastX = pad + ((last.longitude - minLng) / lngSpan) * (MAP_WIDTH - pad * 2);
-  const lastY = MAP_HEIGHT - pad - ((last.latitude - minLat) / latSpan) * (MAP_HEIGHT - pad * 2);
+/** Real OpenStreetMap view of the GPS trail; falls back to a placeholder label. */
+function TrailMap({
+  trail,
+  live,
+  height,
+}: {
+  trail: { latitude: number; longitude: number }[];
+  live?: { latitude: number; longitude: number } | null;
+  height: number;
+}) {
+  // The device fix is the driver's real position right now; the server trail is
+  // history and may be empty when telemetry has not arrived yet.
+  const points = trail.length > 0 ? trail : live ? [live] : [];
+  const last = points[points.length - 1];
+  const markers = [
+    ...(last ? [{ ...last, color: colors.primaryContainer }] : []),
+    ...(live ? [{ ...live, color: colors.success }] : []),
+  ];
 
   return (
-    <Svg width="100%" height={MAP_HEIGHT} viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}>
-      <Polyline
-        points={points}
-        fill="none"
-        stroke={colors.primaryContainer}
-        strokeWidth={4}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Circle cx={lastX} cy={lastY} r={7} fill={colors.primaryContainer} />
-      <Circle cx={lastX} cy={lastY} r={3} fill="#FFFFFF" />
-    </Svg>
+    <MapCanvas
+      points={points}
+      markers={markers}
+      height={height}
+      emptyLabel="Belum ada jejak posisi"
+    />
   );
 }
 

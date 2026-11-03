@@ -13,8 +13,10 @@ import {
 } from '@/components/ui';
 import { INCIDENT_CATEGORIES, INCIDENT_SEVERITIES } from '@/data/constants';
 import { useVehicle } from '@/hooks/api/useDriverData';
+import { useLiveLocation } from '@/hooks/useLiveLocation';
 import { ApiError } from '@/lib/api/client';
 import { safetyApi } from '@/lib/api/endpoints';
+import { currentAddress } from '@/lib/geo';
 import { enqueue } from '@/lib/offline/queue';
 import { capturePhoto } from '@/lib/photo';
 import { uploadImage } from '@/lib/upload';
@@ -35,6 +37,7 @@ const SEVERITY_TONE: Record<Severity, { bg: string; border: string; fg: string }
 export default function IncidentReportScreen() {
   const vehicleQuery = useVehicle();
   const vehicle = vehicleQuery.data;
+  const live = useLiveLocation();
 
   const [category, setCategory] = useState<string>(INCIDENT_CATEGORIES[0]);
   const [severity, setSeverity] = useState<Severity>('Ringan');
@@ -44,6 +47,7 @@ export default function IncidentReportScreen() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Photo evidence is mandatory (FRD-MOB-CMP-04), as is the narrative.
@@ -54,6 +58,19 @@ export default function IncidentReportScreen() {
     description.trim().length > 0 &&
     photos.length > 0 &&
     !saving;
+
+  const fillCurrentLocation = async () => {
+    if (locating) return;
+    setLocating(true);
+    try {
+      // Prefer the live watcher (already warm); fall back to a one-shot fix.
+      const label = await currentAddress();
+      if (label) setLocation(label);
+      else setError('Lokasi tidak tersedia. Aktifkan GPS lalu coba lagi.');
+    } finally {
+      setLocating(false);
+    }
+  };
 
   const addPhoto = async () => {
     if (photos.length >= MAX_PHOTOS) return;
@@ -205,14 +222,24 @@ export default function IncidentReportScreen() {
           </View>
           <Pressable
             accessibilityRole="button"
-            onPress={() => setLocation('Jl. Tol Cipali KM 102, Subang')}
+            onPress={() => void fillCurrentLocation()}
+            disabled={locating}
             style={styles.geoRow}
           >
             <Icon name="gps" size={18} color={colors.primaryContainer} />
             <Text variant="labelLg" color="primaryContainer">
-              Gunakan lokasi saat ini
+              {locating ? 'Mengambil lokasi…' : 'Gunakan lokasi saat ini'}
             </Text>
           </Pressable>
+          <View style={styles.liveRow}>
+            <View style={[styles.liveDot, !live.coords && styles.liveDotIdle]} />
+            <Text variant="caption" color="textSecondary" style={styles.flex}>
+              {live.coords
+                ? `GPS ${live.coords.latitude.toFixed(5)}, ${live.coords.longitude.toFixed(5)}` +
+                  (live.coords.accuracy != null ? ` • ±${Math.round(live.coords.accuracy)} m` : '')
+                : (live.error ?? 'Menunggu sinyal GPS…')}
+            </Text>
+          </View>
         </View>
 
         {/* Chronology */}
@@ -411,6 +438,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     minHeight: 40,
   },
+  liveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+  },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success },
+  liveDotIdle: { backgroundColor: colors.textMuted },
 
   textarea: {
     borderRadius: radius.card,

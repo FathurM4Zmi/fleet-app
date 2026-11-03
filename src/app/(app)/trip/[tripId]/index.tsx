@@ -20,6 +20,7 @@ const HERO_STATUS: Record<TripStatus, string> = {
   assigned: 'Menunggu Konfirmasi',
   accepted: 'Dikonfirmasi',
   in_progress: 'Dalam Perjalanan',
+  arrived: 'Tiba di Tujuan',
   completed: 'Selesai',
   rejected: 'Dibatalkan',
 };

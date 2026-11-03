@@ -16,7 +16,7 @@ export interface TripBuckets {
 
 const bucketOf = (status: TripStatus): keyof TripBuckets => {
   if (status === 'assigned' || status === 'accepted') return 'upcoming';
-  if (status === 'in_progress') return 'active';
+  if (status === 'in_progress' || status === 'arrived') return 'active';
   return 'history';
 };
 

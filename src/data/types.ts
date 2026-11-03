@@ -41,6 +41,7 @@ export type TripStatus =
   | 'assigned'
   | 'accepted'
   | 'in_progress'
+  | 'arrived'
   | 'completed'
   | 'rejected';
 
@@ -541,6 +542,11 @@ export interface RouteOption {
   statusLabel: string;
   statusTone: 'success' | 'warning' | 'neutral';
   recommended?: boolean;
+  /** Endpoints of the route, when the API provides them (map preview). */
+  originLat?: number;
+  originLng?: number;
+  destLat?: number;
+  destLng?: number;
 }
 
 export type TripWarningSeverity = 'critical' | 'warning' | 'info';

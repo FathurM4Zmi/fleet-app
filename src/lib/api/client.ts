@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_TIMEOUT_MS } from './config';
+import { API_BASE_URL, API_TIMEOUT_MS, UPLOAD_TIMEOUT_MS } from './config';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -132,11 +132,44 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 }
 
 /**
+ * Reads the upload response without assuming it is JSON: the contract says
+ * `{ path, url }`, but a plain-text path must not be reported as a network
+ * failure just because `response.json()` threw.
+ */
+function parseUploadResponse(text: string, status: number): { path: string; url: string } {
+  const body = text.trim();
+  if (!body) {
+    throw new ApiError(status, 'Server tidak mengembalikan path berkas. Coba unggah lagi.');
+  }
+
+  let rawPath: string | undefined;
+  let rawUrl: string | undefined;
+  try {
+    const parsed = JSON.parse(body) as { path?: string; url?: string } | string;
+    if (typeof parsed === 'string') {
+      rawPath = parsed;
+    } else {
+      rawPath = parsed.path;
+      rawUrl = parsed.url;
+    }
+  } catch {
+    // Plain-text body — some deployments return the stored path directly.
+    rawPath = body;
+  }
+
+  const storedPath = rawPath?.trim().replace(/^\/+/, '');
+  if (!storedPath) {
+    throw new ApiError(status, 'Server tidak mengembalikan path berkas. Coba unggah lagi.');
+  }
+  return { path: storedPath, url: rawUrl ?? `${API_BASE_URL}/${storedPath}` };
+}
+
+/**
  * Multipart upload for DVIR / POD / fuel receipt photos.
  * The backend returns the relative path that is stored in `photoPaths`.
  *
- * Uses the same timeout and error mapping as `apiRequest` so a stalled upload
- * cannot hang the form forever.
+ * Uses a dedicated (larger) timeout so a slow mobile connection is not
+ * mistaken for a dead server, and the same error mapping as `apiRequest`.
  */
 export async function apiUpload(
   path: string,
@@ -144,17 +177,21 @@ export async function apiUpload(
   field = 'file',
 ): Promise<{ path: string; url: string }> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
 
   try {
     const form = new FormData();
-    // React Native accepts the `{ uri, name, type }` shape directly.
+    // React Native accepts the `{ uri, name, type }` shape directly. Never set
+    // Content-Type by hand: the runtime has to add the multipart boundary.
     form.append(field, file as unknown as Blob);
 
     const token = await tokenProvider();
     const response = await fetch(`${API_BASE_URL}${path}`, {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      headers: {
+        Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : null),
+      },
       body: form,
       signal: controller.signal,
     });
@@ -164,13 +201,18 @@ export async function apiUpload(
       notifyUnauthorized(error.status);
       throw error;
     }
-    return (await response.json()) as { path: string; url: string };
+    return parseUploadResponse(await response.text(), response.status);
   } catch (error) {
     if (error instanceof ApiError) throw error;
     if ((error as Error)?.name === 'AbortError') {
-      throw new ApiError(0, 'Unggahan melebihi batas waktu. Periksa koneksi.');
+      throw new ApiError(0, 'Unggahan melebihi batas waktu. Periksa koneksi lalu coba lagi.');
     }
-    throw new ApiError(0, 'Tidak dapat mengunggah foto. Periksa koneksi.');
+    // Dev builds print the resolved host: a stale LAN IP is the usual cause of
+    // a network-level upload failure while login (cached session) still works.
+    throw new ApiError(
+      0,
+      `Tidak dapat mengunggah foto. Periksa koneksi.${__DEV__ ? ` (${API_BASE_URL})` : ''}`,
+    );
   } finally {
     clearTimeout(timeout);
   }

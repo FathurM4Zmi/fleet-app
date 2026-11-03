@@ -37,20 +37,12 @@ export function useTrip(tripId: string | undefined) {
 
   const refetch = tripQuery.refetch;
 
-  const completeEvent = useCallback(
-    async (label: string) => {
-      if (!tripId) return;
-      if (label === 'Tiba di tujuan') await tripApi.complete(tripId);
-      await refetch();
-    },
-    [tripId, refetch],
-  );
-
   const setStatus = useCallback(
     async (status: Trip['status']) => {
       if (!tripId) return;
       if (status === 'accepted') await tripApi.accept(tripId);
       else if (status === 'in_progress') await tripApi.start(tripId);
+      else if (status === 'arrived') await tripApi.arrive(tripId);
       else if (status === 'completed') await tripApi.complete(tripId);
       await refetch();
     },
@@ -69,6 +61,12 @@ export function useTrip(tripId: string | undefined) {
   const start = useCallback(async () => {
     if (!tripId) return;
     await tripApi.start(tripId);
+    await refetch();
+  }, [tripId, refetch]);
+
+  const arrive = useCallback(async () => {
+    if (!tripId) return;
+    await tripApi.arrive(tripId);
     await refetch();
   }, [tripId, refetch]);
 
@@ -91,10 +89,10 @@ export function useTrip(tripId: string | undefined) {
     loading: tripQuery.loading,
     error: tripQuery.error,
     refetch: tripQuery.refetch,
-    completeEvent,
     setStatus,
     reject,
     start,
+    arrive,
     complete,
   };
 }

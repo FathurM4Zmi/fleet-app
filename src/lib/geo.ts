@@ -10,6 +10,33 @@ export interface GeoPoint {
  * driver denies permission or the fix times out, so callers can decide whether
  * the evidence is still usable.
  */
+/** Human-readable label for a coordinate pair (street + city), else "lat, lng". */
+export async function describePosition(point: GeoPoint): Promise<string> {
+  try {
+    const [address] = await Location.reverseGeocodeAsync({
+      latitude: point.lat,
+      longitude: point.lng,
+    });
+    if (address) {
+      const label =
+        address.formattedAddress ??
+        [address.street, address.streetNumber, address.district, address.city, address.region]
+          .filter(Boolean)
+          .join(' ');
+      if (label?.trim()) return label.trim();
+    }
+  } catch {
+    // Geocoding needs network; fall back to raw coordinates below.
+  }
+  return `${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}`;
+}
+
+/** Resolves the current fix straight to an address, or `null` when denied. */
+export async function currentAddress(): Promise<string | null> {
+  const point = await currentPosition();
+  return point ? describePosition(point) : null;
+}
+
 export async function currentPosition(): Promise<GeoPoint | null> {
   try {
     const permission = await Location.requestForegroundPermissionsAsync();

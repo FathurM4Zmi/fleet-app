@@ -243,7 +243,15 @@ function TripSummaryCard({
   onOpen?: () => void;
 }) {
   const assigned = trip.status === 'assigned';
-  const inProgress = trip.status === 'in_progress';
+  const arrived = trip.status === 'arrived';
+  const inProgress = trip.status === 'in_progress' || arrived;
+  const statusLabel = arrived
+    ? 'Tiba di Tujuan'
+    : trip.status === 'in_progress'
+      ? 'Dalam Perjalanan'
+      : assigned
+        ? 'Menunggu Konfirmasi'
+        : 'Dikonfirmasi';
 
   return (
     <Card shadow style={styles.tripCard}>
@@ -252,7 +260,7 @@ function TripSummaryCard({
           {kicker}
         </Text>
         <Badge
-          label={inProgress ? 'Dalam Perjalanan' : assigned ? 'Menunggu Konfirmasi' : 'Dikonfirmasi'}
+          label={statusLabel}
           tone={inProgress ? 'warning' : 'info'}
         />
       </View>

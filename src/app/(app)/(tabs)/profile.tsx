@@ -228,12 +228,6 @@ export default function ProfileScreen() {
                 {driver.phone}
               </Text>
             </View>
-            <View style={[styles.chip, styles.chipEmergency]}>
-              <Icon name="emergency" size={15} color="#BB3100" />
-              <Text variant="labelMd" color="#912400">
-                Kontak darurat: Istri (0813-8899-12)
-              </Text>
-            </View>
           </View>
         </Card>
 
@@ -247,8 +241,14 @@ export default function ProfileScreen() {
                 </Text>
               </View>
               <View style={styles.stripValue}>
-                <Text variant="headlineMd">DNA {driver.dnaScore}</Text>
-                <Text variant="labelMd" color={dnaTone === 'success' ? 'success' : 'warning'}>
+                <Text variant="headlineMd" numberOfLines={1}>
+                  DNA {driver.dnaScore}
+                </Text>
+                <Text
+                  variant="labelSm"
+                  numberOfLines={1}
+                  color={dnaTone === 'success' ? 'success' : 'warning'}
+                >
                   {dnaTone === 'success' ? 'Baik' : 'Perlu perhatian'}
                 </Text>
               </View>
@@ -262,8 +262,10 @@ export default function ProfileScreen() {
                   Unit Armada
                 </Text>
               </View>
-              <View style={styles.stripValue}>
-                <Text variant="titleMd">{vehicle?.plate ?? '—'}</Text>
+              <View style={styles.stripValueRow}>
+                <Text variant="titleMd" numberOfLines={1} style={styles.flexShrink}>
+                  {vehicle?.plate ?? '—'}
+                </Text>
                 <Icon name="truck" size={18} color={colors.secondary} />
               </View>
             </View>
@@ -470,7 +472,6 @@ const styles = StyleSheet.create({
     borderColor: colors.outlineVariant,
     backgroundColor: colors.surfaceLow,
   },
-  chipEmergency: { backgroundColor: '#FFF4ED', borderColor: '#FFD0B8' },
   strip: { flexDirection: 'row', gap: spacing.sm + 2 },
   stripCard: { flex: 1 },
   stripInner: { padding: spacing.md, justifyContent: 'space-between', flex: 1 },
@@ -481,12 +482,14 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginBottom: spacing.sm,
   },
-  stripValue: {
+  stripValue: { gap: 2 },
+  stripValueRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.xs,
   },
+  flexShrink: { flexShrink: 1 },
   upper: { textTransform: 'uppercase' },
   section: { gap: spacing.sm },
   sectionTitle: { paddingHorizontal: 2 },

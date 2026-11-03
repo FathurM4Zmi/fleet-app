@@ -95,6 +95,7 @@ export const tripApi = {
   decline: (id: string, reason: string) =>
     apiRequest<void>(`${BASE}/trips/${id}/decline`, { method: 'POST', body: { reason } }),
   start: (id: string) => apiRequest<void>(`${BASE}/trips/${id}/start`, { method: 'POST' }),
+  arrive: (id: string) => apiRequest<void>(`${BASE}/trips/${id}/arrive`, { method: 'POST' }),
   complete: (id: string, actualDistanceKm?: number) =>
     apiRequest<void>(`${BASE}/trips/${id}/complete`, {
       method: 'POST',

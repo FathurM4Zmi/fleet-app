@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 
 import { colors, radius, sizes, spacing } from '@/theme';
 
@@ -26,7 +26,7 @@ export function PinInput({
   hasError = false,
   onComplete,
 }: PinInputProps) {
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const digits = value.split('');
   const focusIndex = Math.min(value.length, length - 1);
 

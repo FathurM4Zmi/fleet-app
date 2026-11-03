@@ -4,16 +4,7 @@ import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import {
-  Button,
-  Card,
-  PinInput,
-  Screen,
-  ScreenBody,
-  SegmentedControl,
-  Text,
-  TextField,
-} from '@/components/ui';
+import { Button, Card, PinInput, Screen, ScreenBody, Text, TextField } from '@/components/ui';
 import { ApiError } from '@/lib/api/client';
 import { API_BASE_URL } from '@/lib/api/config';
 import { useAuth } from '@/store/auth';
@@ -22,17 +13,12 @@ import { colors, radius, spacing } from '@/theme';
 /** Wrong-PIN attempts allowed before the account locks (FRD-MOB-LOGIN-03). */
 const MAX_ATTEMPTS = 5;
 
-type Method = 'pin' | 'otp' | 'qr';
-
-const METHODS = [
-  { label: 'PIN', value: 'pin' as const },
-  { label: 'OTP', value: 'otp' as const },
-  { label: 'QR', value: 'qr' as const },
-];
+/** Nomor HP terdaftar di backend — backend hanya memangkas spasi, jadi kirim digit saja. */
+const PHONE_MIN_LENGTH = 9;
+const PHONE_MAX_LENGTH = 15;
 
 export default function LoginScreen() {
   const { loginWithPin } = useAuth();
-  const [method, setMethod] = useState<Method>('pin');
   const [identifier, setIdentifier] = useState('');
   const [pin, setPin] = useState('');
   const [attemptsLeft, setAttemptsLeft] = useState(MAX_ATTEMPTS);
@@ -41,10 +27,27 @@ export default function LoginScreen() {
   // would send two login requests and burn two attempts on one wrong PIN.
   const submitting = useRef(false);
   const [error, setError] = useState<string | null>(null);
-  const [errorKind, setErrorKind] = useState<'network' | 'auth' | 'locked' | 'server' | 'input' | null>(null);
+  const [errorKind, setErrorKind] = useState<
+    'network' | 'auth' | 'locked' | 'server' | 'rate' | 'input' | null
+  >(null);
 
   const locked = attemptsLeft === 0;
-  const canSubmit = identifier.trim().length >= 3 && pin.length === 6 && !locked && !busy;
+  const phone = identifier.trim();
+  const canSubmit = phone.length >= PHONE_MIN_LENGTH && pin.length === 6 && !locked && !busy;
+
+  const clearError = () => {
+    if (error) {
+      setError(null);
+      setErrorKind(null);
+    }
+  };
+
+  const handleIdentifierChange = (next: string) => {
+    // Backend membandingkan identifier apa adanya (hanya trim + lowercase), jadi
+    // spasi/tanda hubung akan membuat nomor tidak ditemukan. Simpan digit saja.
+    setIdentifier(next.replace(/\D/g, '').slice(0, PHONE_MAX_LENGTH));
+    clearError();
+  };
 
   /**
    * `candidate` comes straight from `PinInput.onComplete`, which fires inside the
@@ -54,11 +57,11 @@ export default function LoginScreen() {
   const handleSubmit = async (candidate: string = pin) => {
     if (locked || busy || submitting.current) return;
 
-    // Auto-submit from `PinInput` can fire before the identifier is filled in.
+    // Auto-submit from `PinInput` can fire before the phone number is filled in.
     // Validate here so the button and the auto-submit share one rule set.
-    if (identifier.trim().length < 3) {
+    if (phone.length < PHONE_MIN_LENGTH) {
       setErrorKind('input');
-      setError('Isi nomor lisensi atau telepon terlebih dahulu.');
+      setError('Isi nomor HP yang terdaftar terlebih dahulu.');
       return;
     }
     if (candidate.length !== 6) return;
@@ -72,7 +75,7 @@ export default function LoginScreen() {
       if (net.isConnected === false) {
         throw new ApiError(0, 'Tidak ada koneksi internet. Sambungkan perangkat lalu coba lagi.');
       }
-      await loginWithPin(identifier, candidate);
+      await loginWithPin(phone, candidate);
     } catch (caught) {
       const apiError = caught instanceof ApiError ? caught : null;
 
@@ -85,18 +88,18 @@ export default function LoginScreen() {
         return;
       }
 
-      // 423 = the server has locked the account (FRD-MOB-LOGIN-03).
-      if (apiError.status === 423) {
-        setPin('');
-        setAttemptsLeft(0);
-        setErrorKind('locked');
-        setError(apiError.message);
+      // The API throttles auth endpoints (10 requests/minute) — that is not a
+      // wrong PIN either, so keep the counter and the entered value.
+      if (apiError.status === 429) {
+        setErrorKind('rate');
+        setError('Terlalu banyak percobaan masuk. Tunggu satu menit lalu coba lagi.');
         return;
       }
 
-      // Only a real 401 is a rejected credential. Other statuses (400/500) are
-      // server-side problems and should not lock the driver out. Keep the PIN
-      // for a retry; it is only wiped when the server rejects it.
+      // The API answers a locked account with a plain 401 (anti-enumeration),
+      // so 401 is the only "rejected credential" signal there is. Other
+      // statuses (400/500) are server-side problems and must not lock the
+      // driver out. Keep the PIN for a retry; wipe it only on a real 401.
       if (apiError.status !== 401) {
         setErrorKind('server');
         setError(apiError.message);
@@ -110,12 +113,21 @@ export default function LoginScreen() {
       setError(
         remaining === 0
           ? 'Akun terkunci sementara. Hubungi supervisor untuk membuka.'
-          : `PIN salah. Sisa ${remaining} kesempatan sebelum akun terkunci sementara.`,
+          : `Nomor HP atau PIN tidak cocok. Sisa ${remaining} kesempatan sebelum akun terkunci sementara.`,
       );
     } finally {
       submitting.current = false;
       setBusy(false);
     }
+  };
+
+  const openOtp = () => {
+    if (phone.length < PHONE_MIN_LENGTH) {
+      setErrorKind('input');
+      setError('Isi nomor HP yang terdaftar terlebih dahulu.');
+      return;
+    }
+    router.push({ pathname: '/(auth)/otp', params: { identifier: phone } });
   };
 
   return (
@@ -145,111 +157,59 @@ export default function LoginScreen() {
         <View style={styles.headline}>
           <Text variant="headlineLg">Masuk sebagai Driver</Text>
           <Text variant="bodyMd" color="textSecondary" style={styles.headlineBody}>
-            Gunakan PIN, kode OTP, atau pindai QR dari perangkat terdaftar.
+            Gunakan nomor HP yang terdaftar di data driver dan PIN 6 digit dari supervisor.
           </Text>
         </View>
 
-        <SegmentedControl options={METHODS} value={method} onChange={setMethod} />
+        <Card style={styles.panel}>
+          <TextField
+            label="Nomor HP"
+            placeholder="081234567001"
+            value={identifier}
+            onChangeText={handleIdentifierChange}
+            helper="Nomor HP yang dipakai saat akun driver dibuat."
+            keyboardType="phone-pad"
+            inputMode="tel"
+            autoComplete="tel"
+            textContentType="telephoneNumber"
+            autoCorrect={false}
+            maxLength={PHONE_MAX_LENGTH}
+            leftIcon="profile"
+            returnKeyType="next"
+            autoFocus
+            editable={!locked && !busy}
+          />
 
-        {method === 'pin' ? (
-          <Card style={styles.panel}>
-            <View style={styles.panelHead}>
-              <Text variant="titleMd">Masuk dengan PIN</Text>
-            </View>
-
-            <TextField
-              label="Nomor lisensi atau telepon"
-              placeholder="Masukkan nomor lisensi atau telepon"
-              value={identifier}
-              onChangeText={(next) => {
-                setIdentifier(next);
-                if (error) {
-                  setError(null);
-                  setErrorKind(null);
-                }
-              }}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              leftIcon="profile"
-              returnKeyType="next"
-            />
-
+          <View style={styles.pinHead}>
             <Text variant="labelMd" color="textSecondary">
               PIN 6 digit
             </Text>
-
-            <PinInput
-              value={pin}
-              onChange={(next) => {
-                setPin(next);
-                if (error) {
-                  setError(null);
-                  setErrorKind(null);
-                }
-              }}
-              onComplete={handleSubmit}
-              autoFocus
-              hasError={errorKind === 'auth' || errorKind === 'locked'}
-            />
-
-            <View style={styles.panelMeta}>
-              <Pressable onPress={() => router.push('/(auth)/reset-pin')} hitSlop={8}>
-                <Text variant="labelLg" color="primaryContainer">
-                  Lupa PIN?
-                </Text>
-              </Pressable>
-              <Text variant="caption" color="textSecondary">
-                Sisa {attemptsLeft} kesempatan
+            <Pressable onPress={() => router.push('/(auth)/reset-pin')} hitSlop={8}>
+              <Text variant="labelLg" color="primaryContainer">
+                Lupa PIN?
               </Text>
-            </View>
-          </Card>
-        ) : null}
+            </Pressable>
+          </View>
 
-        {method === 'otp' ? (
-          <Card style={styles.panel}>
-            <Text variant="titleMd">Masuk dengan kode OTP</Text>
-            <Text variant="bodyMd" color="textSecondary" style={styles.panelBody}>
-              Kami akan mengirim 6 digit kode ke nomor terdaftar. Kode berlaku 15 menit dan hanya
-              dapat dipakai sekali.
-            </Text>
-            <TextField
-              label="Nomor lisensi atau telepon"
-              placeholder="Masukkan nomor lisensi atau telepon"
-              value={identifier}
-              onChangeText={setIdentifier}
-              autoCapitalize="characters"
-              autoCorrect={false}
-              leftIcon="profile"
-            />
-            <Button
-              label="Kirim kode OTP"
-              icon="chat"
-              onPress={() => {
-                if (!identifier.trim()) {
-                  setError('Isi nomor lisensi atau telepon terlebih dahulu.');
-                  return;
-                }
-                router.push({ pathname: '/(auth)/otp', params: { identifier: identifier.trim() } });
-              }}
-            />
-          </Card>
-        ) : null}
+          <PinInput
+            value={pin}
+            onChange={(next) => {
+              setPin(next);
+              clearError();
+            }}
+            onComplete={handleSubmit}
+            hasError={errorKind === 'auth' || errorKind === 'locked'}
+          />
 
-        {method === 'qr' ? (
-          <Card style={styles.panel}>
-            <Text variant="titleMd">Masuk dengan pemindaian QR</Text>
-            <Text variant="bodyMd" color="textSecondary" style={styles.panelBody}>
-              Minta supervisor menampilkan QR login dari perangkat terdaftar. QR hanya berlaku
-              sekali pakai.
+          <View style={styles.panelMeta}>
+            <Text variant="caption" color="textSecondary">
+              PIN dikirim supervisor, bukan kata sandi.
             </Text>
-            <Button
-              label="Buka pemindai QR"
-              icon="qr"
-              variant="secondary"
-              onPress={() => router.push('/(auth)/scan-qr')}
-            />
-          </Card>
-        ) : null}
+            <Text variant="caption" color={locked ? 'critical' : 'textSecondary'}>
+              Sisa {attemptsLeft}
+            </Text>
+          </View>
+        </Card>
 
         {error ? (
           <View style={styles.alert} accessibilityLiveRegion="polite">
@@ -260,11 +220,13 @@ export default function LoginScreen() {
                   ? 'Koneksi gagal'
                   : errorKind === 'locked'
                     ? 'Akun terkunci'
-                    : errorKind === 'server'
-                      ? 'Tidak dapat masuk'
-                      : errorKind === 'input'
-                        ? 'Data belum lengkap'
-                        : 'PIN salah'}
+                    : errorKind === 'rate'
+                      ? 'Terlalu banyak percobaan'
+                      : errorKind === 'server'
+                        ? 'Tidak dapat masuk'
+                        : errorKind === 'input'
+                          ? 'Data belum lengkap'
+                          : 'Login ditolak'}
               </Text>
               <Text variant="caption" color="onErrorContainer">
                 {error}
@@ -277,6 +239,22 @@ export default function LoginScreen() {
             </View>
           </View>
         ) : null}
+
+        <View style={styles.altMethods}>
+          <Text variant="caption" color="textSecondary">
+            Tidak bisa memakai PIN?
+          </Text>
+          <View style={styles.altRow}>
+            <Button label="Kirim kode OTP" variant="ghost" icon="chat" onPress={openOtp} style={styles.altButton} />
+            <Button
+              label="Pindai QR"
+              variant="ghost"
+              icon="qr"
+              onPress={() => router.push('/(auth)/scan-qr')}
+              style={styles.altButton}
+            />
+          </View>
+        </View>
       </ScreenBody>
 
       <View style={styles.footer}>
@@ -287,14 +265,8 @@ export default function LoginScreen() {
           disabled={!canSubmit}
           onPress={() => handleSubmit()}
         />
-        <Button
-          label="Gunakan pemindaian QR"
-          variant="ghost"
-          icon="qr"
-          onPress={() => router.push('/(auth)/scan-qr')}
-        />
         <Text variant="micro" color="textMuted" align="center">
-          Hubungi supervisor bila akun terkunci.
+          Hubungi supervisor bila nomor HP belum terdaftar atau akun terkunci.
         </Text>
       </View>
     </Screen>
@@ -330,11 +302,12 @@ const styles = StyleSheet.create({
   },
   headline: { marginTop: spacing.sm, marginBottom: spacing.xl },
   headlineBody: { marginTop: 6 },
-  panel: { marginTop: spacing.xl, gap: spacing.lg },
-  panelHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  panelBody: { marginTop: spacing.xs },
-  panelMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  demoHint: { marginTop: -spacing.sm },
+  panel: { gap: spacing.lg },
+  pinHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  panelMeta: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  altMethods: { marginTop: spacing.xl, gap: spacing.sm },
+  altRow: { flexDirection: 'row', gap: spacing.sm },
+  altButton: { flex: 1 },
   alert: {
     flexDirection: 'row',
     gap: spacing.sm + 2,
@@ -346,26 +319,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.criticalContainer,
   },
   alertBody: { flex: 1, gap: 2 },
-  telemetry: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.lg,
-    padding: spacing.md,
-    borderRadius: radius.input,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    backgroundColor: colors.surfaceLow,
-  },
-  telemetryLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  onlineDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.success,
-    borderWidth: 2,
-    borderColor: colors.successContainer,
-  },
   footer: {
     gap: spacing.sm,
     paddingHorizontal: spacing.gutter,
