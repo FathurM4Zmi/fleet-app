@@ -15,7 +15,8 @@ import { Button, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui'
 import { toCoaching } from '@/data/adapters';
 import { useCoaching } from '@/hooks/api/useDriverData';
 import { insightApi } from '@/lib/api/endpoints';
-import { capturePhoto, captureVideo } from '@/lib/photo';
+import { capturePhoto } from '@/lib/photo';
+import { uploadImage } from '@/lib/upload';
 import { colors, radius, spacing } from '@/theme';
 
 const NOTE_LIMIT = 200;
@@ -27,7 +28,6 @@ export default function CoachingUpdateScreen() {
   const [note, setNote] = useState('');
   const [photoA, setPhotoA] = useState<string>();
   const [photoB, setPhotoB] = useState<string>();
-  const [video, setVideo] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,11 +68,17 @@ export default function CoachingUpdateScreen() {
       // Saving progress must NOT close the plan: the backend only returns a
       // Pending/InProgress plan, so sending 'Completed' here made the whole
       // coaching screen fall back to "Belum ada rencana coaching".
-      const payload = { status: 'InProgress' as const };
-      if (__DEV__) {
-        console.log(`[coaching] POST /api/driver/coaching/${coachingPlan.id}/progress`, payload);
+      const evidencePaths: string[] = [];
+      for (const uri of [photoA, photoB]) {
+        if (uri) evidencePaths.push(await uploadImage(uri, 'coaching'));
       }
-      await insightApi.updateCoaching(coachingPlan.id, payload.status);
+
+      await insightApi.updateCoaching(
+        coachingPlan.id,
+        'InProgress',
+        note.trim() || undefined,
+        evidencePaths.length > 0 ? evidencePaths : undefined,
+      );
       router.back();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Gagal menyimpan progres.');
@@ -82,9 +88,8 @@ export default function CoachingUpdateScreen() {
   };
 
   const evidence = [
-    { key: 'photo-1', label: 'Foto 1', uri: photoA, set: setPhotoA, capture: capturePhoto },
-    { key: 'photo-2', label: 'Foto 2', uri: photoB, set: setPhotoB, capture: capturePhoto },
-    { key: 'video', label: 'Video', uri: video, set: setVideo, capture: captureVideo },
+    { key: 'photo-1', label: 'Foto 1', uri: photoA, set: setPhotoA },
+    { key: 'photo-2', label: 'Foto 2', uri: photoB, set: setPhotoB },
   ];
 
   return (
@@ -221,7 +226,7 @@ export default function CoachingUpdateScreen() {
 
           <View>
             <Text variant="labelSm" color="textMuted" style={[styles.tracked, styles.sectionHead]}>
-              FOTO / VIDEO BUKTI
+              FOTO BUKTI
             </Text>
 
             <View style={styles.evidenceRow}>
@@ -229,7 +234,7 @@ export default function CoachingUpdateScreen() {
                 <Pressable
                   key={tile.key}
                   onPress={async () => {
-                    const uri = await tile.capture();
+                    const uri = await capturePhoto();
                     if (uri) tile.set(uri);
                   }}
                   accessibilityRole="button"
@@ -238,11 +243,7 @@ export default function CoachingUpdateScreen() {
                 >
                   {tile.uri ? (
                     <>
-                      {tile.key === 'video' ? (
-                        <Icon name="play" size={22} color={colors.onPrimary} />
-                      ) : (
-                        <Image source={{ uri: tile.uri }} style={styles.evidenceImage} resizeMode="cover" />
-                      )}
+                      <Image source={{ uri: tile.uri }} style={styles.evidenceImage} resizeMode="cover" />
                       <Pressable
                         onPress={() => tile.set(undefined)}
                         accessibilityRole="button"

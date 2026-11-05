@@ -471,8 +471,17 @@ export interface DocumentDetail {
   statusLabel: string;
   warning?: { title: string; body: string };
   rows: DocumentRow[];
-  /** Preview image of the physical card. Optional — the API does not ship one yet. */
+  /** Preview image of the physical card. */
   photoUrl?: string;
+}
+
+/** Row in the profile's DOKUMEN list — one entry per document on the server. */
+export interface ProfileDocument {
+  key: string;
+  title: string;
+  documentType: string;
+  status: DocumentStatus;
+  statusLabel: string;
 }
 
 export interface VehicleSpec {
@@ -588,4 +597,27 @@ export interface TripAsset {
   footNote: string;
   /** Icon shown beside the footer note. */
   footIcon: 'lock' | 'search';
+  /** FRD-MOB-ASSET-02 — present only for cold-chain assets. */
+  reefer?: TripAssetReefer;
+  /** FRD-MOB-ASSET-04 — chain-of-custody, newest first. */
+  custody: TripAssetCustodyRow[];
+}
+
+export interface TripAssetReefer {
+  temperatureC: number | null;
+  humidityPct: number | null;
+  minC: number | null;
+  maxC: number | null;
+  alarm: 'normal' | 'alarm' | 'unknown';
+  label: string;
+  at: string | null;
+}
+
+export interface TripAssetCustodyRow {
+  key: string;
+  at: string;
+  actor: string;
+  action: string;
+  location?: string;
+  note?: string;
 }

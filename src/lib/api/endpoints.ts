@@ -195,8 +195,16 @@ export const fuelApi = {
 
 export const insightApi = {
   coaching: () => apiRequest<Coaching>(`${BASE}/coaching`),
-  updateCoaching: (planId: string, status: 'InProgress' | 'Completed') =>
-    apiRequest<void>(`${BASE}/coaching/${planId}/progress`, { method: 'POST', body: { status } }),
+  updateCoaching: (
+    planId: string,
+    status: 'InProgress' | 'Completed',
+    note?: string,
+    evidencePaths?: string[],
+  ) =>
+    apiRequest<void>(`${BASE}/coaching/${planId}/progress`, {
+      method: 'POST',
+      body: { status, note, evidencePaths },
+    }),
   performance: () => apiRequest<Performance>(`${BASE}/performance`),
   activity: (days = 30, take = 50) =>
     apiRequest<ActivityEntry[]>(`${BASE}/activity`, { query: { days, take } }),
@@ -247,6 +255,12 @@ export const vehicleApi = {
 export const documentApi = {
   list: () => apiRequest<DriverDocumentSummary[]>(`${BASE}/documents`),
   detail: (id: string) => apiRequest<DriverDocumentDetail>(`${BASE}/documents/${id}`),
+  /** FRD-MOB-PROFILE-02 — `photoPath` comes from `uploadImage(uri, 'dokumen')`. */
+  replacePhoto: (id: string, photoPath: string) =>
+    apiRequest<void>(`${BASE}/documents/${id}/photo`, {
+      method: 'POST',
+      body: { photoPath },
+    }),
 };
 
 /* ── Settlement (M15) ───────────────────────────────────────────────── */

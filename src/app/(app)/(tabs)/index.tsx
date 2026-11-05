@@ -17,6 +17,7 @@ import { toDriver, toVehicle } from '@/data/adapters';
 import type { Trip, Vehicle } from '@/data/types';
 import { useDna, useHome, useVehicle } from '@/hooks/api/useDriverData';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useRealtime } from '@/hooks/useRealtime';
 import { useTrips } from '@/hooks/useTrips';
 import { formatDate, formatKm, formatWindow, scoreTone } from '@/lib/format';
 import { emptyDriver } from '@/store/app';
@@ -40,7 +41,15 @@ export default function HomeScreen() {
   const dna = useDna();
   const vehicleQuery = useVehicle();
   const { unreadCount } = useNotifications();
-  const { upcoming, active, accept } = useTrips();
+  const { upcoming, active, accept, refetch: refetchTrips } = useTrips();
+
+  // FRD-MOB-HOME-03 / INBOX-02 — trip baru dan skor DNA tampil tanpa refresh manual.
+  useRealtime('trips', () => void refetchTrips());
+  useRealtime('dna', () => {
+    void dna.refetch();
+    void home.refetch();
+  });
+
 
   const driver = home.data ? toDriver(home.data.profile, dna.data?.score ?? 0) : emptyDriver;
   const loading = home.loading;

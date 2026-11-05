@@ -203,6 +203,15 @@ export interface TripWarnings {
   history: TripWarningHistory[];
 }
 
+/** FRD-MOB-ASSET-04 — one chain-of-custody row (read-only). */
+export interface TripAssetCustody {
+  at: string;
+  actor: string;
+  action: string;
+  location: string | null;
+  note: string | null;
+}
+
 export interface TripAsset {
   key: string;
   code: string;
@@ -211,6 +220,15 @@ export interface TripAsset {
   statusTone: string;
   footNote: string;
   footIcon: string;
+  isReefer: boolean;
+  temperatureC: number | null;
+  humidityPct: number | null;
+  tempMinC: number | null;
+  tempMaxC: number | null;
+  alarmState: string | null;
+  alarmLabel: string | null;
+  telemetryAt: string | null;
+  custody: TripAssetCustody[];
 }
 
 export interface FuelLog {
@@ -450,15 +468,19 @@ export interface DriverDocumentDetail {
   status: string;
   statusLabel: string;
   rows: DriverDocumentRow[];
+  /** Path berkas di server (`uploads/...`); dipakai sebagai pratinjau. */
+  photoPath: string;
 }
 
 export interface DriverDocumentSummary {
   key: string;
   title: string;
+  documentType: string;
   note: string;
   status: string;
   statusLabel: string;
   hint: string | null;
+  photoPath: string;
 }
 
 export interface SettlementLine {

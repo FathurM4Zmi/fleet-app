@@ -5,8 +5,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { Badge, Button, Card, Screen, Sheet, Text, TextField } from '@/components/ui';
-import { toDriver, toVehicle } from '@/data/adapters';
-import { useDna, useHome, useVehicle } from '@/hooks/api/useDriverData';
+import { toDriver, toProfileDocument, toVehicle } from '@/data/adapters';
+import type { DocumentStatus } from '@/data/types';
+import { useDna, useDocuments, useHome, useVehicle } from '@/hooks/api/useDriverData';
 import { profileApi } from '@/lib/api/endpoints';
 import { formatDate, scoreTone } from '@/lib/format';
 import { emptyDriver } from '@/store/app';
@@ -25,11 +26,29 @@ interface MenuEntry {
   href: Href;
 }
 
+/** Document types seeded by the API (FRD-MOB-PROFILE-02). */
+const DOC_ICON: Record<string, IconName> = {
+  SIM: 'idCard',
+  KTP: 'contactCard',
+  'Sertifikat Homolog': 'verified',
+  STNK: 'document',
+  SKCK: 'shield',
+  KIR: 'verified',
+  'Foto Kendaraan': 'truck',
+};
+
+const DOC_TONE: Record<DocumentStatus, 'success' | 'warning' | 'critical'> = {
+  valid: 'success',
+  expiring: 'warning',
+  expired: 'critical',
+};
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const home = useHome();
   const dna = useDna();
   const vehicleQuery = useVehicle();
+  const documentsQuery = useDocuments();
   const { logout } = useAuth();
   const driver = home.data ? toDriver(home.data.profile, dna.data?.score ?? 0) : emptyDriver;
 
@@ -144,64 +163,8 @@ export default function ProfileScreen() {
     },
   ];
 
-  const documents = [
-    {
-      key: 'sim',
-      icon: 'idCard' as IconName,
-      label: 'SIM BII Umum',
-      status: 'Segera Habis',
-      tone: 'warning' as const,
-      href: '/documents/sim' as Href,
-    },
-    {
-      key: 'ktp',
-      icon: 'contactCard' as IconName,
-      label: 'KTP',
-      status: 'Valid',
-      tone: 'success' as const,
-      href: '/documents/ktp' as Href,
-    },
-    {
-      key: 'homolog',
-      icon: 'verified' as IconName,
-      label: 'Sertifikat Homolog',
-      status: 'Valid',
-      tone: 'success' as const,
-      href: '/documents/homolog' as Href,
-    },
-    {
-      key: 'stnk',
-      icon: 'document' as IconName,
-      label: 'STNK',
-      status: 'Valid',
-      tone: 'success' as const,
-      href: '/documents/stnk' as Href,
-    },
-    {
-      key: 'skck',
-      icon: 'shield' as IconName,
-      label: 'SKCK',
-      status: 'Segera Habis',
-      tone: 'warning' as const,
-      href: '/documents/skck' as Href,
-    },
-    {
-      key: 'kir',
-      icon: 'verified' as IconName,
-      label: 'KIR',
-      status: 'Segera Habis',
-      tone: 'warning' as const,
-      href: '/documents/kir' as Href,
-    },
-    {
-      key: 'kendaraan',
-      icon: 'truck' as IconName,
-      label: 'Foto Kendaraan',
-      status: 'Valid',
-      tone: 'success' as const,
-      href: '/documents/kendaraan' as Href,
-    },
-  ];
+  const documents = (documentsQuery.data ?? []).map(toProfileDocument);
+
 
   return (
     <Screen>
@@ -349,19 +312,30 @@ export default function ProfileScreen() {
             DOKUMEN
           </Text>
           <Card padded={false} shadow>
+            {documents.length === 0 ? (
+              <View style={styles.docRow}>
+                <Text variant="bodyMd" color="textSecondary">
+                  {documentsQuery.loading ? 'Memuat dokumen…' : 'Belum ada dokumen terdaftar.'}
+                </Text>
+              </View>
+            ) : null}
             {documents.map((document, index) => (
               <View key={document.key}>
                 <Pressable
-                  onPress={() => router.push(document.href)}
+                  onPress={() => router.push(`/documents/${document.key}` as Href)}
                   accessibilityRole="button"
                   style={({ pressed }) => [styles.docRow, pressed && styles.menuRowPressed]}
                 >
                   <View style={styles.docLeft}>
-                    <Icon name={document.icon} size={20} color={colors.secondary} />
-                    <Text variant="bodyBold">{document.label}</Text>
+                    <Icon
+                      name={DOC_ICON[document.documentType] ?? 'document'}
+                      size={20}
+                      color={colors.secondary}
+                    />
+                    <Text variant="bodyBold">{document.documentType}</Text>
                   </View>
                   <View style={styles.menuRight}>
-                    <Badge label={document.status} tone={document.tone} />
+                    <Badge label={document.statusLabel} tone={DOC_TONE[document.status]} />
                     <Icon name="forward" size={18} color={colors.secondary} />
                   </View>
                 </Pressable>

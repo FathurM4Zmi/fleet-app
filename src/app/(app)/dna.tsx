@@ -16,11 +16,14 @@ import {
 } from '@/components/ui';
 import { toDna } from '@/data/adapters';
 import { useDna } from '@/hooks/api/useDriverData';
+import { useRealtime } from '@/hooks/useRealtime';
 import { scoreTone } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
 
 export default function DnaScreen() {
   const query = useDna();
+  // FRD-MOB-DNA-02 — skor ter-update tanpa refresh manual setelah server menghitung ulang.
+  useRealtime('dna', () => void query.refetch());
   const dnaSummary = query.data ? toDna(query.data) : undefined;
 
   if (query.loading && !dnaSummary) {

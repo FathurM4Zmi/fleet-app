@@ -137,6 +137,15 @@ export default function SettlementScreen() {
           </View>
         </View>
 
+        {settlementSummary.rateMissing ? (
+          <View style={styles.rateWarning}>
+            <Icon name="warning" size={20} color={colors.warning} />
+            <Text variant="bodyMd" color="onSurfaceVariant" style={styles.noticeText}>
+              Rate card untuk kelas kendaraan ini belum ditetapkan.
+            </Text>
+          </View>
+        ) : null}
+
         <Card shadow style={styles.section}>
           <View style={styles.stepper}>
             <View style={styles.rail} />
@@ -296,8 +305,20 @@ export default function SettlementScreen() {
               <SlipMeta label="Status" value={slip.status} />
               <SlipMeta label="Periode" value={`${formatDate(slip.periodStart)} – ${formatDate(slip.periodEnd)}`} />
               <SlipMeta label="Jumlah Trip" value={`${slip.tripCount} trip`} />
-              <SlipMeta label="Tarif / km" value={`Rp ${formatNumber(slip.ratePerKm)}`} />
+              <SlipMeta
+                label="Tarif / km"
+                value={slip.ratePerKm > 0 ? `Rp ${formatNumber(slip.ratePerKm)}` : 'Belum ditetapkan'}
+              />
             </View>
+
+            {slip.ratePerKm <= 0 ? (
+              <View style={styles.rateWarning}>
+                <Icon name="warning" size={20} color={colors.warning} />
+                <Text variant="bodyMd" color="onSurfaceVariant" style={styles.noticeText}>
+                  Rate card untuk kelas kendaraan ini belum ditetapkan.
+                </Text>
+              </View>
+            ) : null}
 
             <Text variant="labelSm" color="textSecondary" style={styles.slipSection}>
               RINCIAN TRIP
@@ -314,7 +335,9 @@ export default function SettlementScreen() {
                       {formatDate(line.completedAt)} • {formatNumber(line.distanceKm)} km
                     </Text>
                   </View>
-                  <Text variant="bodyBold">Rp {formatNumber(line.amount)}</Text>
+                  <Text variant="bodyBold">
+                    {slip.ratePerKm > 0 ? `Rp ${formatNumber(line.amount)}` : '—'}
+                  </Text>
                 </View>
                 {index < slip.lines.length - 1 ? <View style={styles.rowDivider} /> : null}
               </View>
@@ -325,7 +348,7 @@ export default function SettlementScreen() {
                 TOTAL
               </Text>
               <Text variant="headlineSm" color="primaryContainer">
-                Rp {formatNumber(slip.totalAmount)}
+                {slip.ratePerKm > 0 ? `Rp ${formatNumber(slip.totalAmount)}` : '—'}
               </Text>
             </View>
           </ScrollView>
@@ -457,6 +480,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceLow,
   },
   noticeText: { flex: 1 },
+
+  rateWarning: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm + 4,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    backgroundColor: '#FDF1E3',
+  },
 
   historyRow: {
     flexDirection: 'row',

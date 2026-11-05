@@ -27,6 +27,7 @@ import type {
   TripWarning as TripWarningWire,
   TripWarningHistory as TripWarningHistoryWire,
 } from '@/lib/api/types';
+import { mediaUrl } from '@/lib/api/config';
 import { formatDate, formatDayDate, formatNumber, formatTime } from '@/lib/format';
 import type {
   ActivityCategory,
@@ -38,6 +39,7 @@ import type {
   ComplianceChecklistItem,
   DnaSummary,
   DocumentDetail,
+  ProfileDocument,
   DocumentStatus,
   Driver,
   FuelCardAccount,
@@ -583,6 +585,17 @@ export function toDocumentDetail(dto: DocumentDetailWire): DocumentDetail {
       mono: row.mono,
       badge: row.badge,
     })),
+    photoUrl: dto.photoPath ? mediaUrl(dto.photoPath) : undefined,
+  };
+}
+
+export function toProfileDocument(dto: DocumentSummaryWire): ProfileDocument {
+  return {
+    key: dto.key,
+    title: dto.title,
+    documentType: dto.documentType,
+    status: DOC_STATUS(dto.status),
+    statusLabel: dto.statusLabel,
   };
 }
 
@@ -640,6 +653,7 @@ export function toTripWarningHistory(dto: TripWarningHistoryWire): TripWarningHi
 }
 
 export function toTripAsset(dto: TripAssetWire): TripAsset {
+  const alarm = dto.alarmState === 'alarm' || dto.alarmState === 'normal' ? dto.alarmState : 'unknown';
   return {
     key: dto.key,
     code: dto.code,
@@ -648,10 +662,32 @@ export function toTripAsset(dto: TripAssetWire): TripAsset {
     statusTone: lower(dto.statusTone) === 'success' ? 'success' : 'warning',
     footNote: dto.footNote,
     footIcon: lower(dto.footIcon) === 'lock' ? 'lock' : 'search',
+    reefer: dto.isReefer
+      ? {
+          temperatureC: dto.temperatureC,
+          humidityPct: dto.humidityPct,
+          minC: dto.tempMinC,
+          maxC: dto.tempMaxC,
+          alarm,
+          label: dto.alarmLabel ?? 'Belum ada data suhu',
+          at: dto.telemetryAt,
+        }
+      : undefined,
+    custody: dto.custody.map((row, index) => ({
+      key: `${dto.key}-custody-${index}`,
+      at: row.at,
+      actor: row.actor,
+      action: row.action,
+      location: row.location ?? undefined,
+      note: row.note ?? undefined,
+    })),
   };
 }
 
 /* ── Settlement ─────────────────────────────────────────────────────── */
+
+/** Backend wording used as the `status` value when no rate card matches the period. */
+const RATE_MISSING_STATUS = 'Tarif belum ditetapkan';
 
 export function toSettlement(dto: SettlementWire): {
   summary: {
@@ -660,30 +696,34 @@ export function toSettlement(dto: SettlementWire): {
     status: string;
     paidNote: string;
     punctuality: string;
+    rateMissing: boolean;
   };
   lines: SettlementTripLine[];
   history: SettlementPeriod[];
   steps: SettlementStep[];
 } {
   const current = dto.periods[0];
+  // FRD-MOB-SET-03 — tanpa rate card, angka 0 menyesatkan; tampilkan "—" + pesan.
+  const rateMissing = dto.status === RATE_MISSING_STATUS;
   return {
     summary: {
       period: current?.label ?? 'Periode berjalan',
-      total: rupiah(Number(dto.amount)),
+      total: rateMissing ? '—' : rupiah(Number(dto.amount)),
       status: dto.status,
       paidNote: `${dto.tripCount} trip selesai`,
       punctuality: 'Estimasi',
+      rateMissing,
     },
     lines: dto.lines.map((line) => ({
       key: line.key,
       destination: line.destination,
       meta: line.meta,
-      amount: rupiah(Number(line.amount)),
+      amount: rateMissing ? '—' : rupiah(Number(line.amount)),
     })),
     history: dto.periods.map((period) => ({
       key: period.key,
       label: period.label,
-      amount: rupiah(Number(period.amount)),
+      amount: period.status === RATE_MISSING_STATUS ? '—' : rupiah(Number(period.amount)),
       status: period.status,
     })),
     steps: dto.steps.map((step) => ({

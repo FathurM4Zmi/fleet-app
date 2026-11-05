@@ -15,9 +15,9 @@ import {
   Text,
 } from '@/components/ui';
 import { toDocumentDetail } from '@/data/adapters';
-import { dummyDocumentDetail } from '@/data/documents';
 import { useDocument } from '@/hooks/api/useDriverData';
 import { mediaUrl } from '@/lib/api/config';
+import { documentApi } from '@/lib/api/endpoints';
 import { loadDocumentPhoto, saveDocumentPhoto } from '@/lib/documentPhotos';
 import { capturePhoto } from '@/lib/photo';
 import { uploadImage } from '@/lib/upload';
@@ -33,11 +33,7 @@ const STATUS_TONE: Record<DocumentStatus, 'success' | 'warning' | 'critical'> = 
 export default function DocumentDetailScreen() {
   const { documentKey } = useLocalSearchParams<{ documentKey: string }>();
   const query = useDocument(documentKey);
-  // The API only seeds documents for demo drivers. Fall back to the bundled
-  // sample so the screen still shows a filled card instead of an empty state.
-  const remote = query.data ? toDocumentDetail(query.data) : undefined;
-  const document = remote ?? dummyDocumentDetail(documentKey);
-  const usingDummy = !remote && Boolean(document);
+  const document = query.data ? toDocumentDetail(query.data) : undefined;
 
   // Driver-uploaded replacement photo, kept on the device.
   const [photoPath, setPhotoPath] = useState<string | undefined>();
@@ -55,15 +51,18 @@ export default function DocumentDetailScreen() {
   }, [documentKey]);
 
   const replacePhoto = async () => {
-    if (uploading) return;
+    if (uploading || !document) return;
     setUploadError(null);
     try {
       const uri = await capturePhoto();
       if (!uri) return;
       setUploading(true);
       const path = await uploadImage(uri, 'dokumen');
-      await saveDocumentPhoto(documentKey, path);
+      // FRD-MOB-PROFILE-02 — simpan ke server dulu, baru jadikan cache lokal.
+      await documentApi.replacePhoto(document.key, path);
+      await saveDocumentPhoto(document.key, path);
       setPhotoPath(path);
+      await query.refetch();
     } catch (caught) {
       setUploadError(caught instanceof Error ? caught.message : 'Gagal mengunggah foto.');
     } finally {
@@ -207,21 +206,12 @@ export default function DocumentDetailScreen() {
           ))}
         </Card>
 
-        {usingDummy ? (
-          <View style={styles.notice}>
-            <Icon name="info" size={18} color={colors.textSecondary} />
-            <Text variant="caption" color="textSecondary" style={styles.flex}>
-              Menampilkan data contoh — dokumen Anda belum tersinkron dari server.
-            </Text>
-          </View>
-        ) : null}
-
         {/* Notice */}
         <View style={styles.notice}>
           <Icon name="lock" size={18} color={colors.textSecondary} />
           <Text variant="caption" color="textSecondary" style={styles.flex}>
-            Data kartu dikelola administrator. Foto yang Anda unggah menggantikan tampilan
-            pratinjau di perangkat ini.
+            Judul dan masa berlaku dikelola administrator. Foto yang Anda unggah langsung
+            tersimpan sebagai berkas dokumen Anda.
           </Text>
         </View>
       </ScreenBody>

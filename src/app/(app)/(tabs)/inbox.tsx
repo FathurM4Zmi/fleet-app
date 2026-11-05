@@ -8,6 +8,7 @@ import { EmptyState, Screen, Text } from '@/components/ui';
 import { TripCard } from '@/components/TripCard';
 import type { Trip } from '@/data/types';
 import { useTasks } from '@/hooks/api/useDriverData';
+import { useRealtime } from '@/hooks/useRealtime';
 import { useTrips } from '@/hooks/useTrips';
 import { colors, radius, shadows, spacing } from '@/theme';
 
@@ -38,10 +39,13 @@ const matches = (trip: Trip, filter: FilterKey): boolean => {
 
 export default function InboxScreen() {
   const insets = useSafeAreaInsets();
-  const { accept, trips } = useTrips();
+  const { accept, trips, refetch } = useTrips();
   const tasks = useTasks({ take: 100 });
   const [filter, setFilter] = useState<FilterKey>('all');
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+
+  // FRD-MOB-INBOX-02 — trip baru ditugaskan langsung muncul tanpa refresh.
+  useRealtime('trips', () => void refetch());
 
   const handleAccept = async (tripId: string) => {
     if (acceptingId) return;

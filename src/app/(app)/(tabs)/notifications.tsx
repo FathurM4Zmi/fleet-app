@@ -7,6 +7,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { EmptyState, Screen, Text } from '@/components/ui';
 import type { Notification, NotificationSeverity } from '@/data/types';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useRealtime } from '@/hooks/useRealtime';
 import { formatRelative } from '@/lib/format';
 import { colors, radius, shadows, spacing } from '@/theme';
 
@@ -28,8 +29,11 @@ const SEVERITY: Record<NotificationSeverity, { bg: string; fg: string; icon: Ico
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
-  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+  const { notifications, unreadCount, markRead, markAllRead, refetch } = useNotifications();
   const [filter, setFilter] = useState<FilterKey>('all');
+
+  // FRD-MOB-NOTIF-02 — notifikasi Critical muncul tanpa pull-to-refresh.
+  useRealtime('notifications', () => void refetch());
 
   const visible = useMemo(
     () =>
