@@ -1,5 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
 import {
@@ -14,7 +15,12 @@ import {
   Text,
 } from '@/components/ui';
 import { toDocumentDetail } from '@/data/adapters';
+import { dummyDocumentDetail } from '@/data/documents';
 import { useDocument } from '@/hooks/api/useDriverData';
+import { mediaUrl } from '@/lib/api/config';
+import { loadDocumentPhoto, saveDocumentPhoto } from '@/lib/documentPhotos';
+import { capturePhoto } from '@/lib/photo';
+import { uploadImage } from '@/lib/upload';
 import { colors, radius, spacing } from '@/theme';
 import type { DocumentStatus } from '@/data/types';
 
@@ -27,7 +33,43 @@ const STATUS_TONE: Record<DocumentStatus, 'success' | 'warning' | 'critical'> = 
 export default function DocumentDetailScreen() {
   const { documentKey } = useLocalSearchParams<{ documentKey: string }>();
   const query = useDocument(documentKey);
-  const document = query.data ? toDocumentDetail(query.data) : undefined;
+  // The API only seeds documents for demo drivers. Fall back to the bundled
+  // sample so the screen still shows a filled card instead of an empty state.
+  const remote = query.data ? toDocumentDetail(query.data) : undefined;
+  const document = remote ?? dummyDocumentDetail(documentKey);
+  const usingDummy = !remote && Boolean(document);
+
+  // Driver-uploaded replacement photo, kept on the device.
+  const [photoPath, setPhotoPath] = useState<string | undefined>();
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void loadDocumentPhoto(documentKey).then((path) => {
+      if (active) setPhotoPath(path);
+    });
+    return () => {
+      active = false;
+    };
+  }, [documentKey]);
+
+  const replacePhoto = async () => {
+    if (uploading) return;
+    setUploadError(null);
+    try {
+      const uri = await capturePhoto();
+      if (!uri) return;
+      setUploading(true);
+      const path = await uploadImage(uri, 'dokumen');
+      await saveDocumentPhoto(documentKey, path);
+      setPhotoPath(path);
+    } catch (caught) {
+      setUploadError(caught instanceof Error ? caught.message : 'Gagal mengunggah foto.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (!document) {
     return (
@@ -44,6 +86,7 @@ export default function DocumentDetailScreen() {
 
   const tone = STATUS_TONE[document.status];
   const expiring = document.status !== 'valid';
+  const previewUri = photoPath ? mediaUrl(photoPath) : document.photoUrl;
 
   return (
     <Screen>
@@ -73,12 +116,21 @@ export default function DocumentDetailScreen() {
           </View>
 
           <View style={styles.previewBody}>
-            <View style={styles.photoTile}>
-              <Icon name="profile" size={30} color={colors.textMuted} />
-              <Text variant="labelSm" color="textMuted" style={styles.upper}>
-                FOTO
-              </Text>
-            </View>
+            {previewUri ? (
+              <Image
+                source={{ uri: previewUri }}
+                style={styles.photoImage}
+                resizeMode="cover"
+                accessibilityIgnoresInvertColors
+              />
+            ) : (
+              <View style={styles.photoTile}>
+                <Icon name="profile" size={30} color={colors.textMuted} />
+                <Text variant="labelSm" color={colors.textMuted} style={styles.upper}>
+                  FOTO
+                </Text>
+              </View>
+            )}
             <View style={styles.lines}>
               <View style={[styles.line, styles.lineW80]} />
               <View style={[styles.line, styles.lineW100]} />
@@ -155,19 +207,50 @@ export default function DocumentDetailScreen() {
           ))}
         </Card>
 
+        {usingDummy ? (
+          <View style={styles.notice}>
+            <Icon name="info" size={18} color={colors.textSecondary} />
+            <Text variant="caption" color="textSecondary" style={styles.flex}>
+              Menampilkan data contoh — dokumen Anda belum tersinkron dari server.
+            </Text>
+          </View>
+        ) : null}
+
         {/* Notice */}
         <View style={styles.notice}>
           <Icon name="lock" size={18} color={colors.textSecondary} />
           <Text variant="caption" color="textSecondary" style={styles.flex}>
-            Hanya administrator yang dapat memperbarui dokumen ini.
+            Data kartu dikelola administrator. Foto yang Anda unggah menggantikan tampilan
+            pratinjau di perangkat ini.
           </Text>
         </View>
       </ScreenBody>
 
       <BottomBar>
-        <Button label="Unggah Foto Baru" icon="upload" />
+        {uploadError ? (
+          <Text variant="caption" color="critical" align="center">
+            {uploadError}
+          </Text>
+        ) : null}
+        <Button
+          label={uploading ? 'Mengunggah…' : 'Unggah Foto Baru'}
+          icon="upload"
+          onPress={replacePhoto}
+          disabled={uploading}
+        />
         {expiring ? (
-          <Button label="Hubungi Supervisor" icon="headset" variant="secondary" size="md" />
+          <Button
+            label="Hubungi Supervisor"
+            icon="headset"
+            variant="secondary"
+            size="md"
+            onPress={() =>
+              Alert.alert(
+                'Hubungi Supervisor',
+                'Fitur demo: supervisor belum terhubung ke aplikasi.',
+              )
+            }
+          />
         ) : null}
       </BottomBar>
     </Screen>
@@ -200,6 +283,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.divider,
     gap: spacing.xs,
+  },
+  photoImage: {
+    width: 64,
+    height: 80,
+    borderRadius: radius.input,
+    backgroundColor: '#F1F5F9',
   },
   lines: { flex: 1, gap: spacing.sm },
   line: { height: 10, borderRadius: radius.pill, backgroundColor: '#F1F5F9' },

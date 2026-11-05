@@ -48,15 +48,31 @@ export default function CoachingUpdateScreen() {
   const total = coachingPlan.milestones.length;
   const percent = total ? Math.round((done / total) * 100) : 0;
 
+  // The backend only allows Pending → InProgress and InProgress → Completed.
+  // Posting 'InProgress' to a plan that is already Completed/Cancelled trips the
+  // domain guard in CoachingPlan.Start() and comes back as 422, so resolve the
+  // transition from the plan state the GET returned instead of sending it blind.
+  const alreadyClosed =
+    coachingPlan.status === 'Completed' || coachingPlan.status === 'Cancelled';
+
   const save = async () => {
     if (saving || !coachingPlan.id) return;
+    if (alreadyClosed) {
+      setError('Rencana coaching ini sudah ditutup, progres tidak bisa diubah lagi.');
+      return;
+    }
+
     setSaving(true);
     setError(null);
     try {
       // Saving progress must NOT close the plan: the backend only returns a
       // Pending/InProgress plan, so sending 'Completed' here made the whole
       // coaching screen fall back to "Belum ada rencana coaching".
-      await insightApi.updateCoaching(coachingPlan.id, 'InProgress');
+      const payload = { status: 'InProgress' as const };
+      if (__DEV__) {
+        console.log(`[coaching] POST /api/driver/coaching/${coachingPlan.id}/progress`, payload);
+      }
+      await insightApi.updateCoaching(coachingPlan.id, payload.status);
       router.back();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Gagal menyimpan progres.');
@@ -254,9 +270,14 @@ export default function CoachingUpdateScreen() {
         <View style={styles.footer}>
           <Button
             label={saving ? 'Menyimpan…' : 'Simpan Progres'}
-            disabled={saving}
+            disabled={saving || alreadyClosed}
             onPress={save}
           />
+          {alreadyClosed ? (
+            <Text variant="caption" color="textSecondary" align="center">
+              Rencana sudah {coachingPlan.status === 'Cancelled' ? 'dibatalkan' : 'selesai'}.
+            </Text>
+          ) : null}
           {error ? (
             <Text variant="caption" color="critical" align="center">
               {error}

@@ -422,6 +422,7 @@ export function toCoaching(dto: CoachingWire): {
           title: dto.plan.title,
           description: dto.plan.description,
           targetDate: dto.plan.targetDate,
+          status: dto.plan.status,
           milestones,
         }
       : null,

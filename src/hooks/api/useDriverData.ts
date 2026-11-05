@@ -35,6 +35,7 @@ export const useTripAssets = (tripId: string | undefined) =>
 
 /** BBM. */
 export const useFuelLogs = (take = 50) => useApiQuery(() => fuelApi.logs(take), [take]);
+export const useFuelStations = (take = 100) => useApiQuery(() => fuelApi.stations(take), [take]);
 export const useFuelCard = () => useApiQuery(fuelApi.card);
 export const useFuelTransactions = (take = 50) =>
   useApiQuery(() => fuelApi.cardTransactions(take), [take]);

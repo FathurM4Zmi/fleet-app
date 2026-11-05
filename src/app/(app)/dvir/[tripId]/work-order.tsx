@@ -15,6 +15,7 @@ import {
 } from '@/components/ui';
 import { useDvirForm } from '@/hooks/useDvirForm';
 import { useTrip } from '@/hooks/useTrip';
+import { mediaUrl } from '@/lib/api/config';
 import { formatDateTime, formatTime } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
 
@@ -192,7 +193,7 @@ export default function DvirWorkOrderScreen() {
               {photos.map((photo) => (
                 <View key={photo.id} style={styles.evidenceCard}>
                   <Image
-                    source={{ uri: photo.photoUri }}
+                    source={{ uri: mediaUrl(photo.photoUri) ?? photo.photoUri }}
                     style={styles.evidenceImage}
                     resizeMode="cover"
                   />

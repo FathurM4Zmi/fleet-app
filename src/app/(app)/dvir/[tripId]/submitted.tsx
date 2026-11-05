@@ -7,6 +7,7 @@ import { Badge, Button, Card, EmptyState, Screen, ScreenHeader, Text } from '@/c
 import { useDvirForm } from '@/hooks/useDvirForm';
 import { useTrips } from '@/hooks/useTrips';
 import { useTrip } from '@/hooks/useTrip';
+import { mediaUrl } from '@/lib/api/config';
 import { estimatedDurationHours, formatNumber, formatTime } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
 
@@ -197,7 +198,11 @@ export default function DvirSubmittedScreen() {
             <View style={styles.evidenceGrid}>
               {photos.map((photo) => (
                 <View key={photo.id} style={styles.evidenceCard}>
-                  <Image source={{ uri: photo.photoUri }} style={styles.evidenceImage} resizeMode="cover" />
+                  <Image
+                    source={{ uri: mediaUrl(photo.photoUri) ?? photo.photoUri }}
+                    style={styles.evidenceImage}
+                    resizeMode="cover"
+                  />
                   <View style={styles.evidenceTag}>
                     <View style={styles.evidenceDot} />
                     <Text variant="labelSm" color="#991B1B">

@@ -18,6 +18,7 @@ import type {
   DvirRecord,
   FuelCard,
   FuelLog,
+  FuelStation,
   FuelTransaction,
   LoginResponse,
   OdometerCorrection,
@@ -27,6 +28,7 @@ import type {
   RouteOption,
   SafetyEvent,
   Settlement,
+  SettlementSlip,
   TrackingPoint,
   TripAsset,
   TripTracking,
@@ -169,6 +171,8 @@ export const notificationApi = {
 
 export const fuelApi = {
   logs: (take = 50) => apiRequest<FuelLog[]>(`${BASE}/fuel`, { query: { take } }),
+  stations: (take = 100) =>
+    apiRequest<FuelStation[]>(`${BASE}/fuel/stations`, { query: { take } }),
   submit: (payload: {
     vehicleId: string;
     liters: number;
@@ -178,6 +182,9 @@ export const fuelApi = {
     receiptPath: string;
     tripId?: string | null;
     notes?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    locationName?: string | null;
   }) => apiRequest<{ id: string }>(`${BASE}/fuel`, { method: 'POST', body: payload }),
   card: () => apiRequest<FuelCard | null>(`${BASE}/fuel-card`),
   cardTransactions: (take = 50) =>
@@ -246,6 +253,11 @@ export const documentApi = {
 
 export const settlementApi = {
   summary: (months = 3) => apiRequest<Settlement>(`${BASE}/settlement`, { query: { months } }),
+  /** `period` is the `yyyy-MM` key from `summary().periods`; omit for the current month. */
+  slip: (period?: string) =>
+    apiRequest<SettlementSlip>(
+      `${BASE}/settlements/${encodeURIComponent(period ?? 'current')}`,
+    ),
 };
 
 /* ── Upload (foto DVIR / POD / BBM / kerusakan / insiden) ───────────── */

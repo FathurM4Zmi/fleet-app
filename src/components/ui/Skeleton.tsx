@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Animated, Easing, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Animated,
+  Easing,
+  Platform,
+  StyleSheet,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { colors, radius } from '@/theme';
 
@@ -22,13 +29,13 @@ export function Skeleton({ width = '100%', height = 16, cornerRadius = radius.in
           toValue: 1,
           duration: 700,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(opacity, {
           toValue: 0.5,
           duration: 700,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ]),
     );

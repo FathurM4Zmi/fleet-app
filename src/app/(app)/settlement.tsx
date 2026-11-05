@@ -1,10 +1,25 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import { BottomBar, Button, Card, EmptyState, Screen, ScreenBody, ScreenHeader, Text } from '@/components/ui';
+import {
+  BottomBar,
+  Button,
+  Card,
+  EmptyState,
+  Screen,
+  ScreenBody,
+  ScreenHeader,
+  Sheet,
+  Text,
+} from '@/components/ui';
 import { toSettlement } from '@/data/adapters';
 import type { SettlementStep, SettlementStepState } from '@/data/types';
 import { useSettlement } from '@/hooks/api/useDriverData';
+import { settlementApi } from '@/lib/api/endpoints';
+import type { SettlementSlip } from '@/lib/api/types';
+import { formatDate, formatNumber } from '@/lib/format';
+import { downloadSettlementPdf } from '@/lib/settlement';
 import { colors, radius, spacing } from '@/theme';
 
 const STEPS: SettlementStep[] = [
@@ -24,6 +39,13 @@ export default function SettlementScreen() {
   const query = useSettlement(3);
   const data = query.data ? toSettlement(query.data) : undefined;
 
+  const [slipOpen, setSlipOpen] = useState(false);
+  const [slip, setSlip] = useState<SettlementSlip | null>(null);
+  const [slipLoading, setSlipLoading] = useState(false);
+  const [slipError, setSlipError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadNote, setDownloadNote] = useState<string | null>(null);
+
   if (!data) {
     return (
       <Screen>
@@ -39,6 +61,37 @@ export default function SettlementScreen() {
 
   const { summary: settlementSummary, lines: settlementLines, history: settlementHistory } = data;
   const steps = data.steps.length > 0 ? data.steps : STEPS;
+
+  // `periods[0]` is the running period; the slip endpoint keys off "yyyy-MM".
+  const currentPeriod = settlementHistory[0]?.key ?? 'current';
+
+  const openSlip = async () => {
+    setSlipOpen(true);
+    if (slip) return;
+    setSlipLoading(true);
+    setSlipError(null);
+    try {
+      setSlip(await settlementApi.slip(currentPeriod));
+    } catch (caught) {
+      setSlipError(caught instanceof Error ? caught.message : 'Gagal memuat slip.');
+    } finally {
+      setSlipLoading(false);
+    }
+  };
+
+  const downloadPdf = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    setDownloadNote(null);
+    try {
+      await downloadSettlementPdf(currentPeriod, `slip-settlement-${currentPeriod}.pdf`);
+      setDownloadNote('Slip PDF disiapkan.');
+    } catch (caught) {
+      setDownloadNote(caught instanceof Error ? caught.message : 'Gagal mengunduh slip PDF.');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <Screen>
@@ -203,17 +256,95 @@ export default function SettlementScreen() {
       </ScreenBody>
 
       <BottomBar>
-        <Button label="Lihat Slip" icon="receipt" onPress={() => undefined} />
+        {downloadNote ? (
+          <Text variant="caption" color="textSecondary" align="center">
+            {downloadNote}
+          </Text>
+        ) : null}
+        <Button label="Lihat Slip" icon="receipt" onPress={openSlip} />
         <Pressable
+          onPress={downloadPdf}
+          disabled={downloading}
           accessibilityRole="button"
+          accessibilityLabel="Unduh slip settlement PDF"
           style={({ pressed }) => [styles.download, pressed && styles.pressed]}
         >
           <Text variant="bodyMd" color="secondary">
-            Unduh PDF
+            {downloading ? 'Menyiapkan PDF…' : 'Unduh PDF'}
           </Text>
         </Pressable>
       </BottomBar>
+
+      <Sheet
+        visible={slipOpen}
+        onClose={() => setSlipOpen(false)}
+        title="Slip Settlement"
+        description={slip ? `${slip.slipNumber} • ${slip.periodLabel}` : 'Memuat rincian…'}
+      >
+        {slipLoading ? (
+          <View style={styles.slipLoading}>
+            <ActivityIndicator color={colors.primaryContainer} />
+          </View>
+        ) : slipError ? (
+          <Text variant="bodyMd" color="critical">
+            {slipError}
+          </Text>
+        ) : slip ? (
+          <ScrollView style={styles.slipScroll} showsVerticalScrollIndicator={false}>
+            <View style={styles.slipMeta}>
+              <SlipMeta label="Driver" value={slip.driverName} />
+              <SlipMeta label="Status" value={slip.status} />
+              <SlipMeta label="Periode" value={`${formatDate(slip.periodStart)} – ${formatDate(slip.periodEnd)}`} />
+              <SlipMeta label="Jumlah Trip" value={`${slip.tripCount} trip`} />
+              <SlipMeta label="Tarif / km" value={`Rp ${formatNumber(slip.ratePerKm)}`} />
+            </View>
+
+            <Text variant="labelSm" color="textSecondary" style={styles.slipSection}>
+              RINCIAN TRIP
+            </Text>
+
+            {slip.lines.map((line, index) => (
+              <View key={line.tripId}>
+                <View style={styles.slipLine}>
+                  <View style={styles.lineBody}>
+                    <Text variant="bodyMd" numberOfLines={1}>
+                      {line.code} • {line.destination}
+                    </Text>
+                    <Text variant="labelSm" color="textSecondary">
+                      {formatDate(line.completedAt)} • {formatNumber(line.distanceKm)} km
+                    </Text>
+                  </View>
+                  <Text variant="bodyBold">Rp {formatNumber(line.amount)}</Text>
+                </View>
+                {index < slip.lines.length - 1 ? <View style={styles.rowDivider} /> : null}
+              </View>
+            ))}
+
+            <View style={styles.totalRow}>
+              <Text variant="bodyBold" style={styles.tracked}>
+                TOTAL
+              </Text>
+              <Text variant="headlineSm" color="primaryContainer">
+                Rp {formatNumber(slip.totalAmount)}
+              </Text>
+            </View>
+          </ScrollView>
+        ) : null}
+      </Sheet>
     </Screen>
+  );
+}
+
+function SlipMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.slipMetaRow}>
+      <Text variant="labelMd" color="textSecondary">
+        {label}
+      </Text>
+      <Text variant="bodyBold" numberOfLines={1} style={styles.slipMetaValue}>
+        {value}
+      </Text>
+    </View>
   );
 }
 
@@ -347,4 +478,26 @@ const styles = StyleSheet.create({
   },
 
   download: { height: 40, alignItems: 'center', justifyContent: 'center' },
+
+  slipLoading: { paddingVertical: spacing.xl, alignItems: 'center' },
+  slipScroll: { maxHeight: 420 },
+  slipMeta: { gap: spacing.xs + 2 },
+  slipMetaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
+  slipMetaValue: { flexShrink: 1, textAlign: 'right' },
+  slipSection: {
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginTop: spacing.lg,
+    marginBottom: spacing.xs,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.divider,
+  },
+  slipLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
 });

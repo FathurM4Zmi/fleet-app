@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import { API_BASE_URL, API_TIMEOUT_MS, UPLOAD_TIMEOUT_MS } from './config';
 
 export class ApiError extends Error {
@@ -183,7 +185,15 @@ export async function apiUpload(
     const form = new FormData();
     // React Native accepts the `{ uri, name, type }` shape directly. Never set
     // Content-Type by hand: the runtime has to add the multipart boundary.
-    form.append(field, file as unknown as Blob);
+    // On web there is no such shape: FormData would stringify the object to
+    // "[object Object]", the request would arrive without a file part and the
+    // server answers 400. Fetch the blob:/data: URI into a real Blob first.
+    if (Platform.OS === 'web') {
+      const blob = await (await fetch(file.uri)).blob();
+      form.append(field, blob, file.name);
+    } else {
+      form.append(field, file as unknown as Blob);
+    }
 
     const token = await tokenProvider();
     const response = await fetch(`${API_BASE_URL}${path}`, {

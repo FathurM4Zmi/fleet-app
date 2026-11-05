@@ -1,7 +1,9 @@
+import * as Location from 'expo-location';
 import { useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
+import { MapCanvas } from '@/components/MapCanvas';
 import {
   BottomBar,
   Button,
@@ -12,7 +14,7 @@ import {
   Text,
 } from '@/components/ui';
 import { toVehicle } from '@/data/adapters';
-import { useVehicle } from '@/hooks/api/useDriverData';
+import { useFuelStations, useVehicle } from '@/hooks/api/useDriverData';
 import { useTrips } from '@/hooks/useTrips';
 import { ApiError } from '@/lib/api/client';
 import { fuelApi } from '@/lib/api/endpoints';
@@ -22,9 +24,29 @@ import { capturePhoto } from '@/lib/photo';
 import { uploadImage } from '@/lib/upload';
 import { colors, radius, shadows, spacing, typography } from '@/theme';
 
+/** Metres between two coordinates — used to snap a tap to a nearby SPBU. */
+function distanceMeters(
+  a: { latitude: number; longitude: number },
+  b: { latitude: number; longitude: number },
+): number {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const earthRadius = 6_371_000;
+  const dLat = toRad(b.latitude - a.latitude);
+  const dLon = toRad(b.longitude - a.longitude);
+  const lat1 = toRad(a.latitude);
+  const lat2 = toRad(b.latitude);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 2 * earthRadius * Math.asin(Math.sqrt(h));
+}
+
+/** Radius where a tap counts as "this SPBU" instead of a free point. */
+const STATION_SNAP_METERS = 750;
+
 export default function FuelLogScreen() {
   const { nextTrip } = useTrips();
   const vehicleQuery = useVehicle();
+  const stationsQuery = useFuelStations();
   const vehicle = useMemo(
     () => (vehicleQuery.data ? toVehicle(vehicleQuery.data) : undefined),
     [vehicleQuery.data],
@@ -36,6 +58,9 @@ export default function FuelLogScreen() {
   const [price, setPrice] = useState('14500');
   const [station, setStation] = useState('');
   const [receiptUri, setReceiptUri] = useState<string | undefined>();
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationNote, setLocationNote] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +86,82 @@ export default function FuelLogScreen() {
     if (uri) setReceiptUri(uri);
   };
 
+  /**
+   * Centres the picker on the device position. Reverse geocoding is not used:
+   * Expo removed it in SDK 49, so the driver picks the SPBU on the map instead.
+   */
+  const useCurrentLocation = async () => {
+    if (locating) return;
+    setLocating(true);
+    setLocationNote(null);
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (!permission.granted) {
+        setLocationNote('Izin lokasi ditolak. Pilih titik SPBU di peta.');
+        return;
+      }
+
+      const position = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const { latitude, longitude } = position.coords;
+      setCoords({ latitude, longitude });
+      setLocationNote(
+        `Lokasi saat ini: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+      );
+    } catch {
+      setLocationNote('Gagal membaca lokasi. Periksa GPS lalu coba lagi.');
+    } finally {
+      setLocating(false);
+    }
+  };
+
+  const stations = useMemo(
+    () =>
+      (stationsQuery.data ?? []).filter(
+        (item): item is typeof item & { latitude: number; longitude: number } =>
+          typeof item.latitude === 'number' && typeof item.longitude === 'number',
+      ),
+    [stationsQuery.data],
+  );
+
+  /** Tap on the map: snap to the nearest SPBU, otherwise keep the raw point. */
+  const handleMapPress = (point: { latitude: number; longitude: number }) => {
+    if (!Number.isFinite(point.latitude) || !Number.isFinite(point.longitude)) return;
+
+    let nearest: (typeof stations)[number] | undefined;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    for (const item of stations) {
+      const distance = distanceMeters(point, item);
+      if (distance < nearestDistance) {
+        nearest = item;
+        nearestDistance = distance;
+      }
+    }
+
+    if (nearest && nearestDistance <= STATION_SNAP_METERS) {
+      setCoords({ latitude: nearest.latitude, longitude: nearest.longitude });
+      setStation(nearest.name);
+      setLocationNote(`${nearest.name}${nearest.city ? ` · ${nearest.city}` : ''}`);
+      return;
+    }
+
+    setCoords(point);
+    setLocationNote(`Titik peta: ${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}`);
+  };
+
+  const mapMarkers = useMemo(
+    () => [
+      ...stations.map((item) => ({
+        latitude: item.latitude,
+        longitude: item.longitude,
+        color: colors.primaryContainer,
+      })),
+      ...(coords ? [{ ...coords, color: colors.primary }] : []),
+    ],
+    [stations, coords],
+  );
+
   const handleSave = async () => {
     if (!canSubmit || !receiptUri || saving) return;
     setSaving(true);
@@ -76,6 +177,11 @@ export default function FuelLogScreen() {
         receiptPath,
         tripId: nextTrip?.id ?? null,
         notes: null,
+        latitude: coords?.latitude ?? null,
+        longitude: coords?.longitude ?? null,
+        locationName: coords
+          ? station.trim() || `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`
+          : null,
       };
 
       try {
@@ -270,10 +376,54 @@ export default function FuelLogScreen() {
               placeholderTextColor={colors.textMuted}
               style={[styles.input, styles.inputWithPrefix]}
             />
-            <Pressable accessibilityRole="button" accessibilityLabel="Cari SPBU terdekat" hitSlop={8}>
-              <Icon name="recenter" size={20} color={colors.secondary} />
+            <Pressable
+              onPress={useCurrentLocation}
+              disabled={locating}
+              accessibilityRole="button"
+              accessibilityLabel="Gunakan lokasi saat ini"
+              hitSlop={8}
+            >
+              <Icon
+                name="recenter"
+                size={20}
+                color={locating ? colors.textMuted : colors.primaryContainer}
+              />
             </Pressable>
           </View>
+
+          <Pressable
+            onPress={useCurrentLocation}
+            disabled={locating}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.locationRow, pressed && styles.pressed]}
+          >
+            <Icon name="location" size={16} color={colors.primaryContainer} />
+            <Text variant="labelMd" color="primaryContainer">
+              {locating ? 'Membaca lokasi…' : 'Gunakan lokasi saat ini'}
+            </Text>
+          </Pressable>
+
+          {coords ? (
+            <Text variant="labelSm" color="textMuted">
+              {locationNote}
+            </Text>
+          ) : locationNote ? (
+            <Text variant="labelSm" color="warning">
+              {locationNote}
+            </Text>
+          ) : null}
+
+          {/* Peta pemilihan titik pengisian (FRD-MOB-FUEL-02). */}
+          <MapCanvas
+            height={190}
+            markers={mapMarkers}
+            selected={coords}
+            onPressPoint={handleMapPress}
+            emptyLabel="Memuat peta SPBU…"
+          />
+          <Text variant="labelSm" color="secondary">
+            Ketuk titik SPBU di peta untuk mengisi nama dan koordinat otomatis.
+          </Text>
         </View>
 
         {/* Receipt */}
@@ -381,6 +531,8 @@ const styles = StyleSheet.create({
   },
 
   fieldGroup: { gap: spacing.sm, marginTop: spacing.lg },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs + 2 },
+  pressed: { opacity: 0.85 },
   fieldLabel: { textTransform: 'uppercase' },
   labelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   inputShell: {

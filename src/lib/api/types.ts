@@ -223,6 +223,20 @@ export interface FuelLog {
   receiptPath: string | null;
   createdAt: string;
   syncStatus: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  locationName?: string | null;
+}
+
+/** SPBU aktif berkoordinat (FRD-MOB-FUEL-02) — dipakai peta saat mencatat BBM. */
+export interface FuelStation {
+  id: string;
+  code: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface FuelCard {
@@ -258,6 +272,8 @@ export interface CoachingPlan {
   title: string;
   description: string;
   targetDate: string;
+  /** `Pending` | `InProgress` | `Completed` | `Cancelled` — drives which progress update is legal. */
+  status: string;
   milestones: CoachingMilestone[];
 }
 
@@ -472,6 +488,33 @@ export interface Settlement {
   periods: SettlementPeriod[];
   lines: SettlementLine[];
   steps: SettlementStep[];
+}
+
+/** One trip row inside a settlement slip (FRD-MOB-SETTLE-02). */
+export interface SettlementSlipLine {
+  tripId: string;
+  code: string;
+  destination: string;
+  completedAt: string;
+  distanceKm: number;
+  ratePerKm: number;
+  amount: number;
+}
+
+/** `GET /api/driver/settlements/{period}` — source of the "Lihat Slip" sheet. */
+export interface SettlementSlip {
+  slipNumber: string;
+  periodKey: string;
+  periodLabel: string;
+  driverName: string;
+  status: string;
+  totalAmount: number;
+  tripCount: number;
+  ratePerKm: number;
+  periodStart: string;
+  periodEnd: string;
+  lines: SettlementSlipLine[];
+  generatedAt: string;
 }
 
 export interface UploadResult {

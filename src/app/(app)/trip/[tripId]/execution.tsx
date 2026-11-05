@@ -5,6 +5,7 @@ import {
   Animated,
   Easing,
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -108,7 +109,7 @@ export default function TripExecutionScreen() {
       <ScreenHeader
         title="Trip Aktif"
         onBack
-        right={<WorkingBadge />}
+        right={completed ? <FinishedBadge /> : <WorkingBadge />}
       />
 
       <ScrollView
@@ -282,20 +283,47 @@ export default function TripExecutionScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        {status === 'arrived' ? (
-          <Button
-            label="Ambil Bukti Kirim (POD)"
-            variant="secondary"
-            icon="camera"
-            onPress={() => router.push(`/pod/${trip.id}/capture`)}
-          />
-        ) : null}
-        <Button
-          label={busy ? 'Menyimpan…' : primaryLabel}
-          icon="pin"
-          disabled={completed || busy}
-          onPress={() => void handlePrimary()}
-        />
+        {completed ? (
+          <View style={styles.finished}>
+            <View style={styles.finishedRow}>
+              <View style={styles.finishedIcon}>
+                <Icon name="success" size={22} color={colors.success} />
+              </View>
+              <View style={styles.flex}>
+                <Text variant="bodyBold">
+                  {status === 'rejected' ? 'Trip sudah ditutup' : 'Trip sudah selesai'}
+                </Text>
+                <Text variant="caption" color="textSecondary">
+                  {status === 'rejected'
+                    ? 'Penugasan ini tidak dilanjutkan.'
+                    : 'Semua tahapan trip ini sudah tercatat.'}
+                </Text>
+              </View>
+            </View>
+            <Button
+              label="Kembali ke Halaman Beranda"
+              icon="home"
+              onPress={() => router.replace('/')}
+            />
+          </View>
+        ) : (
+          <>
+            {status === 'arrived' ? (
+              <Button
+                label="Ambil Bukti Kirim (POD)"
+                variant="secondary"
+                icon="camera"
+                onPress={() => router.push(`/pod/${trip.id}/capture`)}
+              />
+            ) : null}
+            <Button
+              label={busy ? 'Menyimpan…' : primaryLabel}
+              icon="pin"
+              disabled={busy}
+              onPress={() => void handlePrimary()}
+            />
+          </>
+        )}
       </View>
     </Screen>
   );
@@ -311,13 +339,13 @@ function WorkingBadge() {
           toValue: 0.3,
           duration: 700,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(pulse, {
           toValue: 1,
           duration: 700,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ]),
     );
@@ -330,6 +358,17 @@ function WorkingBadge() {
       <Animated.View style={[styles.workingDot, { opacity: pulse }]} />
       <Text variant="labelMd" color="primaryContainer">
         Dikerjakan
+      </Text>
+    </View>
+  );
+}
+
+function FinishedBadge() {
+  return (
+    <View style={styles.finishedBadge}>
+      <Icon name="success" size={16} color={colors.success} />
+      <Text variant="labelMd" color="success">
+        Selesai
       </Text>
     </View>
   );
@@ -455,6 +494,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.infoContainer,
   },
   workingDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primaryContainer },
+  finishedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.successContainer,
+  },
+  finished: { gap: spacing.md },
+  finishedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  finishedIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.successContainer,
+  },
 
   // Map
   map: { height: 260, borderBottomWidth: 1, borderBottomColor: colors.divider },

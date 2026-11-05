@@ -1,6 +1,6 @@
 import { router, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
@@ -168,6 +168,38 @@ export default function ProfileScreen() {
       status: 'Valid',
       tone: 'success' as const,
       href: '/documents/homolog' as Href,
+    },
+    {
+      key: 'stnk',
+      icon: 'document' as IconName,
+      label: 'STNK',
+      status: 'Valid',
+      tone: 'success' as const,
+      href: '/documents/stnk' as Href,
+    },
+    {
+      key: 'skck',
+      icon: 'shield' as IconName,
+      label: 'SKCK',
+      status: 'Segera Habis',
+      tone: 'warning' as const,
+      href: '/documents/skck' as Href,
+    },
+    {
+      key: 'kir',
+      icon: 'verified' as IconName,
+      label: 'KIR',
+      status: 'Segera Habis',
+      tone: 'warning' as const,
+      href: '/documents/kir' as Href,
+    },
+    {
+      key: 'kendaraan',
+      icon: 'truck' as IconName,
+      label: 'Foto Kendaraan',
+      status: 'Valid',
+      tone: 'success' as const,
+      href: '/documents/kendaraan' as Href,
     },
   ];
 
@@ -350,14 +382,19 @@ export default function ProfileScreen() {
 
         <Pressable
           onPress={() => {
-            Alert.alert(
-              'Keluar dari akun?',
-              'Data yang belum terkirim tetap disimpan di perangkat dan akan dikirim saat Anda masuk kembali.',
-              [
-                { text: 'Batal', style: 'cancel' },
-                { text: 'Keluar', style: 'destructive', onPress: () => void logout() },
-              ],
-            );
+            const message =
+              'Data yang belum terkirim tetap disimpan di perangkat dan akan dikirim saat Anda masuk kembali.';
+            // react-native-web ships a no-op Alert (dist/exports/Alert is an
+            // empty class), so a confirmation dialog on web silently did
+            // nothing and the logout button never fired.
+            if (Platform.OS === 'web') {
+              if (globalThis.confirm?.(`Keluar dari akun?\n\n${message}`)) void logout();
+              return;
+            }
+            Alert.alert('Keluar dari akun?', message, [
+              { text: 'Batal', style: 'cancel' },
+              { text: 'Keluar', style: 'destructive', onPress: () => void logout() },
+            ]);
           }}
           accessibilityRole="button"
           style={styles.logout}

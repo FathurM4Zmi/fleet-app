@@ -236,6 +236,8 @@ export interface CoachingPlan {
   description: string;
   /** e.g. `25 Apr`. */
   targetDate: string;
+  /** Backend state: `Pending` | `InProgress` | `Completed` | `Cancelled`. */
+  status: string;
   milestones: CoachingMilestone[];
 }
 
@@ -469,6 +471,8 @@ export interface DocumentDetail {
   statusLabel: string;
   warning?: { title: string; body: string };
   rows: DocumentRow[];
+  /** Preview image of the physical card. Optional — the API does not ship one yet. */
+  photoUrl?: string;
 }
 
 export interface VehicleSpec {

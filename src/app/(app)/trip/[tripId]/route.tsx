@@ -141,7 +141,7 @@ export default function TripRouteScreen() {
   );
 }
 
-/** Real OpenStreetMap view of the GPS trail; falls back to a placeholder label. */
+/** Real map view of the GPS trail; falls back to a placeholder label. */
 function TrailMap({
   trail,
   live,

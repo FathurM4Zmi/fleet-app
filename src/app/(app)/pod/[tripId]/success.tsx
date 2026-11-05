@@ -7,6 +7,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { Button, Card, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
 import { usePodForm } from '@/hooks/usePodForm';
 import { useTrip } from '@/hooks/useTrip';
+import { mediaUrl } from '@/lib/api/config';
 import { formatDateTime } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
 
@@ -104,7 +105,11 @@ export default function PodSuccessScreen() {
             <View style={styles.photoGrid}>
               {pod.photoUris.slice(0, 4).map((uri, index) => (
                 <View key={uri} style={styles.photoTile}>
-                  <Image source={{ uri }} style={styles.photoImage} resizeMode="cover" />
+                  <Image
+                    source={{ uri: mediaUrl(uri) ?? uri }}
+                    style={styles.photoImage}
+                    resizeMode="cover"
+                  />
                   <View style={styles.photoLabel}>
                     <Text variant="labelSm" color={colors.onPrimary}>
                       #{index + 1} {PHOTO_LABELS[index] ?? 'Foto'}

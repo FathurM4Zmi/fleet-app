@@ -54,9 +54,17 @@ export const UPLOAD_TIMEOUT_MS = 60_000;
  */
 export const AUTH_TIMEOUT_MS = 10_000;
 
-/** Absolute URL for a stored evidence path (`uploads/...`). */
+/**
+ * Absolute URL for a stored evidence path (`uploads/...`).
+ *
+ * Local and inline URIs (a freshly captured `file://`/`blob:` photo, a `data:`
+ * preview) already carry their own scheme and must be returned untouched —
+ * prefixing them with the API host produces a 404 against Metro.
+ */
+const ABSOLUTE_URI = /^(https?|file|blob|data|content):/i;
+
 export function mediaUrl(path: string | null | undefined): string | undefined {
   if (!path) return undefined;
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (ABSOLUTE_URI.test(path)) return path;
   return `${API_BASE_URL}/${path.replace(/^\/+/, '')}`;
 }
