@@ -160,6 +160,9 @@ export interface TripTracking {
   lastSeenAt: string | null;
   isLive: boolean;
   trail: TrackingPoint[];
+  /** FRD-MOB-TRK-03 — telemetri ringkas; null bila kendaraan tidak mengirimkannya. */
+  fuelLevelPct: number | null;
+  ignitionOn: boolean | null;
 }
 
 export interface RouteOption {

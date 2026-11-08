@@ -111,6 +111,28 @@ export default function TripRouteScreen() {
           <TelemetryRow icon="speed" label="Kecepatan" value={`${Math.round(speed)} km/h`} />
           <View style={styles.divider} />
           <TelemetryRow
+            icon="fuel"
+            label="Level BBM"
+            value={
+              tracking?.fuelLevelPct != null
+                ? `${Math.round(tracking.fuelLevelPct)}%`
+                : 'Tidak tersedia'
+            }
+          />
+          <View style={styles.divider} />
+          <TelemetryRow
+            icon="power"
+            label="Mesin"
+            value={
+              tracking?.ignitionOn == null
+                ? 'Tidak tersedia'
+                : tracking.ignitionOn
+                  ? 'Menyala'
+                  : 'Mati'
+            }
+          />
+          <View style={styles.divider} />
+          <TelemetryRow
             icon="sensors"
             label="Titik jejak 6 jam"
             value={`${tracking?.trail.length ?? 0} titik`}
@@ -188,7 +210,7 @@ function TelemetryRow({
   label,
   value,
 }: {
-  icon: 'speed' | 'sensors' | 'schedule';
+  icon: 'speed' | 'sensors' | 'schedule' | 'fuel' | 'power';
   label: string;
   value: string;
 }) {
