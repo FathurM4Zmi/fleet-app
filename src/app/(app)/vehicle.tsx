@@ -16,6 +16,7 @@ import {
 } from '@/components/ui';
 import { toVehicle, toVehicleDetail, toVehicleDocument } from '@/data/adapters';
 import { useVehicle, useVehicleDocuments } from '@/hooks/api/useDriverData';
+import { useRealtime } from '@/hooks/useRealtime';
 import { colors, radius, spacing } from '@/theme';
 import type { DocumentStatus } from '@/data/types';
 
@@ -34,6 +35,12 @@ const DOC_ICON: Record<string, IconName> = {
 export default function VehicleScreen() {
   const vehicleQuery = useVehicle();
   const documentsQuery = useVehicleDocuments(vehicleQuery.data?.vehicleId);
+
+  // FRD-MOB-VEH-03 — ring skor kesehatan ikut berubah saat server memperbarui DNA.
+  useRealtime('vehicle', () => {
+    void vehicleQuery.refetch();
+    void documentsQuery.refetch();
+  });
   const detail = vehicleQuery.data
     ? toVehicleDetail(
         vehicleQuery.data,

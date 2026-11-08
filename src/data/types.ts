@@ -294,6 +294,8 @@ export interface ActivityEntry {
   /** e.g. `08:02`. */
   time: string;
   tone: ActivityTone;
+  /** FRD-MOB-ACT-03 — entri dari antrian offline yang belum tersinkron. */
+  pending?: boolean;
 }
 
 export type SettlementStepState = 'done' | 'active' | 'upcoming';
@@ -540,6 +542,8 @@ export interface SafetyEvent {
   metricNote: string;
   /** Renders a photo thumbnail tile when true. */
   hasPhoto: boolean;
+  /** FRD-MOB-SAF-02 — tautan video vendor (dibuka di luar aplikasi). */
+  videoUrl: string | null;
 }
 
 /** One selectable route on the Pilih Rute screen. */

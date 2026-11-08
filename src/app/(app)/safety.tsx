@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
@@ -198,6 +198,20 @@ function SafetyRow({ event }: { event: SafetyEvent }) {
           </Text>
           <Text variant="labelSm">{event.metricNote}</Text>
         </View>
+
+        {event.videoUrl ? (
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Buka video vendor"
+            onPress={() => void Linking.openURL(event.videoUrl as string).catch(() => undefined)}
+            style={styles.videoLink}
+          >
+            <Icon name="forward" size={14} color={colors.primaryContainer} />
+            <Text variant="labelSm" color="primaryContainer">
+              Buka video vendor
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {event.hasPhoto ? (
@@ -308,6 +322,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: radius.sm,
     backgroundColor: colors.surfaceLow,
+  },
+  videoLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 4,
+    marginTop: spacing.sm,
   },
   thumb: {
     width: 60,

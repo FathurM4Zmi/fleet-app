@@ -12,7 +12,13 @@ import { currentToken } from '@/lib/auth/session';
  * name — each screen knows how to refresh itself, so one event can serve several
  * FRDs without a bespoke payload per feature.
  */
-export type RealtimeScope = 'notifications' | 'trips' | 'dna' | 'vehicle' | 'alerts';
+export type RealtimeScope =
+  | 'notifications'
+  | 'trips'
+  | 'dna'
+  | 'tracking'
+  | 'vehicle'
+  | 'alerts';
 
 type Listener = (scope: string) => void;
 

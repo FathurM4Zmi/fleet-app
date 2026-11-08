@@ -21,6 +21,7 @@ import type {
   FuelStation,
   FuelTransaction,
   LoginResponse,
+  NotificationPreference,
   OdometerCorrection,
   OtpRequestResult,
   PagedResult,
@@ -116,6 +117,11 @@ export const tripOpsApi = {
   assets: (tripId: string) => apiRequest<TripAsset[]>(`${BASE}/trips/${tripId}/assets`),
   checkAsset: (tripId: string, assetId: string) =>
     apiRequest<void>(`${BASE}/trips/${tripId}/assets/${assetId}/check`, { method: 'POST' }),
+  /** FRD-MOB-TRK-02 — kirim posisi GPS perangkat; server yang menakar intervalnya. */
+  reportPosition: (
+    tripId: string,
+    payload: { latitude: number; longitude: number; speed?: number | null; heading?: number | null },
+  ) => apiRequest<void>(`${BASE}/trips/${tripId}/positions`, { method: 'POST', body: payload }),
 };
 
 /* ── DVIR (M17) ─────────────────────────────────────────────────────── */
@@ -165,6 +171,13 @@ export const notificationApi = {
   list: (params: { isRead?: boolean; page?: number; pageSize?: number } = {}) =>
     apiRequest<PagedResult<AppNotification>>(`${BASE}/notifications`, { query: params }),
   read: (id: string) => apiRequest<void>(`${BASE}/notifications/${id}/read`, { method: 'POST' }),
+  /** FRD-MOB-NOTIF-04 — preferensi milik driver sendiri. */
+  preferences: () => apiRequest<NotificationPreference[]>(`${BASE}/notification-preferences`),
+  setPreference: (notificationType: string, isEnabled: boolean) =>
+    apiRequest<{ id: string }>(`${BASE}/notification-preferences`, {
+      method: 'PUT',
+      body: { notificationType, isEnabled },
+    }),
 };
 
 /* ── BBM & kartu (M07/M22) ──────────────────────────────────────────── */

@@ -499,6 +499,7 @@ export function toSafetyEvent(dto: SafetyEventWire): SafetyEvent {
     metric: dto.metric,
     metricNote: dto.metricNote,
     hasPhoto: dto.hasPhoto,
+    videoUrl: dto.videoUrl ?? null,
   };
 }
 

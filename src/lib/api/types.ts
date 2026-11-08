@@ -136,6 +136,13 @@ export interface AppNotification {
   createdAt: string;
 }
 
+export interface NotificationPreference {
+  id: string;
+  notificationType: string;
+  channel: string;
+  isEnabled: boolean;
+}
+
 export interface PagedResult<T> {
   items: T[];
   page: number;
@@ -399,6 +406,8 @@ export interface SafetyEvent {
   metric: string;
   metricNote: string;
   hasPhoto: boolean;
+  /** FRD-MOB-SAF-02 — tautan video vendor; null bila tidak ada. */
+  videoUrl: string | null;
 }
 
 export interface ComplianceItem {

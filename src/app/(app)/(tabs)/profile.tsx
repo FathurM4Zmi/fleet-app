@@ -129,6 +129,14 @@ export default function ProfileScreen() {
       href: '/activity',
     },
     {
+      key: 'notificationPreferences',
+      icon: 'notifications',
+      iconColor: colors.onSurfaceVariant,
+      label: 'Preferensi Notifikasi',
+      value: '',
+      href: '/notification-preferences' as Href,
+    },
+    {
       key: 'settlement',
       icon: 'payments',
       iconColor: colors.primary,

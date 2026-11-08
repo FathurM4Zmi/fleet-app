@@ -7,6 +7,7 @@ import { MapCanvas } from '@/components/MapCanvas';
 import { BottomBar, Button, EmptyState, Screen, ScreenBody, ScreenHeader, Text } from '@/components/ui';
 import { toRouteOption } from '@/data/adapters';
 import { useTripRoutes } from '@/hooks/api/useDriverData';
+import { useRealtime } from '@/hooks/useRealtime';
 import { useTrip } from '@/hooks/useTrip';
 import { tripOpsApi } from '@/lib/api/endpoints';
 import { colors, radius, shadows, spacing } from '@/theme';
@@ -23,6 +24,9 @@ export default function SelectRouteScreen() {
   const { trip } = useTrip(tripId);
   const query = useTripRoutes(tripId);
   const routeOptions = (query.data ?? []).map(toRouteOption);
+
+  // FRD-MOB-RTE-05 — ETA ikut posisi terbaru tanpa tarik-ulang manual.
+  useRealtime('tracking', () => void query.refetch());
   const [picked, setPicked] = useState<string | undefined>(undefined);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState<string | null>(null);

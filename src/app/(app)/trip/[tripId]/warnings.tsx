@@ -6,6 +6,7 @@ import { Icon } from '@/components/Icon';
 import { Button, Card, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
 import { toTripWarning, toTripWarningHistory } from '@/data/adapters';
 import { useTripWarnings } from '@/hooks/api/useDriverData';
+import { useRealtime } from '@/hooks/useRealtime';
 import { useTrip } from '@/hooks/useTrip';
 import { colors, radius, shadows, spacing } from '@/theme';
 import type { TripWarning } from '@/data/types';
@@ -22,6 +23,9 @@ export default function TripWarningsScreen() {
   const query = useTripWarnings(tripId);
   const [handled, setHandled] = useState<string[]>([]);
   const [filter, setFilter] = useState<'active' | 'all' | 'done'>('active');
+
+  // FRD-MOB-ALT-01 — peringatan baru untuk trip ini langsung muncul di atas daftar.
+  useRealtime('alerts', () => void query.refetch());
 
   const tripWarnings = (query.data?.active ?? []).map(toTripWarning);
   const tripWarningHistory = (query.data?.history ?? []).map(toTripWarningHistory);

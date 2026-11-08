@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,11 +8,16 @@ import { MapCanvas } from '@/components/MapCanvas';
 import { Card, EmptyState, Screen, ScreenBody, Text } from '@/components/ui';
 import { useTripTracking } from '@/hooks/api/useDriverData';
 import { useLiveLocation } from '@/hooks/useLiveLocation';
+import { useRealtime } from '@/hooks/useRealtime';
 import { useTrip } from '@/hooks/useTrip';
+import { tripOpsApi } from '@/lib/api/endpoints';
 import { addHours, estimatedDurationHours, formatTime } from '@/lib/format';
 import { colors, radius, shadows, spacing } from '@/theme';
 
 const MAP_HEIGHT = 220;
+
+/** FRD-MOB-TRK-04 — ambang GPS dianggap terputus. */
+const STALE_MINUTES = 10;
 
 export default function TripRouteScreen() {
   const insets = useSafeAreaInsets();
@@ -20,6 +26,29 @@ export default function TripRouteScreen() {
   const trackingQuery = useTripTracking(tripId);
   const tracking = trackingQuery.data;
   const live = useLiveLocation();
+
+  // FRD-MOB-TRK-02 — jejak baru dari server langsung memperbarui peta.
+  useRealtime('tracking', () => void trackingQuery.refetch());
+
+  // FRD-MOB-TRK-04 — jam berjalan sendiri agar banner muncul tanpa perlu aksi.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // FRD-MOB-TRK-02 — posisi perangkat dikirim ke server selama trip berjalan,
+  // supaya jejak di peta (dan dispatcher) ikut bergerak. Server menakar
+  // interval/jarak, jadi setiap fix boleh dikirim; gagal = offline, coba lagi nanti.
+  useEffect(() => {
+    if (!tripId || !live.coords || trip?.status !== 'in_progress') return;
+    void tripOpsApi
+      .reportPosition(tripId, {
+        latitude: live.coords.latitude,
+        longitude: live.coords.longitude,
+      })
+      .catch(() => undefined);
+  }, [tripId, live.coords, trip?.status]);
 
   if (!trip) {
     return (
@@ -52,6 +81,10 @@ export default function TripRouteScreen() {
   const speed = tracking?.speed ?? 0;
   const gpsLive = Boolean(live.coords) || Boolean(tracking?.isLive);
   const position = live.coords ?? tracking;
+  const staleMinutes = tracking?.lastSeenAt
+    ? Math.max(0, Math.floor((now - new Date(tracking.lastSeenAt).getTime()) / 60_000))
+    : 0;
+  const noSignal = staleMinutes >= STALE_MINUTES;
 
   return (
     <Screen>
@@ -76,6 +109,15 @@ export default function TripRouteScreen() {
       </View>
 
       <ScreenBody bottomPadding={spacing.xxl} style={styles.body}>
+        {noSignal ? (
+          <View style={styles.noSignal}>
+            <Icon name="warning" size={20} color={colors.warning} />
+            <Text variant="caption" color={colors.warning} style={styles.flex}>
+              Sinyal kendaraan terputus selama {staleMinutes} menit.
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.map}>
           <TrailMap trail={tracking?.trail ?? []} live={live.coords} height={MAP_HEIGHT} />
           <View style={styles.mapFooter}>
@@ -251,6 +293,17 @@ const styles = StyleSheet.create({
   gpsDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#34D399' },
   gpsDotStale: { backgroundColor: '#FCD34D' },
   body: { paddingHorizontal: spacing.gutter },
+  noSignal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    backgroundColor: colors.warningContainer,
+    borderWidth: 1,
+    borderColor: colors.warning,
+  },
   map: {
     marginTop: spacing.md,
     borderRadius: radius.card,
