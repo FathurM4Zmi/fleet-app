@@ -78,6 +78,8 @@ export interface Trip {
   distanceKm: number;
   /** ISO datetime. */
   scheduledAt: string;
+  /** ISO datetime when the driver tapped "Selesaikan Trip"; absent until then. */
+  completedAt?: string;
   vehicleId: string;
   /** Plate/model come from the trip response so list cards avoid a second fetch. */
   vehiclePlate?: string;

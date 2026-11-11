@@ -16,6 +16,11 @@ export interface MapCanvasProps {
   height?: number;
   /** Force a zoom level; when omitted the view is fitted to `points`/`markers`. */
   zoom?: number;
+  /**
+   * When set, the camera centres on this point (the live vehicle position)
+   * instead of fitting every point, so the map follows the trip in real time.
+   */
+  follow?: MapPoint | null;
   emptyLabel?: string;
   /** Set false when the map is full-bleed inside a screen section. */
   rounded?: boolean;

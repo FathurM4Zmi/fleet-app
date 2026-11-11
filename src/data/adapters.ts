@@ -143,6 +143,7 @@ export function toTrip(dto: DriverTripWire): Trip {
     weightKg: dto.weightKg ?? 0,
     distanceKm: dto.plannedDistanceKm ?? dto.actualDistanceKm ?? 0,
     scheduledAt: dto.scheduledStart,
+    completedAt: dto.actualEndAt ?? undefined,
     vehicleId: dto.vehicleId,
     vehiclePlate: dto.vehiclePlate ?? undefined,
     vehicleModel: dto.vehicleModel ?? undefined,

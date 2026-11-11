@@ -17,8 +17,10 @@ import { MapCanvas } from '@/components/MapCanvas';
 import { Badge, Button, Card, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
 import { useTripTracking } from '@/hooks/api/useDriverData';
 import { useLiveLocation } from '@/hooks/useLiveLocation';
+import { useRealtime } from '@/hooks/useRealtime';
 import { useTrip } from '@/hooks/useTrip';
-import { addHours, estimatedDurationHours, formatKm, formatTime } from '@/lib/format';
+import { tripOpsApi } from '@/lib/api/endpoints';
+import { addHours, estimatedDurationHours, formatKm, formatRecency, formatTime } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
 
 const NOTE_LIMIT = 200;
@@ -34,6 +36,30 @@ export default function TripExecutionScreen() {
 
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+
+  // FRD-MOB-TRK-02 — jejak baru dari server langsung memperbarui peta.
+  useRealtime('tracking', () => void trackingQuery.refetch());
+
+  // Selama trip berjalan, tarik telemetri berkala supaya peta tetap segar
+  // meski kanal realtime sedang terputus.
+  const refetchTracking = trackingQuery.refetch;
+  const running = trip?.status === 'in_progress' || trip?.status === 'arrived';
+  useEffect(() => {
+    if (!running) return;
+    const timer = setInterval(() => void refetchTracking(), 15_000);
+    return () => clearInterval(timer);
+  }, [running, refetchTracking]);
+
+  // Kirim posisi perangkat ke server agar jejak (dan dispatcher) ikut bergerak.
+  useEffect(() => {
+    if (!tripId || !live.coords || trip?.status !== 'in_progress') return;
+    void tripOpsApi
+      .reportPosition(tripId, {
+        latitude: live.coords.latitude,
+        longitude: live.coords.longitude,
+      })
+      .catch(() => undefined);
+  }, [tripId, live.coords, trip?.status]);
 
   if (!trip) {
     return (
@@ -296,7 +322,9 @@ export default function TripExecutionScreen() {
                 <Text variant="caption" color="textSecondary">
                   {status === 'rejected'
                     ? 'Penugasan ini tidak dilanjutkan.'
-                    : 'Semua tahapan trip ini sudah tercatat.'}
+                    : trip.completedAt
+                      ? `Selesai ${formatRecency(trip.completedAt)}`
+                      : 'Semua tahapan trip ini sudah tercatat.'}
                 </Text>
               </View>
             </View>
@@ -468,6 +496,7 @@ function RouteMap({
     <MapCanvas
       points={points}
       markers={markers}
+      follow={live ?? null}
       height={260}
       rounded={false}
       emptyLabel="Menunggu posisi kendaraan"

@@ -228,6 +228,7 @@ function TrailMap({
     <MapCanvas
       points={points}
       markers={markers}
+      follow={live ?? null}
       height={height}
       emptyLabel="Belum ada jejak posisi"
     />

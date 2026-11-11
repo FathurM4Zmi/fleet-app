@@ -164,8 +164,11 @@ export default function LoginScreen() {
         <Card style={styles.panel}>
           <TextField
             label="Nomor HP"
-            placeholder="081234567001"
+            placeholder="Nomor HP terdaftar"
             value={identifier}
+            // Nomor tidak ditampilkan terang-terangan di layar; ikon mata
+            // membuka sementara bila driver perlu memeriksa digitnya.
+            password
             onChangeText={handleIdentifierChange}
             helper="Nomor HP yang dipakai saat akun driver dibuat."
             keyboardType="phone-pad"

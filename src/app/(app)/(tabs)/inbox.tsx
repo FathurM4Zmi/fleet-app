@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -46,6 +46,19 @@ export default function InboxScreen() {
 
   // FRD-MOB-INBOX-02 — trip baru ditugaskan langsung muncul tanpa refresh.
   useRealtime('trips', () => void refetch());
+
+  // Setelah menyelesaikan trip, status dan jam selesai asli harus langsung
+  // terlihat saat driver kembali ke Inbox (layar tab tetap ter-mount).
+  const firstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (firstFocus.current) {
+        firstFocus.current = false;
+        return;
+      }
+      void refetch();
+    }, [refetch]),
+  );
 
   const handleAccept = async (tripId: string) => {
     if (acceptingId) return;
@@ -101,6 +114,7 @@ export default function InboxScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Segarkan data"
+              onPress={() => void refetch()}
               style={styles.iconButton}
             >
               <Icon name="sync" size={24} color={colors.ink} />

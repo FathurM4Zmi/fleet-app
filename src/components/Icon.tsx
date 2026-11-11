@@ -18,6 +18,7 @@ export const icons = {
   notifications: { ios: 'bell.fill', android: 'notifications', web: 'notifications' },
   profile: { ios: 'person.fill', android: 'person', web: 'person' },
   add: { ios: 'plus', android: 'add', web: 'add' },
+  menu: { ios: 'line.3.horizontal', android: 'menu', web: 'menu' },
   back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
   forward: { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' },
   expand: { ios: 'chevron.down', android: 'expand_more', web: 'expand_more' },

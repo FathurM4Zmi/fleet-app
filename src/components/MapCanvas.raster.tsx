@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ComponentRef } from 'react';
+import { useCallback, useMemo, useRef, useState, type ComponentRef } from 'react';
 import {
   Image,
   Pressable,
@@ -9,14 +9,18 @@ import {
 } from 'react-native';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 
+import { Icon } from '@/components/Icon';
 import { Text } from '@/components/ui';
-import { colors, radius } from '@/theme';
+import { colors, radius, shadows } from '@/theme';
 
 import type { MapCanvasProps, MapPoint } from './MapCanvas.types';
 
 const TILE_SIZE = 256;
 const MIN_ZOOM = 4;
-const MAX_ZOOM = 14;
+const MAX_ZOOM = 18;
+/** Zoom used when the map follows the live vehicle position. */
+const FOLLOW_ZOOM = 15;
+const DEFAULT_CENTRE: MapPoint = { latitude: -6.2, longitude: 106.8166 };
 
 /**
  * Raster-tile map. Tiles are plain <Image> requests, so it runs on the web and
@@ -66,15 +70,42 @@ function fitZoom(points: MapPoint[], width: number, height: number) {
   return MIN_ZOOM;
 }
 
+const clampZoom = (zoom: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+
+interface Touch {
+  pageX: number;
+  pageY: number;
+}
+
+interface ViewState {
+  zoom: number;
+  centre: MapPoint;
+}
+
+/** Moves the camera by a screen-space delta, keeping the same zoom. */
+function shiftCentre(centre: MapPoint, zoom: number, dx: number, dy: number): MapPoint {
+  const world = project(centre.latitude, centre.longitude, zoom);
+  return unproject(world.x - dx, world.y - dy, zoom);
+}
+
+const touchDistance = (a: Touch, b: Touch) => Math.hypot(a.pageX - b.pageX, a.pageY - b.pageY);
+
+const touchMidpoint = (a: Touch, b: Touch) => ({
+  x: (a.pageX + b.pageX) / 2,
+  y: (a.pageY + b.pageY) / 2,
+});
+
 /**
- * Raster map with an overlay for trails and pins. Attribution is required and
- * rendered below.
+ * Raster map with an overlay for trails and pins, plus drag / pinch-to-zoom
+ * gestures and on-screen zoom controls. Attribution is required and rendered
+ * below.
  */
 export function MapCanvas({
   points = [],
   markers = [],
   height = 220,
   zoom: fixedZoom,
+  follow,
   emptyLabel = 'Menunggu data lokasi',
   rounded = true,
   onPressPoint,
@@ -82,6 +113,15 @@ export function MapCanvas({
 }: MapCanvasProps) {
   const [size, setSize] = useState({ width: 0, height });
   const containerRef = useRef<ComponentRef<typeof View>>(null);
+
+  // Camera after the driver pans or pinches; `null` means "auto" (fit or follow).
+  const [manual, setManual] = useState<ViewState | null>(null);
+  const manualRef = useRef<ViewState | null>(null);
+
+  const applyView = useCallback((next: ViewState) => {
+    manualRef.current = next;
+    setManual(next);
+  }, []);
 
   const onLayout = (event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout;
@@ -96,46 +136,149 @@ export function MapCanvas({
     [points, markers],
   );
 
-  const view = useMemo(() => {
+  /** Camera derived from the props: follow the live point, or fit the trail. */
+  const autoView = useMemo<ViewState | null>(() => {
     const width = size.width;
     if (width <= 0) return null;
 
-    const zoom = fixedZoom ?? fitZoom(anchors, width, height);
+    const followPoint =
+      follow && Number.isFinite(follow.latitude) && Number.isFinite(follow.longitude)
+        ? follow
+        : null;
 
-    // Centre on the bounding box of the anchors; fall back to Jakarta.
-    const centre =
-      anchors.length > 0
-        ? {
-            latitude:
-              (Math.min(...anchors.map((p) => p.latitude)) +
-                Math.max(...anchors.map((p) => p.latitude))) /
-              2,
-            longitude:
-              (Math.min(...anchors.map((p) => p.longitude)) +
-                Math.max(...anchors.map((p) => p.longitude))) /
-              2,
-          }
-        : { latitude: -6.2, longitude: 106.8166 };
+    const zoom = fixedZoom ?? (followPoint ? FOLLOW_ZOOM : fitZoom(anchors, width, height));
 
+    if (followPoint) {
+      return { zoom, centre: { latitude: followPoint.latitude, longitude: followPoint.longitude } };
+    }
+    if (anchors.length > 0) {
+      return {
+        zoom,
+        centre: {
+          latitude:
+            (Math.min(...anchors.map((p) => p.latitude)) +
+              Math.max(...anchors.map((p) => p.latitude))) /
+            2,
+          longitude:
+            (Math.min(...anchors.map((p) => p.longitude)) +
+              Math.max(...anchors.map((p) => p.longitude))) /
+            2,
+        },
+      };
+    }
+    return { zoom, centre: DEFAULT_CENTRE };
+  }, [anchors, fixedZoom, follow, height, size.width]);
+
+  const active = manual ?? autoView;
+
+  const lastGesture = useRef<{ touches: Touch[]; view: ViewState } | null>(null);
+  /** First touch of a one-finger drag, used to tell a tap from a pan. */
+  const pressStart = useRef<{ x: number; y: number } | null>(null);
+
+  /**
+   * React Native Web does not always fill `touches` for mouse drags, so fall
+   * back to the event's own page coordinates.
+   */
+  const touchesOf = (event: GestureResponderEvent): Touch[] => {
+    const native = event.nativeEvent;
+    if (native.touches && native.touches.length > 0) return [...native.touches];
+    if (Number.isFinite(native.pageX) && Number.isFinite(native.pageY)) {
+      return [{ pageX: native.pageX, pageY: native.pageY }];
+    }
+    return [];
+  };
+
+  // Two fingers always start a pinch; a single finger only becomes a pan after
+  // moving, so taps still reach the `onPressPoint` overlay.
+  const onStartShouldSetResponder = (event: GestureResponderEvent) => {
+    const touches = touchesOf(event);
+    if (touches.length >= 2) return true;
+    if (touches.length === 1) {
+      pressStart.current = { x: touches[0].pageX, y: touches[0].pageY };
+    }
+    return false;
+  };
+
+  const onMoveShouldSetResponder = (event: GestureResponderEvent) => {
+    const touches = touchesOf(event);
+    if (touches.length >= 2) return true;
+    const start = pressStart.current;
+    if (!start || touches.length !== 1) return false;
+    return Math.hypot(touches[0].pageX - start.x, touches[0].pageY - start.y) > 4;
+  };
+
+  const onResponderGrant = (event: GestureResponderEvent) => {
+    const view = manualRef.current ?? autoView;
+    if (!view) return;
+    lastGesture.current = { touches: touchesOf(event), view };
+  };
+
+  const onResponderMove = (event: GestureResponderEvent) => {
+    const last = lastGesture.current;
+    const touches = touchesOf(event);
+    if (!last || touches.length === 0) return;
+
+    // `last.view` is the camera we computed on the previous frame; using the
+    // React state here would lag one move behind.
+    const view = last.view;
+    const previous = last.touches;
+    let next: ViewState | null = null;
+
+    if (touches.length >= 2 && previous.length >= 2) {
+      const previousDistance = Math.max(1, touchDistance(previous[0], previous[1]));
+      const distance = Math.max(1, touchDistance(touches[0], touches[1]));
+      const previousMid = touchMidpoint(previous[0], previous[1]);
+      const mid = touchMidpoint(touches[0], touches[1]);
+      const zoom = clampZoom(view.zoom + Math.log2(distance / previousDistance));
+      const centre = shiftCentre(view.centre, view.zoom, mid.x - previousMid.x, mid.y - previousMid.y);
+      next = { zoom, centre };
+    } else if (touches.length === 1 && previous.length === 1) {
+      const dx = touches[0].pageX - previous[0].pageX;
+      const dy = touches[0].pageY - previous[0].pageY;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+      next = { zoom: view.zoom, centre: shiftCentre(view.centre, view.zoom, dx, dy) };
+    }
+
+    if (next) applyView(next);
+    lastGesture.current = { touches: [...touches], view: next ?? view };
+  };
+
+  const endGesture = () => {
+    lastGesture.current = null;
+    pressStart.current = null;
+  };
+
+  const view = useMemo(() => {
+    const width = size.width;
+    if (!active || width <= 0) return null;
+
+    const { zoom, centre } = active;
     const centreWorld = project(centre.latitude, centre.longitude, zoom);
     const topLeft = { x: centreWorld.x - width / 2, y: centreWorld.y - height / 2 };
-    const tileCount = 2 ** zoom;
 
-    const tiles: { key: string; uri: string; left: number; top: number }[] = [];
-    const firstX = Math.floor(topLeft.x / TILE_SIZE);
-    const lastX = Math.floor((topLeft.x + width) / TILE_SIZE);
-    const firstY = Math.floor(topLeft.y / TILE_SIZE);
-    const lastY = Math.floor((topLeft.y + height) / TILE_SIZE);
+    // Pinch produces fractional zoom levels, but tiles only exist at integer
+    // zooms. Fetch the nearest level and scale the images to the current zoom.
+    const tileZoom = Math.round(zoom);
+    const scale = 2 ** (zoom - tileZoom);
+    const scaledTileSize = TILE_SIZE * scale;
+    const tileCount = 2 ** tileZoom;
+
+    const tiles: { key: string; uri: string; left: number; top: number; size: number }[] = [];
+    const firstX = Math.floor(topLeft.x / scaledTileSize);
+    const lastX = Math.floor((topLeft.x + width) / scaledTileSize);
+    const firstY = Math.floor(topLeft.y / scaledTileSize);
+    const lastY = Math.floor((topLeft.y + height) / scaledTileSize);
 
     for (let x = firstX; x <= lastX; x++) {
       for (let y = firstY; y <= lastY; y++) {
         if (y < 0 || y >= tileCount) continue;
         const wrappedX = ((x % tileCount) + tileCount) % tileCount;
         tiles.push({
-          key: `${zoom}-${x}-${y}`,
-          uri: tileUrl(zoom, wrappedX, y),
-          left: x * TILE_SIZE - topLeft.x,
-          top: y * TILE_SIZE - topLeft.y,
+          key: `${tileZoom}-${x}-${y}`,
+          uri: tileUrl(tileZoom, wrappedX, y),
+          left: x * scaledTileSize - topLeft.x,
+          top: y * scaledTileSize - topLeft.y,
+          size: scaledTileSize,
         });
       }
     }
@@ -146,7 +289,20 @@ export function MapCanvas({
     };
 
     return { zoom, tiles, toScreen, topLeft };
-  }, [anchors, fixedZoom, height, size.width]);
+  }, [active, height, size.width]);
+
+  const zoomBy = (delta: number) => {
+    const current = manualRef.current ?? autoView;
+    if (!current) return;
+    const zoom = clampZoom(current.zoom + delta);
+    if (zoom === current.zoom) return;
+    applyView({ zoom, centre: current.centre });
+  };
+
+  const resetToAuto = () => {
+    manualRef.current = null;
+    setManual(null);
+  };
 
   const linePoints = points
     .filter((point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude))
@@ -196,13 +352,23 @@ export function MapCanvas({
       ref={containerRef}
       style={[styles.container, { height }, !rounded && styles.square]}
       onLayout={onLayout}
+      onStartShouldSetResponder={onStartShouldSetResponder}
+      onMoveShouldSetResponder={onMoveShouldSetResponder}
+      onResponderGrant={onResponderGrant}
+      onResponderMove={onResponderMove}
+      onResponderRelease={endGesture}
+      onResponderTerminate={endGesture}
+      onResponderTerminationRequest={() => false}
     >
       {view
         ? view.tiles.map((tile) => (
             <Image
               key={tile.key}
               source={{ uri: tile.uri }}
-              style={[styles.tile, { left: tile.left, top: tile.top }]}
+              style={[
+                styles.tile,
+                { left: tile.left, top: tile.top, width: tile.size, height: tile.size },
+              ]}
               fadeDuration={0}
               accessibilityIgnoresInvertColors
             />
@@ -291,6 +457,39 @@ export function MapCanvas({
         </View>
       ) : null}
 
+      <View style={styles.controls} pointerEvents="box-none">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Perbesar peta"
+          onPress={() => zoomBy(1)}
+          style={({ pressed }) => [styles.controlButton, pressed && styles.controlPressed]}
+        >
+          <Text variant="titleMd" color="ink" style={styles.controlGlyph}>
+            +
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Perkecil peta"
+          onPress={() => zoomBy(-1)}
+          style={({ pressed }) => [styles.controlButton, pressed && styles.controlPressed]}
+        >
+          <Text variant="titleMd" color="ink" style={styles.controlGlyph}>
+            −
+          </Text>
+        </Pressable>
+        {follow ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Kembali ke posisi kendaraan"
+            onPress={resetToAuto}
+            style={({ pressed }) => [styles.controlButton, pressed && styles.controlPressed]}
+          >
+            <Icon name="recenter" size={20} color={colors.primaryContainer} />
+          </Pressable>
+        ) : null}
+      </View>
+
       <View style={styles.attribution} pointerEvents="none">
         <Text variant="caption" color="textSecondary">
           {MAPTILER_KEY ? '© MapTiler · © OpenStreetMap contributors' : '© OpenStreetMap contributors'}
@@ -318,6 +517,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  controls: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    gap: 8,
+  },
+  controlButton: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.input,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.96)',
+    borderWidth: 1,
+    borderColor: colors.divider,
+    ...shadows.card,
+  },
+  controlPressed: { backgroundColor: colors.surfaceLow },
+  controlGlyph: { lineHeight: 22 },
   attribution: {
     position: 'absolute',
     right: 6,

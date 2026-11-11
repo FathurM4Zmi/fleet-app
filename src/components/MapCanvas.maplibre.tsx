@@ -30,6 +30,7 @@ export function MapCanvas({
   markers = [],
   height = 220,
   zoom: fixedZoom,
+  follow,
   emptyLabel = 'Menunggu data lokasi',
   rounded = true,
   onPressPoint,
@@ -72,6 +73,18 @@ export function MapCanvas({
     .map((point) => `${point.longitude},${point.latitude}`)
     .join(';');
 
+  /** Live vehicle position — the camera tracks it as new fixes arrive. */
+  const followKey =
+    follow && Number.isFinite(follow.latitude) && Number.isFinite(follow.longitude)
+      ? `${follow.longitude},${follow.latitude}`
+      : null;
+
+  const followCenter = useMemo<[number, number] | null>(() => {
+    if (!followKey) return null;
+    const [longitude, latitude] = followKey.split(',').map(Number);
+    return [longitude, latitude];
+  }, [followKey]);
+
   const route = useMemo<GeoJSON.FeatureCollection>(() => {
     const coordinates = routeKey
       ? (routeKey.split(';').map((pair) => pair.split(',').map(Number)) as [number, number][])
@@ -109,7 +122,9 @@ export function MapCanvas({
             : undefined
         }
       >
-        {bounds ? (
+        {followCenter ? (
+          <Camera center={followCenter} zoom={fixedZoom ?? 15} duration={400} />
+        ) : bounds ? (
           <Camera bounds={bounds} padding={FIT_PADDING} duration={500} />
         ) : (
           <Camera center={center} zoom={fixedZoom ?? 12} duration={500} />
