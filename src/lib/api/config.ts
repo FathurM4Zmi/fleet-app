@@ -32,9 +32,22 @@ function inferBaseUrl(): string {
 /** Empty/whitespace values must fall back, not become a relative URL. */
 const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 
-if (!configuredUrl && !__DEV__) {
+/**
+ * Native production builds must point at a real server: the fallback below is
+ * a dev-machine address that will never work on a phone. Web is different —
+ * the static export renders these modules in Node before any browser exists,
+ * so throwing here fails the whole deploy instead of the request.
+ */
+if (!configuredUrl && !__DEV__ && Platform.OS !== 'web') {
   throw new Error(
     'EXPO_PUBLIC_API_URL wajib diisi untuk build produksi. Set variabel ini di profil EAS.',
+  );
+}
+
+if (!configuredUrl && !__DEV__ && Platform.OS === 'web') {
+  console.warn(
+    '[FleetOps] EXPO_PUBLIC_API_URL belum diisi; memakai alamat lokal. ' +
+      'Set variabel ini di Vercel (Production + Preview) lalu redeploy.',
   );
 }
 
