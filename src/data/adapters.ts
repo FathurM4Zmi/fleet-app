@@ -7,6 +7,7 @@ import type {
   ActivityEntry as ActivityEntryWire,
   Coaching as CoachingWire,
   Compliance as ComplianceWire,
+  DamageReport as DamageReportWire,
   Dna as DnaWire,
   DriverDocumentDetail as DocumentDetailWire,
   DriverDocumentSummary as DocumentSummaryWire,
@@ -37,6 +38,7 @@ import type {
   CoachingPlan,
   CoachingSession,
   ComplianceChecklistItem,
+  DamageReport,
   DnaSummary,
   DocumentDetail,
   ProfileDocument,
@@ -89,7 +91,7 @@ const lower = (value: string | null | undefined) => (value ?? '').toLowerCase();
 /* ── Trip ───────────────────────────────────────────────────────────── */
 
 const TRIP_STATUS: Record<string, TripStatus> = {
-  Scheduled: 'assigned',
+  Scheduled: 'scheduled',
   Assigned: 'assigned',
   Acknowledged: 'accepted',
   InProgress: 'in_progress',
@@ -391,6 +393,22 @@ export function toActivity(dto: ActivityEntryWire): ActivityEntry {
     detail: dto.detail,
     time: dto.time,
     tone: ACTIVITY_TONE[lower(dto.tone)] ?? 'info',
+  };
+}
+
+/** FRD-MOB-DEF-04/05 — damage reports are work orders on the backend. */
+export function toDamageReport(dto: DamageReportWire): DamageReport {
+  return {
+    id: dto.id,
+    vehicleId: dto.vehicleId,
+    category: dto.category,
+    severity: dto.severity,
+    description: dto.description,
+    photoUris: dto.photoPaths,
+    submittedAt: dto.submittedAt,
+    code: dto.code,
+    status: dto.status,
+    statusLabel: dto.statusLabel,
   };
 }
 

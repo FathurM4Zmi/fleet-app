@@ -218,7 +218,8 @@ export const insightApi = {
       method: 'POST',
       body: { status, note, evidencePaths },
     }),
-  performance: () => apiRequest<Performance>(`${BASE}/performance`),
+  performance: (period: 'week' | 'month' = 'month') =>
+    apiRequest<Performance>(`${BASE}/performance`, { query: { period } }),
   activity: (days = 30, take = 50) =>
     apiRequest<ActivityEntry[]>(`${BASE}/activity`, { query: { days, take } }),
   dna: () => apiRequest<Dna>(`${BASE}/dna`),

@@ -17,6 +17,7 @@ import { formatDayDate, formatKg, formatKm, formatTime } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
 
 const HERO_STATUS: Record<TripStatus, string> = {
+  scheduled: 'Draft',
   assigned: 'Menunggu Konfirmasi',
   accepted: 'Dikonfirmasi',
   in_progress: 'Dalam Perjalanan',

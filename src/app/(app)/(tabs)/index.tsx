@@ -1,4 +1,5 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -50,13 +51,22 @@ export default function HomeScreen() {
     void home.refetch();
   });
 
+  // Setelah trip selesai, beranda harus berhenti menampilkan trip itu sebagai aktif.
+  useFocusEffect(
+    useCallback(() => {
+      void refetchTrips();
+    }, [refetchTrips]),
+  );
 
   const driver = home.data ? toDriver(home.data.profile, dna.data?.score ?? 0) : emptyDriver;
   const loading = home.loading;
-  const newTasks = upcoming.filter((item) => item.status === 'assigned');
-  // New assignments get their own card below, so the "next trip" card prefers
-  // a trip the driver has already accepted.
-  const trip = active[0] ?? upcoming.find((item) => item.status === 'accepted') ?? (newTasks.length > 0 ? undefined : upcoming[0]);
+  // "Belum dikonfirmasi" = Assigned atau Scheduled. Keduanya harus tampil sebagai
+  // tugas baru, bukan sebagai trip aktif.
+  const newTasks = upcoming.filter(
+    (item) => item.status === 'assigned' || item.status === 'scheduled',
+  );
+  // Only a trip the driver has already accepted may appear as the active trip.
+  const trip = active[0] ?? upcoming.find((item) => item.status === 'accepted');
   const vehicle = vehicleQuery.data ? toVehicle(vehicleQuery.data) : undefined;
   const dnaTone = scoreTone(driver.dnaScore);
   const dnaLabel =
@@ -251,7 +261,7 @@ function TripSummaryCard({
   onReject?: () => void;
   onOpen?: () => void;
 }) {
-  const assigned = trip.status === 'assigned';
+  const assigned = trip.status === 'assigned' || trip.status === 'scheduled';
   const arrived = trip.status === 'arrived';
   const inProgress = trip.status === 'in_progress' || arrived;
   const statusLabel = arrived

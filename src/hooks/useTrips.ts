@@ -20,7 +20,7 @@ export interface TripBuckets {
 }
 
 const bucketOf = (status: TripStatus): keyof TripBuckets => {
-  if (status === 'assigned' || status === 'accepted') return 'upcoming';
+  if (status === 'scheduled' || status === 'assigned' || status === 'accepted') return 'upcoming';
   if (status === 'in_progress' || status === 'arrived') return 'active';
   return 'history';
 };
@@ -28,10 +28,22 @@ const bucketOf = (status: TripStatus): keyof TripBuckets => {
 /** Cache daftar trip agar Inbox tetap terisi saat offline (FRD-MOB-INBOX-04). */
 const CACHE_KEY = 'trips';
 
-/** Aksi antrian disimpan sebagai `/api/driver/trips/{id}/accept|decline`. */
-const queuedActionOf = (path: string): { tripId: string; action: 'accept' | 'decline' } | null => {
-  const match = /\/trips\/([^/]+)\/(accept|decline)$/.exec(path);
-  return match ? { tripId: match[1], action: match[2] as 'accept' | 'decline' } : null;
+/** Aksi antrian disimpan sebagai `/api/driver/trips/{id}/accept|decline|start|arrive|complete`. */
+type QueuedTripAction = 'accept' | 'decline' | 'start' | 'arrive' | 'complete';
+
+const queuedActionOf = (path: string): { tripId: string; action: QueuedTripAction } | null => {
+  const match = /\/trips\/([^/]+)\/(accept|decline|start|arrive|complete)$/.exec(path);
+  return match
+    ? { tripId: match[1], action: match[2] as QueuedTripAction }
+    : null;
+};
+
+const QUEUED_STATUS: Record<QueuedTripAction, TripStatus> = {
+  accept: 'accepted',
+  decline: 'rejected',
+  start: 'in_progress',
+  arrive: 'arrived',
+  complete: 'completed',
 };
 
 const isOffline = (error: unknown) => error instanceof ApiError && error.status === 0;
@@ -52,10 +64,11 @@ export function useTrips() {
   // Aksi yang masih menunggu sinyal ditampilkan seolah sudah terjadi, supaya
   // driver tidak menekan tombolnya berkali-kali saat offline.
   const queued = useMemo(() => {
-    const map = new Map<string, 'accept' | 'decline'>();
+    const map = new Map<string, QueuedTripAction>();
     for (const item of outbox) {
       const pending = queuedActionOf(item.path);
-      if (pending) map.set(pending.tripId, pending.action);
+      // `outbox` is newest-first; keep the latest transition per trip.
+      if (pending && !map.has(pending.tripId)) map.set(pending.tripId, pending.action);
     }
     return map;
   }, [outbox]);
@@ -65,8 +78,7 @@ export function useTrips() {
       (query.data ?? cached ?? []).map((dto) => {
         const trip = toTrip(dto);
         const action = queued.get(dto.id);
-        if (action === 'accept') return { ...trip, status: 'accepted' as TripStatus };
-        if (action === 'decline') return { ...trip, status: 'rejected' as TripStatus };
+        if (action) return { ...trip, status: QUEUED_STATUS[action] };
         return trip;
       }),
     [query.data, cached, queued],

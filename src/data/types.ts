@@ -38,6 +38,7 @@ export interface Vehicle {
 }
 
 export type TripStatus =
+  | 'scheduled'
   | 'assigned'
   | 'accepted'
   | 'in_progress'
@@ -384,6 +385,12 @@ export interface DamageReport {
   photoUris: string[];
   /** ISO datetime. */
   submittedAt: string;
+  /** Work-order number shown in the defect report list (FRD-MOB-DEF-04). */
+  code?: string;
+  /** Raw server status (`Open`, `InProgress`, …). */
+  status?: string;
+  /** Localised status label from the server. */
+  statusLabel?: string;
 }
 
 export interface FuelCardAccount {

@@ -27,7 +27,7 @@ const PERIODS: { label: string; value: Period }[] = [
 
 export default function PerformanceScreen() {
   const [period, setPeriod] = useState<Period>('week');
-  const query = usePerformance();
+  const query = usePerformance(period);
   const performance = query.data ? toPerformance(query.data) : undefined;
   const performanceKpis = performance?.kpis ?? [];
   const performanceTrend = performance?.trend ?? [];
@@ -102,7 +102,7 @@ export default function PerformanceScreen() {
         <Card style={styles.section}>
           <View style={styles.rowBetween}>
             <Text variant="labelSm" color="textSecondary" style={styles.tracked}>
-              TREN 7 HARI
+              TREN {performanceTrend.length || (period === 'week' ? 7 : 30)} HARI
             </Text>
             <View style={styles.legend}>
               <View style={styles.legendItem}>
@@ -137,11 +137,15 @@ export default function PerformanceScreen() {
             />
 
             <View style={styles.axis}>
-              {performanceTrend.map((point) => (
-                <Text key={point.day} variant="labelSm" color="textSecondary" style={styles.axisLabel}>
-                  {point.day}
-                </Text>
-              ))}
+              {performanceTrend.map((point, index) => {
+                const step = Math.max(1, Math.ceil(performanceTrend.length / 7));
+                const show = index % step === 0 || index === performanceTrend.length - 1;
+                return (
+                  <Text key={`${point.day}-${index}`} variant="labelSm" color="textSecondary" style={styles.axisLabel}>
+                    {show ? point.day : ''}
+                  </Text>
+                );
+              })}
             </View>
           </View>
         </Card>

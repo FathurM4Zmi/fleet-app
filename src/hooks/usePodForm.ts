@@ -29,6 +29,7 @@ export function usePodForm(tripId: string | undefined) {
   const save = useCallback(
     async (draft: {
       photoUris: string[];
+      signatureUri: string;
       recipientName: string;
       scannedCode?: string;
     }) => {
@@ -46,10 +47,11 @@ export function usePodForm(tripId: string | undefined) {
         photoPaths.push(await uploadImage(uri, 'pod'));
       }
 
+      const signaturePath = await uploadImage(draft.signatureUri, 'ttd');
       const notes = [draft.recipientName, draft.scannedCode].filter(Boolean).join(' • ');
       const payload = {
         photoPath: photoPaths[0] ?? null,
-        signaturePath: null,
+        signaturePath,
         notes: notes || null,
         latitude: geo.lat,
         longitude: geo.lng,
@@ -84,7 +86,7 @@ export function usePodForm(tripId: string | undefined) {
         pod: {
           tripId,
           photoUris: photoPaths,
-          hasSignature: false,
+          hasSignature: true,
           recipientName: draft.recipientName,
           scannedCode: draft.scannedCode,
           geo,

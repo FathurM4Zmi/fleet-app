@@ -32,6 +32,7 @@ const OUTBOX_CATEGORY: Record<OutboxKind, ActivityCategory> = {
 };
 
 const RANGES = [
+  { label: 'Hari ini', value: '1' },
   { label: '7 hari', value: '7' },
   { label: '30 hari', value: '30' },
   { label: '90 hari', value: '90' },
@@ -54,7 +55,11 @@ export default function ActivityScreen() {
   const query = useActivity(days, 100);
   const { items: outbox } = useOutbox();
   const activityEntries = (query.data ?? []).map(toActivity);
-  const activityDay = formatDayDate(new Date().toISOString());
+  const [today] = useState(() => Date.now());
+  const activityDay = formatDayDate(new Date(today).toISOString());
+  const rangeStart = formatDayDate(
+    new Date(today - Math.max(0, days - 1) * 24 * 60 * 60 * 1000).toISOString(),
+  );
 
   // FRD-MOB-ACT-03 — aksi yang masih di antrian offline tampil sebagai pending,
   // jadi driver tidak mengira aksinya hilang saat sinyal putus.
@@ -118,6 +123,17 @@ export default function ActivityScreen() {
           })}
         </ScrollView>
 
+        {/* ACT-04 — rentang tanggal */}
+        <View style={styles.rangeBlock}>
+          <Text variant="labelSm" color="textSecondary" style={styles.tracked}>
+            RENTANG TANGGAL
+          </Text>
+          <SegmentedControl options={RANGES} value={range} onChange={setRange} />
+          <Text variant="caption" color="textMuted">
+            {rangeStart} — {activityDay}
+          </Text>
+        </View>
+
         <Card style={styles.section}>
           <View style={styles.cardHead}>
             <View style={styles.cardHeadLeft}>
@@ -176,10 +192,6 @@ export default function ActivityScreen() {
             </View>
           )}
         </Card>
-
-        <View style={styles.rangeRow}>
-          <SegmentedControl options={RANGES} value={range} onChange={setRange} />
-        </View>
       </ScreenBody>
     </Screen>
   );
@@ -267,6 +279,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.warningContainer,
   },
 
+  rangeBlock: { marginTop: spacing.md, gap: spacing.sm },
   rangeRow: { marginTop: spacing.md },
 
   footer: { marginTop: spacing.md },

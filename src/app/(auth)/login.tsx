@@ -110,10 +110,19 @@ export default function LoginScreen() {
       const remaining = Math.max(0, attemptsLeft - 1);
       setAttemptsLeft(remaining);
       setErrorKind(remaining === 0 ? 'locked' : 'auth');
+      // LOGIN-04 — the server is the authority on lock/licence state. Surface a
+      // specific reason (e.g. SIM kedaluwarsa) when it sends one; otherwise keep
+      // the anti-enumeration wording.
+      const serverMessage = apiError.message?.trim();
+      const specificReason =
+        serverMessage && !/invalid|tidak cocok|kredensial|salah/i.test(serverMessage)
+          ? serverMessage
+          : null;
       setError(
-        remaining === 0
-          ? 'Akun terkunci sementara. Hubungi supervisor untuk membuka.'
-          : `Nomor HP atau PIN tidak cocok. Sisa ${remaining} kesempatan sebelum akun terkunci sementara.`,
+        specificReason ??
+          (remaining === 0
+            ? 'Akun terkunci sementara. Hubungi supervisor untuk membuka.'
+            : `Nomor HP atau PIN tidak cocok. Sisa ${remaining} kesempatan sebelum akun terkunci sementara.`),
       );
     } finally {
       submitting.current = false;
@@ -297,8 +306,8 @@ const styles = StyleSheet.create({
   },
   brandText: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   iconButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     borderRadius: radius.input,
     alignItems: 'center',
     justifyContent: 'center',

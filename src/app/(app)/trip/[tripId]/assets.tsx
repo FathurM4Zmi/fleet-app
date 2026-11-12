@@ -17,7 +17,8 @@ import {
 } from '@/components/ui';
 import { toTripAsset } from '@/data/adapters';
 import type { TripAsset, TripAssetReefer } from '@/data/types';
-import { useTripAssets } from '@/hooks/api/useDriverData';
+import { useTripAssets, useTripWarnings } from '@/hooks/api/useDriverData';
+import { useRealtime } from '@/hooks/useRealtime';
 import { useTrip } from '@/hooks/useTrip';
 import { tripOpsApi } from '@/lib/api/endpoints';
 import { formatRelative } from '@/lib/format';
@@ -27,6 +28,8 @@ export default function TripAssetsScreen() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const { trip } = useTrip(tripId);
   const query = useTripAssets(tripId);
+  const warningsQuery = useTripWarnings(tripId);
+  useRealtime('alerts', () => void warningsQuery.refetch());
   const [checked, setChecked] = useState<string[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +37,13 @@ export default function TripAssetsScreen() {
 
   const assets = (query.data ?? []).map(toTripAsset);
   const pending = assets.filter((asset) => !checked.includes(asset.key));
+
+  // FRD-MOB-AST-03 — geofence/anti-theft alerts raised for this trip.
+  const theftWarnings = (warningsQuery.data?.active ?? []).filter((warning) =>
+    /geofence|zona|zone|theft|curian|keluar|outside|pergerakan|detour/i.test(
+      `${warning.title} ${warning.note ?? ''}`,
+    ),
+  );
 
   const verify = async (assetId: string) => {
     if (!tripId || busyId) return;
@@ -87,6 +97,38 @@ export default function TripAssetsScreen() {
             Periksa setiap aset sebelum berangkat. Verifikasi tercatat atas nama Anda.
           </Text>
         </View>
+
+        {theftWarnings.length > 0 ? (
+          <View style={styles.theftPanel}>
+            <View style={styles.theftHead}>
+              <Icon name="warning" size={20} color={colors.critical} />
+              <Text variant="bodyBold" color="critical" style={styles.flex}>
+                Peringatan anti-theft
+              </Text>
+              <Badge label={`${theftWarnings.length} ALERT`} tone="critical" dot />
+            </View>
+            <Text variant="caption" color="critical">
+              Pergerakan aset di luar zona yang diizinkan terdeteksi.
+            </Text>
+            {theftWarnings.map((warning) => (
+              <View key={warning.key} style={styles.theftRow}>
+                <Text variant="labelMd" color="critical">
+                  {warning.title}
+                </Text>
+                {warning.note ? (
+                  <Text variant="caption" color="onSurfaceVariant">
+                    {warning.note}
+                  </Text>
+                ) : null}
+                {warning.timeLabel ? (
+                  <Text variant="labelSm" color="textMuted">
+                    {warning.timeLabel}
+                  </Text>
+                ) : null}
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         {assets.length === 0 ? (
           <EmptyState
@@ -301,6 +343,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.infoContainer,
   },
   list: { marginTop: spacing.lg, gap: spacing.md },
+
+  // FRD-MOB-AST-03 — anti-theft / geofence warning
+  theftPanel: {
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    backgroundColor: '#FEF2F2',
+  },
+  theftHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  theftRow: {
+    gap: 2,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#FECACA',
+  },
   assetCard: { ...shadows.card, gap: spacing.md },
   assetHead: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   tracked: { letterSpacing: 0.8 },

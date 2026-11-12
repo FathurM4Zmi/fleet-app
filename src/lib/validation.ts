@@ -5,8 +5,11 @@ export const isDvirItemComplete = (item: { result: string | null; photoUri?: str
   return true;
 };
 
-/** The driver app can only attach photos; signature capture is not implemented yet. */
-export const isPodComplete = (pod: { photoUris: string[] }): boolean => pod.photoUris.length > 0;
+/** FRD-MOB-POD-01 — a POD needs photo evidence and the recipient signature. */
+export const isPodComplete = (pod: {
+  photoUris: string[];
+  hasSignature?: boolean;
+}): boolean => pod.photoUris.length > 0 && Boolean(pod.hasSignature);
 
 export const isPinComplete = (pin: string): boolean => /^\d{6}$/.test(pin);
 

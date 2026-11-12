@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
 import { MapCanvas } from '@/components/MapCanvas';
@@ -49,6 +49,20 @@ export default function SelectRouteScreen() {
     } finally {
       setApplying(false);
     }
+  };
+
+  // FRD-MOB-RTE-02 — never apply a route without explicit confirmation.
+  const confirmApply = () => {
+    const option = routeOptions.find((candidate) => candidate.key === selected);
+    if (!option) return;
+    Alert.alert(
+      'Terapkan rute ini?',
+      `${option.title} • ${option.minutes} menit • ${option.km} km. Rute disarankan belum diterapkan sampai Anda mengonfirmasi.`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        { text: 'Terapkan', onPress: () => void apply() },
+      ],
+    );
   };
 
   if (!trip) {
@@ -151,7 +165,7 @@ export default function SelectRouteScreen() {
             label={applying ? 'Menerapkan…' : 'Terapkan Rute'}
             icon="navigation"
             disabled={!selected || applying}
-            onPress={apply}
+            onPress={confirmApply}
             style={styles.footerPrimary}
           />
         </View>

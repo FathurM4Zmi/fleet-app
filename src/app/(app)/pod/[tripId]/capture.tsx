@@ -1,13 +1,15 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
+import { SignaturePad, type SignaturePadHandle } from '@/components/SignaturePad';
 import { Button, Card, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
 import { usePodForm } from '@/hooks/usePodForm';
 import { useTrip } from '@/hooks/useTrip';
 import { capturePhoto } from '@/lib/photo';
+import { signatureBase64ToUri } from '@/lib/signature';
 import { colors, radius, spacing } from '@/theme';
 
 const MAX_PHOTOS = 5;
@@ -24,6 +26,8 @@ export default function PodCaptureScreen() {
   const [recipientName, setRecipientName] = useState(trip?.recipient.name ?? '');
   const [scannedCode, setScannedCode] = useState(trip?.code ?? '');
   const [capturedAt] = useState(() => new Date().toISOString());
+  const [hasSignature, setHasSignature] = useState(false);
+  const signatureRef = useRef<SignaturePadHandle>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -36,10 +40,9 @@ export default function PodCaptureScreen() {
     );
   }
 
-  // Validate the local draft, not the stored POD (which does not exist yet).
-  // Photo evidence is mandatory: the backend accepts a signature file, but the
-  // app has no signature pad yet, so a signature alone would be lost.
-  const ready = photoUris.length > 0 && recipientName.trim().length > 0;
+  // FRD-MOB-POD-01 — photo and recipient signature are both mandatory.
+  const ready =
+    photoUris.length > 0 && hasSignature && recipientName.trim().length > 0;
 
   const addPhoto = async () => {
     if (photoUris.length >= MAX_PHOTOS) return;
@@ -52,7 +55,17 @@ export default function PodCaptureScreen() {
     setSaving(true);
     setSaveError(null);
     try {
-      await save({ photoUris, recipientName: recipientName.trim(), scannedCode });
+      const signatureBase64 = await signatureRef.current?.toDataURL();
+      if (!signatureBase64) {
+        throw new Error('Tanda tangan penerima belum tersimpan. Coba tanda tangani ulang.');
+      }
+      const signatureUri = await signatureBase64ToUri(signatureBase64);
+      await save({
+        photoUris,
+        signatureUri,
+        recipientName: recipientName.trim(),
+        scannedCode,
+      });
       router.replace(`/pod/${trip.id}/success`);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Gagal mengirim POD. Coba lagi.');
@@ -144,6 +157,41 @@ export default function PodCaptureScreen() {
               </Pressable>
             ) : null}
           </View>
+        </View>
+
+        {/* Recipient signature — FRD-MOB-POD-01 */}
+        <View style={styles.section}>
+          <View style={styles.rowBetween}>
+            <Text variant="labelLg">Tanda tangan penerima</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Hapus tanda tangan"
+              disabled={!hasSignature}
+              onPress={() => {
+                signatureRef.current?.clear();
+                setHasSignature(false);
+              }}
+              style={({ pressed }) => [styles.resetRow, pressed && styles.pressed]}
+            >
+              <Icon
+                name="refresh"
+                size={16}
+                color={hasSignature ? colors.primaryContainer : colors.textMuted}
+              />
+              <Text
+                variant="labelMd"
+                color={hasSignature ? 'primaryContainer' : 'textMuted'}
+              >
+                Ulangi
+              </Text>
+            </Pressable>
+          </View>
+          <SignaturePad ref={signatureRef} onChange={setHasSignature} />
+          <Text variant="labelMd" color={hasSignature ? 'success' : 'critical'}>
+            {hasSignature
+              ? 'Tanda tangan tercatat.'
+              : 'Wajib: minta penerima menandatangani di area di atas.'}
+          </Text>
         </View>
 
         {/* Inputs */}

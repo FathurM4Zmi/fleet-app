@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -5,7 +6,7 @@ import { Icon } from '@/components/Icon';
 import { EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
 import { toFuelCard, toFuelTransaction } from '@/data/adapters';
 import { useFuelCard, useFuelTransactions } from '@/hooks/api/useDriverData';
-import { formatNumber } from '@/lib/format';
+import { formatNumber, maskCardNumber } from '@/lib/format';
 import { colors, radius, shadows, spacing } from '@/theme';
 import type { FuelTransaction, FuelTxnStatus } from '@/data/types';
 
@@ -101,7 +102,7 @@ export default function FuelCardScreen() {
           <View style={styles.heroBody}>
             <View style={styles.chip} />
             <Text variant="headlineMd" color={colors.onPrimary} style={styles.cardNumber}>
-              {card.number}
+              {maskCardNumber(card.number)}
             </Text>
             <Text variant="labelMd" color="rgba(255,255,255,0.9)">
               {card.holder}
@@ -204,9 +205,15 @@ export default function FuelCardScreen() {
 function TransactionRow({ txn }: { txn: FuelTransaction }) {
   const tone = TXN_TONE[txn.status];
   const flagged = txn.status === 'flagged';
+  const statusLabel = flagged ? 'Menunggu tinjauan' : txn.statusLabel;
 
   return (
-    <View style={[styles.txn, flagged && styles.txnFlagged]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Buka Fuel Log untuk transaksi ${txn.station}`}
+      onPress={() => router.push('/fuel')}
+      style={({ pressed }) => [styles.txn, flagged && styles.txnFlagged, pressed && styles.pressed]}
+    >
       <View style={styles.txnMain}>
         <View
           style={[
@@ -229,7 +236,7 @@ function TransactionRow({ txn }: { txn: FuelTransaction }) {
           <View style={[styles.txnBadge, { backgroundColor: tone.bg, borderColor: tone.border }]}>
             {flagged ? <Icon name="warning" size={13} color={tone.fg} /> : null}
             <Text variant="labelSm" color={tone.fg}>
-              {txn.statusLabel}
+              {statusLabel}
             </Text>
           </View>
         </View>
@@ -243,7 +250,13 @@ function TransactionRow({ txn }: { txn: FuelTransaction }) {
           </Text>
         </View>
       ) : null}
-    </View>
+      <View style={styles.txnLink}>
+        <Icon name="forward" size={14} color={colors.secondary} />
+        <Text variant="labelSm" color="secondary">
+          Lihat entri Fuel Log terkait
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -359,6 +372,7 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   txnFlagged: { borderColor: '#FECACA' },
+  pressed: { opacity: 0.85 },
   txnMain: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   txnIcon: {
     width: 44,
@@ -377,8 +391,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: 1,
   },
-  txnNote: {
+  txnLink: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
+
+  txnNote: {    flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs + 2,
     marginTop: spacing.sm + 2,

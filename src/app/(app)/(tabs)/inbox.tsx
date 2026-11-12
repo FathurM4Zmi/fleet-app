@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
@@ -12,10 +12,11 @@ import { useRealtime } from '@/hooks/useRealtime';
 import { useTrips } from '@/hooks/useTrips';
 import { colors, radius, shadows, spacing } from '@/theme';
 
-type FilterKey = 'all' | 'new' | 'active' | 'done' | 'cancelled';
+type FilterKey = 'all' | 'draft' | 'new' | 'active' | 'done' | 'cancelled';
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'all', label: 'Semua' },
+  { key: 'draft', label: 'Draft' },
   { key: 'new', label: 'Baru' },
   { key: 'active', label: 'Dikerjakan' },
   { key: 'done', label: 'Selesai' },
@@ -24,6 +25,8 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 
 const matches = (trip: Trip, filter: FilterKey): boolean => {
   switch (filter) {
+    case 'draft':
+      return trip.status === 'scheduled';
     case 'new':
       return trip.status === 'assigned';
     case 'active':
@@ -81,9 +84,17 @@ export default function InboxScreen() {
   );
 
   const counts = useMemo(() => {
-    const map: Record<FilterKey, number> = { all: 0, new: 0, active: 0, done: 0, cancelled: 0 };
+    const map: Record<FilterKey, number> = {
+      all: 0,
+      draft: 0,
+      new: 0,
+      active: 0,
+      done: 0,
+      cancelled: 0,
+    };
     for (const trip of trips) {
       map.all += 1;
+      if (trip.status === 'scheduled') map.draft += 1;
       if (trip.status === 'assigned') map.new += 1;
       if (trip.status === 'accepted' || trip.status === 'in_progress' || trip.status === 'arrived') map.active += 1;
       if (trip.status === 'completed') map.done += 1;
@@ -163,44 +174,46 @@ export default function InboxScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView
+      <FlatList
+        data={visible}
+        keyExtractor={(trip) => trip.id}
         style={styles.list}
         contentContainerStyle={[styles.listContent, { paddingBottom: spacing.xxl }]}
         showsVerticalScrollIndicator={false}
-      >
-        {visible.length === 0 ? (
+        initialNumToRender={8}
+        windowSize={7}
+        removeClippedSubviews
+        ListEmptyComponent={
           <EmptyState
             icon="inbox"
             title="Tidak ada trip"
             description="Belum ada penugasan pada filter ini. Coba pilih filter lain."
           />
-        ) : (
-          visible.map((trip) => (
-            <TripCard
-              key={trip.id}
-              trip={trip}
-              vehicle={
-                trip.vehiclePlate
-                  ? {
-                      id: trip.vehicleId,
-                      plate: trip.vehiclePlate,
-                      model: trip.vehicleModel ?? '—',
-                      type: '—',
-                      odometerKm: 0,
-                      status: 'in_use',
-                    }
-                  : undefined
-              }
-              hasPod={deliveredTrips.has(trip.id)}
-              onPress={() => router.push(`/trip/${trip.id}`)}
-              onAccept={() => void handleAccept(trip.id)}
-              onReject={() => router.push(`/trip/${trip.id}/reject`)}
-              primaryLabel={trip.status === 'in_progress' || trip.status === 'arrived' ? 'Buka Rute' : undefined}
-              onPrimary={() => router.push(`/trip/${trip.id}/execution`)}
-            />
-          ))
+        }
+        renderItem={({ item: trip }) => (
+          <TripCard
+            trip={trip}
+            vehicle={
+              trip.vehiclePlate
+                ? {
+                    id: trip.vehicleId,
+                    plate: trip.vehiclePlate,
+                    model: trip.vehicleModel ?? '—',
+                    type: '—',
+                    odometerKm: 0,
+                    status: 'in_use',
+                  }
+                : undefined
+            }
+            hasPod={deliveredTrips.has(trip.id)}
+            onPress={() => router.push(`/trip/${trip.id}`)}
+            onAccept={() => void handleAccept(trip.id)}
+            onReject={() => router.push(`/trip/${trip.id}/reject`)}
+            primaryLabel={trip.status === 'in_progress' || trip.status === 'arrived' ? 'Buka Rute' : undefined}
+            onPrimary={() => router.push(`/trip/${trip.id}/execution`)}
+          />
         )}
-      </ScrollView>
+      />
     </Screen>
   );
 }

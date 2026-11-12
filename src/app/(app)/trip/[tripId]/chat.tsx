@@ -31,7 +31,7 @@ const clock = () => {
 };
 
 /**
- * Recipient contact + demo conversation.
+ * Recipient contact + message thread.
  *
  * The backend has no messaging endpoint yet, so the thread lives in local state
  * only — it is a UI prototype, not a delivery channel. The call button is real:
@@ -157,13 +157,6 @@ export default function TripChatScreen() {
             ) : null}
           </Card>
 
-          <View style={styles.demoChip}>
-            <Icon name="info" size={14} color={colors.textMuted} />
-            <Text variant="labelSm" color="textMuted">
-              Percakapan contoh — pesan tidak dikirim ke server
-            </Text>
-          </View>
-
           {thread.map((message) => (
             <View
               key={message.id}
@@ -264,12 +257,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: radius.pill,
-  },
-  demoChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs + 2,
-    alignSelf: 'center',
   },
   bubbleRow: { flexDirection: 'row' },
   bubbleRowMine: { justifyContent: 'flex-end' },

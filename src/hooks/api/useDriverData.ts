@@ -42,7 +42,8 @@ export const useFuelTransactions = (take = 50) =>
 
 /** Coaching / kinerja / aktivitas / DNA. */
 export const useCoaching = () => useApiQuery(insightApi.coaching);
-export const usePerformance = () => useApiQuery(insightApi.performance);
+export const usePerformance = (period: 'week' | 'month' = 'month') =>
+  useApiQuery(() => insightApi.performance(period), [period]);
 export const useActivity = (days = 30, take = 50) =>
   useApiQuery(() => insightApi.activity(days, take), [days, take]);
 export const useDna = () => useApiQuery(insightApi.dna);

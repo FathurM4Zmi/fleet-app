@@ -99,7 +99,7 @@ export default function TripExecutionScreen() {
   };
 
   const handlePrimary = async () => {
-    if (status === 'assigned') {
+    if (status === 'scheduled' || status === 'assigned') {
       await run(() => setStatus('accepted'), 'Gagal menerima trip');
       return;
     }
@@ -108,19 +108,20 @@ export default function TripExecutionScreen() {
       return;
     }
     if (status === 'in_progress') {
-      await run(async () => {
-        await arrive();
-        router.push(`/pod/${trip.id}/capture`);
-      }, 'Gagal menandai tiba di tujuan');
+      await run(arrive, 'Gagal menandai tiba di tujuan');
       return;
     }
     if (status === 'arrived') {
-      await run(complete, 'Gagal menyelesaikan trip');
+      // FRD-MOB-TRIPEXEC-02 — complete first, then continue to POD capture.
+      await run(async () => {
+        await complete();
+        router.push(`/pod/${trip.id}/capture`);
+      }, 'Gagal menyelesaikan trip');
     }
   };
 
   const primaryLabel =
-    status === 'assigned'
+    status === 'scheduled' || status === 'assigned'
       ? 'Terima Trip'
       : status === 'accepted'
         ? 'Mulai Perjalanan'
@@ -335,22 +336,12 @@ export default function TripExecutionScreen() {
             />
           </View>
         ) : (
-          <>
-            {status === 'arrived' ? (
-              <Button
-                label="Ambil Bukti Kirim (POD)"
-                variant="secondary"
-                icon="camera"
-                onPress={() => router.push(`/pod/${trip.id}/capture`)}
-              />
-            ) : null}
-            <Button
-              label={busy ? 'Menyimpan…' : primaryLabel}
-              icon="pin"
-              disabled={busy}
-              onPress={() => void handlePrimary()}
-            />
-          </>
+          <Button
+            label={busy ? 'Menyimpan…' : primaryLabel}
+            icon="pin"
+            disabled={busy}
+            onPress={() => void handlePrimary()}
+          />
         )}
       </View>
     </Screen>

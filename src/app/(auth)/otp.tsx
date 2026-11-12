@@ -215,7 +215,7 @@ export default function OtpScreen() {
           </Text>
         </View>
 
-        <Text variant="micro" color="textMuted" align="center" style={styles.demoHint}>
+        <Text variant="micro" color="textMuted" align="center" style={styles.codeHint}>
           Kode dikirim ke akun terdaftar. Hubungi dispatcher bila tidak diterima.
         </Text>
       </ScreenBody>
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   trustText: { flex: 1 },
-  demoHint: { marginTop: spacing.md },
+  codeHint: { marginTop: spacing.md },
   footer: {
     gap: spacing.md,
     paddingHorizontal: spacing.xl,

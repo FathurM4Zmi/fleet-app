@@ -1,8 +1,10 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { toDvir, toTrip, toVehicle, toVehicleFromTrip } from '@/data/adapters';
 import type { DvirInspection, Trip, Vehicle } from '@/data/types';
 import { dvirApi, profileApi, tripApi, vehicleApi } from '@/lib/api/endpoints';
+import { ApiError } from '@/lib/api/client';
+import { enqueue } from '@/lib/offline/queue';
 import { useApiQuery } from '@/hooks/api/useApiQuery';
 
 export function useTrip(tripId: string | undefined) {
@@ -22,6 +24,14 @@ export function useTrip(tripId: string | undefined) {
     [tripQuery.data],
   );
 
+  // FRD-MOB-TRIPEXEC-04 — a transition queued offline must still drive the UI.
+  const [pendingStatus, setPendingStatus] = useState<Trip['status'] | null>(null);
+
+  const effectiveTrip: Trip | undefined = useMemo(() => {
+    if (!trip || !pendingStatus || trip.status === pendingStatus) return trip;
+    return { ...trip, status: pendingStatus };
+  }, [trip, pendingStatus]);
+
   const vehicle: Vehicle | undefined = useMemo(() => {
     if (!trip) return undefined;
     if (vehicleQuery.data && vehicleQuery.data.vehicleId === trip.vehicleId) {
@@ -37,50 +47,101 @@ export function useTrip(tripId: string | undefined) {
 
   const refetch = tripQuery.refetch;
 
+  const transition = useCallback(
+    async (
+      next: Trip['status'],
+      path: string,
+      label: string,
+      call: () => Promise<void>,
+      body: unknown = null,
+    ) => {
+      if (!tripId) return;
+      try {
+        await call();
+        setPendingStatus(null);
+        await refetch();
+      } catch (error) {
+        if (!(error instanceof ApiError) || !error.isNetworkError) throw error;
+        // Offline: keep the driver moving and let the outbox replay the call.
+        setPendingStatus(next);
+        await enqueue({ kind: 'trip', label, path, method: 'POST', body });
+      }
+    },
+    [tripId, refetch],
+  );
+
   const setStatus = useCallback(
     async (status: Trip['status']) => {
       if (!tripId) return;
-      if (status === 'accepted') await tripApi.accept(tripId);
-      else if (status === 'in_progress') await tripApi.start(tripId);
-      else if (status === 'arrived') await tripApi.arrive(tripId);
-      else if (status === 'completed') await tripApi.complete(tripId);
-      await refetch();
+      if (status === 'accepted') {
+        await transition(status, `/api/driver/trips/${tripId}/accept`, 'Terima tugas', () =>
+          tripApi.accept(tripId),
+        );
+      } else if (status === 'in_progress') {
+        await transition(status, `/api/driver/trips/${tripId}/start`, 'Mulai perjalanan', () =>
+          tripApi.start(tripId),
+        );
+      } else if (status === 'arrived') {
+        await transition(status, `/api/driver/trips/${tripId}/arrive`, 'Tiba di tujuan', () =>
+          tripApi.arrive(tripId),
+        );
+      } else if (status === 'completed') {
+        await transition(
+          status,
+          `/api/driver/trips/${tripId}/complete`,
+          'Selesaikan trip',
+          () => tripApi.complete(tripId),
+          { actualDistanceKm: null },
+        );
+      }
     },
-    [tripId, refetch],
+    [tripId, transition],
   );
 
   const reject = useCallback(
     async (reason: string) => {
       if (!tripId) return;
-      await tripApi.decline(tripId, reason);
-      await refetch();
+      await transition(
+        'rejected',
+        `/api/driver/trips/${tripId}/decline`,
+        'Tolak tugas',
+        () => tripApi.decline(tripId, reason),
+        { reason },
+      );
     },
-    [tripId, refetch],
+    [tripId, transition],
   );
 
   const start = useCallback(async () => {
     if (!tripId) return;
-    await tripApi.start(tripId);
-    await refetch();
-  }, [tripId, refetch]);
+    await transition('in_progress', `/api/driver/trips/${tripId}/start`, 'Mulai perjalanan', () =>
+      tripApi.start(tripId),
+    );
+  }, [tripId, transition]);
 
   const arrive = useCallback(async () => {
     if (!tripId) return;
-    await tripApi.arrive(tripId);
-    await refetch();
-  }, [tripId, refetch]);
+    await transition('arrived', `/api/driver/trips/${tripId}/arrive`, 'Tiba di tujuan', () =>
+      tripApi.arrive(tripId),
+    );
+  }, [tripId, transition]);
 
   const complete = useCallback(
     async (actualDistanceKm?: number) => {
       if (!tripId) return;
-      await tripApi.complete(tripId, actualDistanceKm);
-      await refetch();
+      await transition(
+        'completed',
+        `/api/driver/trips/${tripId}/complete`,
+        'Selesaikan trip',
+        () => tripApi.complete(tripId, actualDistanceKm),
+        { actualDistanceKm: actualDistanceKm ?? null },
+      );
     },
-    [tripId, refetch],
+    [tripId, transition],
   );
 
   return {
-    trip,
+    trip: effectiveTrip,
     vehicle,
     preTrip,
     postTrip,

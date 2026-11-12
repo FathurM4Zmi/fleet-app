@@ -7,6 +7,7 @@ import { formatRecency, formatWindow } from '@/lib/format';
 import { colors, spacing } from '@/theme';
 
 const STATUS: Record<TripStatus, { label: string; tone: BadgeTone; icon: IconName }> = {
+  scheduled: { label: 'Draft', tone: 'neutral', icon: 'assignment' },
   assigned: { label: 'Baru', tone: 'info', icon: 'assignment' },
   accepted: { label: 'Dikonfirmasi', tone: 'info', icon: 'success' },
   in_progress: { label: 'Dikerjakan', tone: 'warning', icon: 'truck' },

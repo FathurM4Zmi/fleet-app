@@ -237,7 +237,7 @@ export default function DocumentDetailScreen() {
             onPress={() =>
               Alert.alert(
                 'Hubungi Supervisor',
-                'Fitur demo: supervisor belum terhubung ke aplikasi.',
+                'Supervisor belum terhubung ke aplikasi. Hubungi dispatcher melalui kanal resmi.',
               )
             }
           />
