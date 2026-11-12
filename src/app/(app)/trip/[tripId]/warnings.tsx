@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
-import { Button, Card, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
+import { Button, Card, EmptyState, Screen, ScreenHeader, Sheet, Text, TextField } from '@/components/ui';
 import { toTripWarning, toTripWarningHistory } from '@/data/adapters';
 import { useTripWarnings } from '@/hooks/api/useDriverData';
 import { useRealtime } from '@/hooks/useRealtime';
 import { useTrip } from '@/hooks/useTrip';
+import { tripOpsApi } from '@/lib/api/endpoints';
 import { colors, radius, shadows, spacing } from '@/theme';
 import type { TripWarning } from '@/data/types';
 
@@ -21,17 +22,50 @@ export default function TripWarningsScreen() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
   const { trip } = useTrip(tripId);
   const query = useTripWarnings(tripId);
-  const [handled, setHandled] = useState<string[]>([]);
-  const [filter, setFilter] = useState<'active' | 'all' | 'done'>('active');
+  // FRD-MOB-ALT-03 — alasan wajib sebelum peringatan ditandai ditangani.
+  const [target, setTarget] = useState<TripWarning | null>(null);
+  const [reason, setReason] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // FRD-MOB-ALT-01 — peringatan baru untuk trip ini langsung muncul di atas daftar.
   useRealtime('alerts', () => void query.refetch());
 
   const tripWarnings = (query.data?.active ?? []).map(toTripWarning);
   const tripWarningHistory = (query.data?.history ?? []).map(toTripWarningHistory);
-  const active = tripWarnings.filter((warning) => !handled.includes(warning.key));
-  const done = tripWarnings.filter((warning) => handled.includes(warning.key));
-  const visible = filter === 'active' ? active : filter === 'done' ? done : tripWarnings;
+  // Server hanya mengembalikan peringatan yang belum resolved.
+  const active = tripWarnings;
+
+  const openReason = (warning: TripWarning) => {
+    setTarget(warning);
+    setReason('');
+    setFormError(null);
+  };
+
+  const submitReason = async () => {
+    if (!target || saving) return;
+
+    const trimmed = reason.trim();
+    if (trimmed.length < 3) {
+      setFormError('Alasan penyelesaian wajib diisi.');
+      return;
+    }
+
+    setSaving(true);
+    setFormError(null);
+    try {
+      await tripOpsApi.resolveWarning(tripId, target.key, trimmed);
+      setTarget(null);
+      setReason('');
+      void query.refetch();
+    } catch (error) {
+      setFormError(
+        error instanceof Error ? error.message : 'Gagal menyimpan alasan. Coba lagi.',
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Screen>
@@ -46,55 +80,26 @@ export default function TripWarningsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
-          {(
-            [
-              { key: 'active', label: `Aktif (${active.length})` },
-              { key: 'all', label: `Semua (${tripWarnings.length})` },
-              { key: 'done', label: `Selesai (${done.length})` },
-            ] as const
-          ).map((item) => {
-            const selected = item.key === filter;
-            return (
-              <Pressable
-                key={item.key}
-                onPress={() => setFilter(item.key)}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                style={[styles.filterChip, selected && styles.filterChipActive]}
-              >
-                <Text variant="labelMd" color={selected ? 'onPrimary' : 'secondary'}>
-                  {item.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-
-        {visible.length === 0 ? (
+        {active.length === 0 ? (
           <EmptyState
             icon="success"
-            title={filter === 'done' ? 'Belum ada yang selesai' : 'Semua peringatan tertangani'}
-            description={
-              filter === 'done'
-                ? 'Peringatan yang Anda tandai ditangani akan muncul di sini.'
-                : 'Tidak ada peringatan aktif untuk trip ini.'
-            }
+            title="Semua peringatan tertangani"
+            description="Tidak ada peringatan aktif untuk trip ini."
           />
         ) : (
-          visible.map((warning) => (
+          active.map((warning) => (
             <WarningCard
               key={warning.key}
               warning={warning}
-              handled={handled.includes(warning.key)}
-              onHandle={() => setHandled((current) => [...current, warning.key])}
+              onHandle={() => openReason(warning)}
               onOpenRoute={() => router.push(`/trip/${tripId}/routes`)}
             />
           ))
         )}
 
         {/* History */}
-        <View style={styles.section}>
+        {tripWarningHistory.length > 0 ? (
+          <View style={styles.section}>
           <View style={styles.sectionHead}>
             <Text variant="labelMd" color="textSecondary" style={styles.upper}>
               RIWAYAT
@@ -128,7 +133,8 @@ export default function TripWarningsScreen() {
               </View>
             ))}
           </Card>
-        </View>
+          </View>
+        ) : null}
 
         {trip ? (
           <Button
@@ -140,18 +146,42 @@ export default function TripWarningsScreen() {
           />
         ) : null}
       </ScrollView>
+
+      <Sheet
+        visible={target !== null}
+        onClose={() => (saving ? undefined : setTarget(null))}
+        title="Beri alasan"
+        description={target?.title}
+      >
+        <TextField
+          label="Alasan penyelesaian"
+          placeholder="Contoh: sudah kembali ke rute yang ditentukan"
+          value={reason}
+          onChangeText={(value) => {
+            setReason(value);
+            if (formError) setFormError(null);
+          }}
+          error={formError ?? undefined}
+          multiline
+          maxLength={500}
+          editable={!saving}
+        />
+        <Button
+          label={saving ? 'Menyimpan…' : 'Kirim alasan'}
+          onPress={() => void submitReason()}
+          disabled={saving || reason.trim().length < 3}
+        />
+      </Sheet>
     </Screen>
   );
 }
 
 function WarningCard({
   warning,
-  handled = false,
   onHandle,
   onOpenRoute,
 }: {
   warning: TripWarning;
-  handled?: boolean;
   onHandle: () => void;
   onOpenRoute: () => void;
 }) {
@@ -203,29 +233,17 @@ function WarningCard({
           </Pressable>
         ) : null}
 
-        {handled ? (
-          <View style={styles.handledRow}>
-            <Icon name="success" size={16} color={colors.success} />
-            <Text variant="labelMd" color="success">
-              Sudah ditangani
+        <View style={styles.warningActions}>
+          <Pressable
+            onPress={onHandle}
+            accessibilityRole="button"
+            style={[styles.action, styles.actionPrimary]}
+          >
+            <Text variant="labelLg" color="onPrimary">
+              {warning.severity === 'critical' ? 'Beri Alasan' : 'Tandai Ditangani'}
             </Text>
-          </View>
-        ) : warning.severity === 'critical' ? (
-          <View style={styles.warningActions}>
-            <Pressable accessibilityRole="button" style={[styles.action, styles.actionGhost]}>
-              <Text variant="labelLg">Beri Alasan</Text>
-            </Pressable>
-            <Pressable
-              onPress={onHandle}
-              accessibilityRole="button"
-              style={[styles.action, styles.actionPrimary]}
-            >
-              <Text variant="labelLg" color="onPrimary">
-                Tandai Ditangani
-              </Text>
-            </Pressable>
-          </View>
-        ) : null}
+          </Pressable>
+        </View>
       </View>
     </Card>
   );
@@ -240,17 +258,6 @@ const styles = StyleSheet.create({
 
   scroll: { flex: 1 },
   content: { gap: spacing.lg, paddingHorizontal: spacing.gutter, paddingTop: spacing.sm, paddingBottom: spacing.xxl },
-
-  filters: { gap: spacing.sm },
-  filterChip: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.outlineVariant,
-    backgroundColor: colors.surface,
-  },
-  filterChipActive: { backgroundColor: colors.primaryContainer, borderColor: colors.primaryContainer },
 
   warningCard: {
     borderLeftWidth: 4,
@@ -272,14 +279,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   warningBody: { gap: spacing.xs },
-  handledRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs + 2,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.divider,
-  },
   warningNote: { lineHeight: 20 },
 
   suggestion: {
@@ -316,7 +315,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radius.input,
   },
-  actionGhost: { borderWidth: 1, borderColor: colors.outlineVariant },
   actionPrimary: { backgroundColor: colors.primaryContainer, ...shadows.card },
 
   section: { gap: spacing.sm },

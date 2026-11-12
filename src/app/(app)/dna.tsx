@@ -56,6 +56,9 @@ export default function DnaScreen() {
 
   const tone = scoreTone(dnaSummary.score);
   const ringColor = tone === 'success' ? colors.success : colors.warning;
+  // FRD-MOB-DNA-03 — penurunan ≥5 poin dianggap signifikan dan memicu banner coaching.
+  const deltaDown = dnaSummary.delta < 0;
+  const significantDrop = dnaSummary.delta <= -5;
 
   return (
     <Screen>
@@ -81,10 +84,14 @@ export default function DnaScreen() {
             />
 
             <View style={styles.heroChips}>
-              <View style={styles.deltaPill}>
-                <Icon name="arrowUp" size={16} color={colors.success} />
-                <Text variant="labelLg" color="success">
-                  +{dnaSummary.delta}
+              <View style={[styles.deltaPill, deltaDown && styles.deltaPillDown]}>
+                <Icon
+                  name={deltaDown ? 'trendingDown' : 'arrowUp'}
+                  size={16}
+                  color={deltaDown ? colors.critical : colors.success}
+                />
+                <Text variant="labelLg" color={deltaDown ? 'critical' : 'success'}>
+                  {deltaDown ? dnaSummary.delta : `+${dnaSummary.delta}`}
                 </Text>
               </View>
 
@@ -110,6 +117,27 @@ export default function DnaScreen() {
             </Text>
           </View>
         </Card>
+
+        {significantDrop ? (
+          <Card shadow style={styles.dropBanner}>
+            <View style={styles.dropHead}>
+              <Icon name="warning" size={20} color={colors.critical} />
+              <Text variant="bodyBold" style={styles.flex}>
+                Skor kesehatan turun {Math.abs(dnaSummary.delta)} poin
+              </Text>
+            </View>
+            <Text variant="caption" color="textSecondary">
+              Dibanding 12 minggu sebelumnya. Ikuti coaching agar skor kembali naik.
+            </Text>
+            <Button
+              label="Buka Coaching"
+              variant="secondary"
+              size="md"
+              icon="school"
+              onPress={() => router.push('/coaching')}
+            />
+          </Card>
+        ) : null}
 
         <Card shadow style={styles.section}>
           <View style={styles.rowBetween}>
@@ -268,6 +296,13 @@ const styles = StyleSheet.create({
     borderColor: '#B6E4D3',
     backgroundColor: colors.successContainer,
   },
+  deltaPillDown: {
+    borderColor: '#F7C9C9',
+    backgroundColor: colors.criticalContainer,
+  },
+  flex: { flex: 1 },
+  dropBanner: { gap: spacing.sm, borderLeftWidth: 4, borderLeftColor: colors.critical },
+  dropHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   neutralPill: {
     alignSelf: 'flex-start',
     paddingHorizontal: spacing.sm + 2,

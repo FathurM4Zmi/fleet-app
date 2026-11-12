@@ -653,11 +653,14 @@ export function toRouteOption(dto: RouteOptionWire): RouteOption {
 }
 
 export function toTripWarning(dto: TripWarningWire): TripWarning {
+  const severity = lower(dto.severity);
   return {
     key: dto.key,
+    // Server mengirim Critical/High/Medium/Low — High dipetakan ke tone warning agar
+    // tidak tampil biru seperti info.
     severity:
-      lower(dto.severity) === 'critical' ? 'critical'
-      : lower(dto.severity) === 'warning' ? 'warning'
+      severity === 'critical' ? 'critical'
+      : severity === 'high' || severity === 'warning' ? 'warning'
       : 'info',
     severityLabel: dto.severityLabel,
     title: dto.title,

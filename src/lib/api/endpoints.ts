@@ -114,6 +114,12 @@ export const tripOpsApi = {
   selectRoute: (tripId: string, routeId: string) =>
     apiRequest<void>(`${BASE}/trips/${tripId}/routes/${routeId}/select`, { method: 'POST' }),
   warnings: (tripId: string) => apiRequest<TripWarnings>(`${BASE}/trips/${tripId}/warnings`),
+  /** FRD-MOB-ALT-03 — tandai peringatan ditangani; alasan wajib. */
+  resolveWarning: (tripId: string, alertId: string, reason: string) =>
+    apiRequest<void>(`${BASE}/trips/${tripId}/warnings/${alertId}/resolve`, {
+      method: 'POST',
+      body: { reason },
+    }),
   assets: (tripId: string) => apiRequest<TripAsset[]>(`${BASE}/trips/${tripId}/assets`),
   checkAsset: (tripId: string, assetId: string) =>
     apiRequest<void>(`${BASE}/trips/${tripId}/assets/${assetId}/check`, { method: 'POST' }),
