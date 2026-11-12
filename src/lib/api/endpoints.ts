@@ -72,6 +72,14 @@ export const authApi = {
       anonymous: true,
       timeoutMs: AUTH_TIMEOUT_MS,
     }),
+  /** FRD-MOB-LOGIN-02 — tukar refresh token dengan sesi baru. */
+  refresh: (refreshToken: string) =>
+    apiRequest<LoginResponse>(`${AUTH}/refresh`, {
+      method: 'POST',
+      body: { refreshToken },
+      anonymous: true,
+      timeoutMs: AUTH_TIMEOUT_MS,
+    }),
   changePin: (currentPin: string, newPin: string) =>
     apiRequest<void>(`${AUTH}/pin/change`, { method: 'POST', body: { currentPin, newPin } }),
 };
@@ -183,6 +191,17 @@ export const notificationApi = {
     apiRequest<{ id: string }>(`${BASE}/notification-preferences`, {
       method: 'PUT',
       body: { notificationType, isEnabled },
+    }),
+  /** FRD-MOB-NOTIF-02 — daftarkan token push perangkat. */
+  registerDevice: (token: string, platform: string) =>
+    apiRequest<void>(`${BASE}/devices`, {
+      method: 'POST',
+      body: { token, platform },
+    }),
+  unregisterDevice: (token: string) =>
+    apiRequest<void>(`${BASE}/devices/unregister`, {
+      method: 'POST',
+      body: { token, platform: null },
     }),
 };
 

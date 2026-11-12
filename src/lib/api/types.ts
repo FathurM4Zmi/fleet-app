@@ -73,6 +73,8 @@ export interface LoginResponse {
   twoFactorChallengeToken: string | null;
   token: string | null;
   expiresAt: string | null;
+  /** FRD-MOB-LOGIN-02 — dipakai untuk memperpanjang sesi tanpa login ulang. */
+  refreshToken?: string | null;
   user: { id: string; email: string; fullName: string; role: string; isActive: boolean } | null;
 }
 

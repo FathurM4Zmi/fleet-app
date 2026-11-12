@@ -32,12 +32,32 @@ export class ApiError extends Error {
 
 export type TokenProvider = () => Promise<string | null>;
 export type UnauthorizedHandler = () => void;
+/** FRD-MOB-LOGIN-02 — returns true when a new access token was obtained. */
+export type RefreshHandler = () => Promise<boolean>;
 
 let tokenProvider: TokenProvider = async () => null;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
+let refreshHandler: RefreshHandler | null = null;
+let refreshing: Promise<boolean> | null = null;
 
 export function setTokenProvider(provider: TokenProvider) {
   tokenProvider = provider;
+}
+
+export function setRefreshHandler(handler: RefreshHandler | null) {
+  refreshHandler = handler;
+}
+
+/**
+ * Coalesces concurrent 401s into a single refresh call, so five parallel
+ * requests do not each burn a refresh token.
+ */
+function tryRefresh(): Promise<boolean> {
+  if (!refreshHandler) return Promise.resolve(false);
+  refreshing ??= refreshHandler().finally(() => {
+    refreshing = null;
+  });
+  return refreshing;
 }
 
 /**
@@ -92,44 +112,54 @@ function notifyUnauthorized(status: number) {
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? API_TIMEOUT_MS);
-  const abortFromCaller = () => controller.abort();
-  options.signal?.addEventListener('abort', abortFromCaller);
+  for (let attempt = 0; ; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? API_TIMEOUT_MS);
+    const abortFromCaller = () => controller.abort();
+    options.signal?.addEventListener('abort', abortFromCaller);
 
-  const headers: Record<string, string> = { Accept: 'application/json' };
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
-  if (!options.anonymous) {
-    const token = await tokenProvider();
-    if (token) headers.Authorization = `Bearer ${token}`;
-  }
+    try {
+      const headers: Record<string, string> = { Accept: 'application/json' };
+      if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+      if (!options.anonymous) {
+        const token = await tokenProvider();
+        if (token) headers.Authorization = `Bearer ${token}`;
+      }
 
-  try {
-    const response = await fetch(buildUrl(path, options.query), {
-      method: options.method ?? 'GET',
-      headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
-      signal: controller.signal,
-    });
+      const response = await fetch(buildUrl(path, options.query), {
+        method: options.method ?? 'GET',
+        headers,
+        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
+      if (response.ok) {
+        if (response.status === 204) return undefined as T;
+        const text = await response.text();
+        return (text ? JSON.parse(text) : undefined) as T;
+      }
+
       const error = await parseError(response);
+
+      // FRD-MOB-LOGIN-02 — access token kedaluwarsa: perpanjang sekali lalu ulangi
+      // permintaan dengan token baru. Endpoint refresh sendiri memakai `anonymous`,
+      // jadi tidak mungkin rekursif.
+      if (error.status === 401 && !options.anonymous && attempt === 0 && (await tryRefresh())) {
+        continue;
+      }
+
       notifyUnauthorized(error.status);
       throw error;
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      if ((error as Error)?.name === 'AbortError') {
+        throw new ApiError(0, 'Permintaan melebihi batas waktu. Periksa koneksi.');
+      }
+      throw new ApiError(0, 'Tidak dapat terhubung ke server. Periksa koneksi.');
+    } finally {
+      clearTimeout(timeout);
+      options.signal?.removeEventListener('abort', abortFromCaller);
     }
-    if (response.status === 204) return undefined as T;
-
-    const text = await response.text();
-    return (text ? JSON.parse(text) : undefined) as T;
-  } catch (error) {
-    if (error instanceof ApiError) throw error;
-    if ((error as Error)?.name === 'AbortError') {
-      throw new ApiError(0, 'Permintaan melebihi batas waktu. Periksa koneksi.');
-    }
-    throw new ApiError(0, 'Tidak dapat terhubung ke server. Periksa koneksi.');
-  } finally {
-    clearTimeout(timeout);
-    options.signal?.removeEventListener('abort', abortFromCaller);
   }
 }
 

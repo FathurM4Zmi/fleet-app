@@ -3,9 +3,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { Card, EmptyState, Screen, ScreenBody, ScreenHeader, Text, TrendChart } from '@/components/ui';
-import { toCoaching } from '@/data/adapters';
-import { useCoaching, useDna } from '@/hooks/api/useDriverData';
-import type { CoachingMilestoneState, DocumentStatus, StatusDocument } from '@/data/types';
+import { toCoaching, toComplianceDocuments } from '@/data/adapters';
+import { useCoaching, useDocuments, useDna } from '@/hooks/api/useDriverData';
+import type { CoachingMilestoneState, DocumentStatus } from '@/data/types';
 import { colors, radius, spacing } from '@/theme';
 
 const DOC_ICON: Record<string, IconName> = {
@@ -28,10 +28,15 @@ const MILESTONE_TONE: Record<CoachingMilestoneState, { fg: string; bg?: string; 
 export default function CoachingScreen() {
   const coachingQuery = useCoaching();
   const dnaQuery = useDna();
+  const documentsQuery = useDocuments();
   const data = coachingQuery.data ? toCoaching(coachingQuery.data) : undefined;
   const coachingPlan = data?.plan;
   const coachingSessions = data?.sessions ?? [];
-  const coachingCertifications: StatusDocument[] = [];
+  // FRD-MOB-COACH-03 — sertifikasi & pelatihan beserta status kedaluwarsa. Sumbernya
+  // endpoint dokumen driver; coaching hanya menampilkan tipe "Sertifikat".
+  const coachingCertifications = toComplianceDocuments(
+    (documentsQuery.data ?? []).filter((document) => document.documentType === 'Sertifikat'),
+  );
 
   const coachingScore = {
     period: '30 hari terakhir',
@@ -238,7 +243,12 @@ export default function CoachingScreen() {
           <Text variant="labelSm" color="textSecondary" style={styles.tracked}>
             SERTIFIKASI
           </Text>
-          <Pressable accessibilityRole="button" hitSlop={8}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Lihat semua dokumen"
+            hitSlop={8}
+            onPress={() => router.push('/profile' as never)}
+          >
             <Text variant="labelMd" color="primaryContainer">
               Lihat Semua
             </Text>
@@ -246,6 +256,13 @@ export default function CoachingScreen() {
         </View>
 
         <View style={styles.certGrid}>
+          {coachingCertifications.length === 0 ? (
+            <Text variant="caption" color="textSecondary">
+              {documentsQuery.loading
+                ? 'Memuat sertifikasi…'
+                : 'Belum ada sertifikasi atau pelatihan terdaftar.'}
+            </Text>
+          ) : null}
           {coachingCertifications.map((document) => {
             const tone = DOC_TONE[document.status];
 
@@ -253,7 +270,7 @@ export default function CoachingScreen() {
               <Card key={document.key} style={styles.certCard}>
                 <View style={[styles.certIcon, { backgroundColor: tone.bg }]}>
                   <Icon
-                    name={DOC_ICON[document.key] ?? 'verified'}
+                    name={DOC_ICON[document.key] ?? 'award'}
                     size={19}
                     color={tone.fg}
                   />

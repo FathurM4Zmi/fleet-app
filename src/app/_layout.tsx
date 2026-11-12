@@ -3,11 +3,15 @@ import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
 import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
 import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 import { useFonts } from '@expo-google-fonts/inter/useFonts';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import {
+  configureForegroundNotifications,
+  subscribeToNotificationTaps,
+} from '@/lib/push';
 import { AppStoreProvider } from '@/store/app';
 import { AuthProvider, useAuth } from '@/store/auth';
 import { colors } from '@/theme';
@@ -53,6 +57,12 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { status } = useAuth();
+
+  // FRD-MOB-NOTIF-03 — ketuk notifikasi push membuka layar kontekstual.
+  useEffect(() => {
+    void configureForegroundNotifications();
+    return subscribeToNotificationTaps((target) => router.push(target as never));
+  }, []);
 
   // Wait for the stored token to be read before choosing a stack, otherwise a
   // signed-in driver briefly sees the login screen on cold start.
