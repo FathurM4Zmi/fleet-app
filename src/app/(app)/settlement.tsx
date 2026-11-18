@@ -137,6 +137,11 @@ export default function SettlementScreen() {
           </View>
         </View>
 
+        {/* FRD-MOB-SET-02 — driver hanya melihat (SoD): jelaskan kenapa tidak ada aksi setujui. */}
+        <Text variant="caption" color="textSecondary" style={styles.sodNote}>
+          Pembuat tidak dapat menyetujui settlement-nya sendiri.
+        </Text>
+
         {settlementSummary.rateMissing ? (
           <View style={styles.rateWarning}>
             <Icon name="warning" size={20} color={colors.warning} />
@@ -481,6 +486,7 @@ const styles = StyleSheet.create({
   },
   noticeText: { flex: 1 },
 
+  sodNote: { marginTop: spacing.sm, marginBottom: spacing.xs, textAlign: 'center' },
   rateWarning: {
     flexDirection: 'row',
     alignItems: 'flex-start',

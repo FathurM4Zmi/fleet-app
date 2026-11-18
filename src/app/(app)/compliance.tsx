@@ -56,25 +56,34 @@ export default function ComplianceScreen() {
             const tone = DOC_TONE[document.status];
 
             return (
-              <Card key={document.key} shadow style={styles.docCard}>
-                <View style={styles.docLeft}>
-                  <View style={[styles.docIcon, { backgroundColor: tone.bg }]}>
-                    <Icon name={DOC_ICON[document.key] ?? 'document'} size={22} color={tone.fg} />
+              <Card key={document.key} shadow>
+                <View style={styles.docCard}>
+                  <View style={styles.docLeft}>
+                    <View style={[styles.docIcon, { backgroundColor: tone.bg }]}>
+                      <Icon name={DOC_ICON[document.key] ?? 'document'} size={22} color={tone.fg} />
+                    </View>
+                    <View style={styles.docText}>
+                      <Text variant="labelLg">{document.title}</Text>
+                      <Text variant="labelSm" color="textSecondary" style={styles.docNote}>
+                        {document.note}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.docText}>
-                    <Text variant="labelLg">{document.title}</Text>
-                    <Text variant="labelSm" color="textSecondary" style={styles.docNote}>
-                      {document.note}
+
+                  <View style={[styles.statusChip, { backgroundColor: tone.bg, borderColor: tone.fg }]}>
+                    <View style={[styles.statusDot, { backgroundColor: tone.fg }]} />
+                    <Text variant="labelSm" style={{ color: tone.fg }}>
+                      {document.statusLabel}
                     </Text>
                   </View>
                 </View>
 
-                <View style={[styles.statusChip, { backgroundColor: tone.bg, borderColor: tone.fg }]}>
-                  <View style={[styles.statusDot, { backgroundColor: tone.fg }]} />
-                  <Text variant="labelSm" style={{ color: tone.fg }}>
-                    {document.statusLabel}
+                {/* FRD-MOB-CMP-01 — dokumen kedaluwarsa memblokir operasional. */}
+                {document.status === 'expired' ? (
+                  <Text variant="caption" color="critical" style={styles.docAlert}>
+                    {`${document.title} telah kedaluwarsa dan menonaktifkan operasional terkait.`}
                   </Text>
-                </View>
+                ) : null}
               </Card>
             );
           })}
@@ -173,6 +182,7 @@ const styles = StyleSheet.create({
 
   docs: { gap: spacing.sm + 4 },
   docCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  docAlert: { marginTop: spacing.sm },
   docLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 4, flex: 1 },
   docIcon: {
     width: 40,

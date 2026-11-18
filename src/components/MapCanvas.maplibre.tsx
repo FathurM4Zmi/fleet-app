@@ -27,6 +27,7 @@ const DEFAULT_CENTER: [number, number] = [106.8166, -6.2];
  */
 export function MapCanvas({
   points = [],
+  plannedPoints = [],
   markers = [],
   height = 220,
   zoom: fixedZoom,
@@ -38,7 +39,7 @@ export function MapCanvas({
 }: MapCanvasProps) {
   // Serialise the coordinates so re-renders of the parent screen (e.g. typing a
   // note) don't re-fit the camera; only real position changes do.
-  const anchorKey = [...points, ...markers]
+  const anchorKey = [...points, ...plannedPoints, ...markers]
     .filter((point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude))
     .map((point) => `${point.longitude},${point.latitude}`)
     .join(';');
@@ -73,6 +74,11 @@ export function MapCanvas({
     .map((point) => `${point.longitude},${point.latitude}`)
     .join(';');
 
+  const plannedKey = plannedPoints
+    .filter((point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude))
+    .map((point) => `${point.longitude},${point.latitude}`)
+    .join(';');
+
   /** Live vehicle position — the camera tracks it as new fixes arrive. */
   const followKey =
     follow && Number.isFinite(follow.latitude) && Number.isFinite(follow.longitude)
@@ -102,6 +108,23 @@ export function MapCanvas({
     };
   }, [routeKey]);
 
+  const plannedRoute = useMemo<GeoJSON.FeatureCollection>(() => {
+    const coordinates = plannedKey
+      ? (plannedKey.split(';').map((pair) => pair.split(',').map(Number)) as [number, number][])
+      : [];
+    if (coordinates.length < 2) return { type: 'FeatureCollection', features: [] };
+    return {
+      type: 'FeatureCollection',
+      features: [
+        {
+          type: 'Feature',
+          properties: {},
+          geometry: { type: 'LineString', coordinates },
+        },
+      ],
+    };
+  }, [plannedKey]);
+
   return (
     <View style={[styles.container, { height }, !rounded && styles.square]}>
       <Map
@@ -129,6 +152,22 @@ export function MapCanvas({
         ) : (
           <Camera center={center} zoom={fixedZoom ?? 12} duration={500} />
         )}
+
+        {plannedKey.includes(';') ? (
+          <GeoJSONSource id="map-planned-route" data={plannedRoute}>
+            <Layer
+              id="map-planned-route-line"
+              type="line"
+              paint={{
+                'line-color': colors.secondary,
+                'line-opacity': 0.7,
+                'line-width': 4,
+                'line-dasharray': [2, 1.4],
+              }}
+              layout={{ 'line-cap': 'round', 'line-join': 'round' }}
+            />
+          </GeoJSONSource>
+        ) : null}
 
         {points.length > 1 ? (
           <GeoJSONSource id="map-route" data={route}>

@@ -242,6 +242,16 @@ function TransactionRow({ txn }: { txn: FuelTransaction }) {
         </View>
       </View>
 
+      {/* FRD-MOB-FCARD — jelaskan kenapa transaksi ditandai. */}
+      {flagged ? (
+        <View style={styles.txnNote}>
+          <Icon name="warning" size={15} color={colors.critical} />
+          <Text variant="labelSm" color={colors.critical}>
+            Transaksi mencurigakan terdeteksi dan ditandai untuk ditinjau.
+          </Text>
+        </View>
+      ) : null}
+
       {txn.note ? (
         <View style={styles.txnNote}>
           <Icon name="info" size={15} color={colors.critical} />

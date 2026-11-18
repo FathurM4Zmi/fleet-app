@@ -57,7 +57,11 @@ export const useCompliance = () => useApiQuery(safetyApi.compliance);
 /** Kendaraan & dokumen. */
 export const useVehicle = () => useApiQuery(vehicleApi.current);
 export const useVehicleDocuments = (vehicleId?: string) =>
-  useApiQuery(() => vehicleApi.documents(vehicleId), [vehicleId]);
+  useApiQuery(() => vehicleApi.documents(vehicleId), [vehicleId], {
+    // `GET /api/driver/vehicle/documents` wajib `?vehicleId=`; memanggil sebelum
+    // unit dimuat hanya menghasilkan 400 "The value '' is invalid.".
+    enabled: Boolean(vehicleId),
+  });
 export const useOdometerCorrections = () => useApiQuery(vehicleApi.odometerCorrections);
 export const useDocuments = () => useApiQuery(documentApi.list);
 export const useDocument = (id: string | undefined) =>

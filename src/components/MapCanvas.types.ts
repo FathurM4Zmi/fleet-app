@@ -11,6 +11,12 @@ export interface MapMarker extends MapPoint {
 export interface MapCanvasProps {
   /** Polyline to draw, e.g. the GPS trail or the route between origin and destination. */
   points?: MapPoint[];
+  /**
+   * Planned route (origin → destination) drawn as a dashed line underneath
+   * `points`, so the driver sees where the task is heading before any GPS
+   * fix exists.
+   */
+  plannedPoints?: MapPoint[];
   /** Pins drawn on top of the map. */
   markers?: MapMarker[];
   height?: number;

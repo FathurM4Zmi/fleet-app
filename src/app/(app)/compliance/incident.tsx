@@ -59,6 +59,15 @@ export default function IncidentReportScreen() {
     photos.length > 0 &&
     !saving;
 
+  // Tombol hanya menunggu field teks; foto sengaja tidak ikut supaya driver
+  // mendapat pesan "Foto bukti wajib dilampirkan." saat menekan kirim.
+  const formComplete =
+    Boolean(vehicle) &&
+    location.trim().length > 0 &&
+    chronology.trim().length > 0 &&
+    description.trim().length > 0 &&
+    !saving;
+
   const fillCurrentLocation = async () => {
     if (locating) return;
     setLocating(true);
@@ -79,6 +88,12 @@ export default function IncidentReportScreen() {
   };
 
   const submit = async () => {
+    // FRD-MOB-CMP-04 — foto bukti wajib; jelaskan alasannya, jangan hanya
+    // mematikan tombol sehingga driver tidak tahu apa yang kurang.
+    if (photos.length === 0) {
+      setError('Foto bukti wajib dilampirkan.');
+      return;
+    }
     if (!canSubmit || !vehicle) return;
     setSaving(true);
     setError(null);
@@ -354,7 +369,7 @@ export default function IncidentReportScreen() {
           <Button
             label={saving ? 'Mengirim…' : 'Kirim Laporan'}
             iconAfter="send"
-            disabled={!canSubmit}
+            disabled={!formComplete}
             onPress={submit}
           />
         )}

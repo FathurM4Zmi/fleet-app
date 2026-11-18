@@ -9,6 +9,7 @@ import type { Notification, NotificationSeverity } from '@/data/types';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useRealtime } from '@/hooks/useRealtime';
 import { formatRelative } from '@/lib/format';
+import { notify } from '@/lib/notify';
 import { colors, radius, shadows, spacing } from '@/theme';
 
 type FilterKey = 'all' | 'trip' | 'coaching' | 'document' | 'system';
@@ -51,6 +52,8 @@ export default function NotificationsScreen() {
   const handleMarkAll = async () => {
     try {
       await markAllRead();
+      // FRD-MOB-NOTIF — konfirmasi bahwa tidak ada lagi yang belum dibaca.
+      notify('Semua notifikasi telah dibaca.');
     } catch (error) {
       Alert.alert(
         'Gagal menandai notifikasi',
@@ -115,7 +118,7 @@ export default function NotificationsScreen() {
         {visible.length === 0 ? (
           <EmptyState
             icon="notifications"
-            title="Tidak ada notifikasi"
+            title="Tidak ada notifikasi baru."
             description="Belum ada pemberitahuan pada filter ini."
           />
         ) : (

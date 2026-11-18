@@ -645,12 +645,37 @@ export function toRouteOption(dto: RouteOptionWire): RouteOption {
       : lower(dto.statusTone) === 'warning' ? 'warning'
       : 'neutral',
     recommended: dto.recommended,
+    selected: dto.selected,
     originLat: dto.originLat,
     originLng: dto.originLng,
     destLat: dto.destLat,
     destLng: dto.destLng,
   };
 }
+
+/**
+ * Server mengirim nama tipe alert apa adanya (mis. `GeofenceBreach`). Driver
+ * tidak boleh melihat enum mentah, jadi tipe yang dikenal diterjemahkan ke
+ * kalimat FRD-MOB-Alerts.
+ */
+const WARNING_TITLE: Record<string, string> = {
+  GeofenceBreach: 'Anda keluar dari zona rute yang ditentukan.',
+  RouteDetour: 'Anda keluar dari zona rute yang ditentukan.',
+  GeofenceExit: 'Anda keluar dari zona yang dipantau.',
+  GeofenceEntry: 'Anda memasuki zona yang dipantau.',
+  Overspeed: 'Melebihi batas kecepatan.',
+  Idle: 'Mesin idle melebihi ambang.',
+  DataGap: 'Sinyal kendaraan terputus.',
+  MaintenanceOverdue: 'Jadwal perawatan preventif terlewat.',
+  DocumentExpiry: 'Dokumen kendaraan akan kedaluwarsa.',
+  FuelAnomaly: 'Konsumsi BBM menyimpang dari baseline.',
+  FuelOdometerRegression: 'Odometer mundur dari entri sebelumnya.',
+  FuelDuplicateFill: 'Dua pengisian mirip dalam waktu singkat.',
+  FuelPriceAnomaly: 'Harga BBM menyimpang dari harga umum.',
+  FuelMissingOdometer: 'Entri BBM tanpa odometer.',
+};
+
+const warningTitle = (title: string): string => WARNING_TITLE[title] ?? title;
 
 export function toTripWarning(dto: TripWarningWire): TripWarning {
   const severity = lower(dto.severity);
@@ -663,7 +688,7 @@ export function toTripWarning(dto: TripWarningWire): TripWarning {
       : severity === 'high' || severity === 'warning' ? 'warning'
       : 'info',
     severityLabel: dto.severityLabel,
-    title: dto.title,
+    title: warningTitle(dto.title),
     note: dto.note ?? '',
     sla: dto.sla ?? undefined,
     timeLabel: dto.timeLabel ?? undefined,
@@ -672,7 +697,7 @@ export function toTripWarning(dto: TripWarningWire): TripWarning {
 }
 
 export function toTripWarningHistory(dto: TripWarningHistoryWire): TripWarningHistoryEntry {
-  return { key: dto.key, title: dto.title, note: dto.note ?? '', time: dto.time };
+  return { key: dto.key, title: warningTitle(dto.title), note: dto.note ?? '', time: dto.time };
 }
 
 export function toTripAsset(dto: TripAssetWire): TripAsset {

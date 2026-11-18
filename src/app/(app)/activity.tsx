@@ -151,7 +151,7 @@ export default function ActivityScreen() {
 
           {visible.length === 0 ? (
             <Text variant="caption" color="textSecondary" style={styles.empty}>
-              Belum ada aktivitas pada kategori ini.
+              Belum ada aktivitas tercatat.
             </Text>
           ) : (
             <View style={styles.timeline}>

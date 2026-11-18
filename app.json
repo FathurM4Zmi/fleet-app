@@ -64,7 +64,9 @@
           "color": "#DC2626"
         }
       ],
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

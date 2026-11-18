@@ -405,7 +405,7 @@ function PhotoTile({ uri, onCapture }: { uri?: string; onCapture: () => void }) 
       <View style={styles.photoIcon}>
         <Icon name="camera" size={22} color={colors.critical} />
       </View>
-      <Text variant="titleMd">Foto kondisi wajib diunggah</Text>
+      <Text variant="titleMd">Foto kondisi wajib diunggah untuk item yang gagal.</Text>
       <Text variant="labelSm" color="textMuted" style={styles.photoHint}>
         Ketuk untuk buka kamera (kualitas tinggi &amp; geotag)
       </Text>

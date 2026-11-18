@@ -29,6 +29,7 @@ export default function CoachingUpdateScreen() {
   const [photoA, setPhotoA] = useState<string>();
   const [photoB, setPhotoB] = useState<string>();
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!coachingPlan) {
@@ -37,7 +38,7 @@ export default function CoachingUpdateScreen() {
         <ScreenHeader title="Perbarui Progres" onBack />
         <EmptyState
           icon="school"
-          title="Belum ada rencana coaching"
+          title="Belum ada rencana coaching."
           description={coachingQuery.error?.message ?? 'Supervisor belum menetapkan rencana coaching.'}
         />
       </Screen>
@@ -79,7 +80,8 @@ export default function CoachingUpdateScreen() {
         note.trim() || undefined,
         evidencePaths.length > 0 ? evidencePaths : undefined,
       );
-      router.back();
+      // FRD-MOB-COACH — tampilkan konfirmasi dulu, jangan langsung tutup sheet.
+      setSaved(true);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Gagal menyimpan progres.');
     } finally {
@@ -269,22 +271,36 @@ export default function CoachingUpdateScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <Button
-            label={saving ? 'Menyimpan…' : 'Simpan Progres'}
-            disabled={saving || alreadyClosed}
-            onPress={save}
-          />
-          {alreadyClosed ? (
-            <Text variant="caption" color="textSecondary" align="center">
-              Rencana sudah {coachingPlan.status === 'Cancelled' ? 'dibatalkan' : 'selesai'}.
-            </Text>
-          ) : null}
-          {error ? (
-            <Text variant="caption" color="critical" align="center">
-              {error}
-            </Text>
-          ) : null}
-          <Button label="Batal" variant="secondary" onPress={() => router.back()} />
+          {saved ? (
+            <>
+              <View style={styles.savedRow}>
+                <Icon name="cloudDone" size={20} color={colors.success} />
+                <Text variant="labelLg" color="success">
+                  Progres coaching tersimpan.
+                </Text>
+              </View>
+              <Button label="Tutup" onPress={() => router.back()} />
+            </>
+          ) : (
+            <>
+              <Button
+                label={saving ? 'Menyimpan…' : 'Simpan Progres'}
+                disabled={saving || alreadyClosed}
+                onPress={save}
+              />
+              {alreadyClosed ? (
+                <Text variant="caption" color="textSecondary" align="center">
+                  Rencana sudah {coachingPlan.status === 'Cancelled' ? 'dibatalkan' : 'selesai'}.
+                </Text>
+              ) : null}
+              {error ? (
+                <Text variant="caption" color="critical" align="center">
+                  {error}
+                </Text>
+              ) : null}
+              <Button label="Batal" variant="secondary" onPress={() => router.back()} />
+            </>
+          )}
         </View>
       </View>
     </Screen>
@@ -440,5 +456,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.divider,
+  },
+  savedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
   },
 });

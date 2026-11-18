@@ -4,7 +4,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
-import { BottomBar, Button, Card, Screen, ScreenBody, Text } from '@/components/ui';
+import { BottomBar, Button, Card, EmptyState, Screen, ScreenBody, Text } from '@/components/ui';
 import { SAFETY_FILTERS } from '@/data/constants';
 import { toSafetyEvent } from '@/data/adapters';
 import { useSafetyEvents } from '@/hooks/api/useDriverData';
@@ -100,6 +100,16 @@ export default function SafetyScreen() {
           })}
         </ScrollView>
 
+        {/* FRD-MOB-SAF — tampilkan peringatan bila ada perilaku berisiko. */}
+        {safetyEvents.some((event) => event.severity !== 'info') ? (
+          <View style={styles.alertBanner}>
+            <Icon name="warning" size={18} color={colors.critical} />
+            <Text variant="labelMd" color="critical" style={styles.flex}>
+              Perilaku mengemudi berisiko terdeteksi.
+            </Text>
+          </View>
+        ) : null}
+
         {/* Score */}
         <Card shadow>
           <View style={styles.scoreHead}>
@@ -138,9 +148,15 @@ export default function SafetyScreen() {
         </View>
 
         <View style={styles.eventList}>
-          {visible.map((event) => (
-            <SafetyRow key={event.key} event={event} />
-          ))}
+          {visible.length === 0 ? (
+            <EmptyState
+              icon="success"
+              title="Tidak ada peristiwa. Pertahankan cara mengemudi yang aman."
+              description="Peristiwa safety akan tampil di sini begitu telematika mendeteksinya."
+            />
+          ) : (
+            visible.map((event) => <SafetyRow key={event.key} event={event} />)
+          )}
         </View>
 
         {/* Info */}
@@ -292,6 +308,17 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   eventList: { gap: spacing.md, marginTop: spacing.md },
+  alertBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.critical,
+    backgroundColor: colors.criticalContainer,
+  },
   event: {
     flexDirection: 'row',
     alignItems: 'flex-start',

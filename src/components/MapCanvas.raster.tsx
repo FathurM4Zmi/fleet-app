@@ -102,6 +102,7 @@ const touchMidpoint = (a: Touch, b: Touch) => ({
  */
 export function MapCanvas({
   points = [],
+  plannedPoints = [],
   markers = [],
   height = 220,
   zoom: fixedZoom,
@@ -130,10 +131,10 @@ export function MapCanvas({
 
   const anchors = useMemo(
     () =>
-      [...points, ...markers].filter(
+      [...points, ...plannedPoints, ...markers].filter(
         (point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude),
       ),
-    [points, markers],
+    [points, plannedPoints, markers],
   );
 
   /** Camera derived from the props: follow the live point, or fit the trail. */
@@ -310,6 +311,14 @@ export function MapCanvas({
     .filter(Boolean);
   const polyline = linePoints.map((point) => `${point!.x.toFixed(1)},${point!.y.toFixed(1)}`).join(' ');
 
+  const plannedLinePoints = plannedPoints
+    .filter((point) => Number.isFinite(point.latitude) && Number.isFinite(point.longitude))
+    .map((point) => view?.toScreen(point))
+    .filter(Boolean);
+  const plannedPolyline = plannedLinePoints
+    .map((point) => `${point!.x.toFixed(1)},${point!.y.toFixed(1)}`)
+    .join(' ');
+
   const handlePress = (event: GestureResponderEvent) => {
     if (!view || !onPressPoint) return;
 
@@ -375,13 +384,26 @@ export function MapCanvas({
           ))
         : null}
 
-      {view && (linePoints.length > 1 || markers.length > 0) ? (
+      {view && (linePoints.length > 1 || plannedLinePoints.length > 1 || markers.length > 0) ? (
         <Svg
           width={size.width}
           height={height}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         >
+          {plannedLinePoints.length > 1 ? (
+            <Polyline
+              points={plannedPolyline}
+              fill="none"
+              stroke={colors.secondary}
+              strokeOpacity={0.7}
+              strokeWidth={4}
+              strokeDasharray="10,7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ) : null}
+
           {linePoints.length > 1 ? (
             <>
               <Polyline

@@ -5,9 +5,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { Badge, Button, Card, Screen, Sheet, Text, TextField } from '@/components/ui';
-import { toDriver, toProfileDocument, toVehicle } from '@/data/adapters';
+import { toDriver, toProfileDocument, toSettlement, toVehicle } from '@/data/adapters';
 import type { DocumentStatus } from '@/data/types';
-import { useDna, useDocuments, useHome, useVehicle } from '@/hooks/api/useDriverData';
+import {
+  useCoaching,
+  useDna,
+  useDocuments,
+  useHome,
+  useSettlement,
+  useVehicle,
+} from '@/hooks/api/useDriverData';
 import { profileApi } from '@/lib/api/endpoints';
 import { formatDate, scoreTone } from '@/lib/format';
 import { emptyDriver } from '@/store/app';
@@ -49,10 +56,26 @@ export default function ProfileScreen() {
   const dna = useDna();
   const vehicleQuery = useVehicle();
   const documentsQuery = useDocuments();
+  const coachingQuery = useCoaching();
+  const settlementQuery = useSettlement();
   const { logout } = useAuth();
   const driver = home.data ? toDriver(home.data.profile, dna.data?.score ?? 0) : emptyDriver;
 
   const vehicle = vehicleQuery.data ? toVehicle(vehicleQuery.data) : undefined;
+
+  const documents = (documentsQuery.data ?? []).map(toProfileDocument);
+  const expiredDocuments = documents.filter((document) => document.status === 'expired').length;
+
+  const coachingPlan = coachingQuery.data?.plan ?? null;
+  const coachingLabel = !coachingPlan
+    ? 'Tidak ada'
+    : coachingPlan.status === 'Completed'
+      ? 'Selesai'
+      : coachingPlan.status === 'Cancelled'
+        ? 'Dibatalkan'
+        : 'Berjalan';
+
+  const settlement = settlementQuery.data ? toSettlement(settlementQuery.data).summary : null;
 
   const [editOpen, setEditOpen] = useState(false);
   const [draftName, setDraftName] = useState(driver.name);
@@ -108,7 +131,7 @@ export default function ProfileScreen() {
       icon: 'school',
       iconColor: colors.onSurfaceVariant,
       label: 'Coaching dan Sertifikasi',
-      value: '2 aktif',
+      value: coachingLabel,
       href: '/coaching',
     },
     {
@@ -117,7 +140,10 @@ export default function ProfileScreen() {
       iconColor: colors.warning,
       label: 'Kepatuhan',
       value: '',
-      badge: { label: '1 kedaluwarsa', tone: 'warning' },
+      badge:
+        expiredDocuments > 0
+          ? { label: `${expiredDocuments} kedaluwarsa`, tone: 'warning' }
+          : undefined,
       href: '/compliance',
     },
     {
@@ -141,7 +167,7 @@ export default function ProfileScreen() {
       icon: 'payments',
       iconColor: colors.primary,
       label: 'Settlement',
-      value: 'Rp 8.450.000',
+      value: settlement?.total ?? '—',
       tone: 'neutral',
       href: '/settlement',
     },
@@ -170,9 +196,6 @@ export default function ProfileScreen() {
       href: '/safety',
     },
   ];
-
-  const documents = (documentsQuery.data ?? []).map(toProfileDocument);
-
 
   return (
     <Screen>
@@ -233,6 +256,15 @@ export default function ProfileScreen() {
             </View>
           </View>
         </Card>
+
+        {/* FRD-MOB-PROFILE-03 — data inti hanya boleh diubah administrator. */}
+        <View style={styles.note}>
+          <Icon name="lock" size={18} color={colors.secondary} />
+          <Text variant="caption" color="secondary" style={styles.noteText}>
+            Data ini hanya dapat diubah oleh administrator. SIM berlaku sampai{' '}
+            {driver.licenseExpiry ? formatDate(driver.licenseExpiry) : '—'}.
+          </Text>
+        </View>
 
         {/* DNA + vehicle strip */}
         <View style={styles.strip}>
@@ -351,15 +383,6 @@ export default function ProfileScreen() {
               </View>
             ))}
           </Card>
-        </View>
-
-        <View style={styles.note}>
-          <Icon name="lock" size={18} color={colors.secondary} />
-          <Text variant="caption" color="secondary" style={styles.noteText}>
-            Nama dan nomor HP dapat Anda perbarui sendiri. Data lain hanya dapat diubah
-            administrator. SIM berlaku sampai{' '}
-            {driver.licenseExpiry ? formatDate(driver.licenseExpiry) : '—'}.
-          </Text>
         </View>
 
         <Pressable

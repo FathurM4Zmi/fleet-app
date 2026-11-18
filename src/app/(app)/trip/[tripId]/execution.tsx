@@ -19,6 +19,7 @@ import { useTripTracking } from '@/hooks/api/useDriverData';
 import { useLiveLocation } from '@/hooks/useLiveLocation';
 import { useRealtime } from '@/hooks/useRealtime';
 import { useTrip } from '@/hooks/useTrip';
+import { useTripRoutePlan } from '@/hooks/useTripRoutePlan';
 import { tripOpsApi } from '@/lib/api/endpoints';
 import { addHours, estimatedDurationHours, formatKm, formatRecency, formatTime } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
@@ -32,6 +33,7 @@ export default function TripExecutionScreen() {
   const trackingQuery = useTripTracking(tripId);
   const tracking = trackingQuery.data;
   const trail = tracking?.trail ?? [];
+  const routePlan = useTripRoutePlan(tripId);
   const live = useLiveLocation();
 
   const [note, setNote] = useState('');
@@ -98,13 +100,44 @@ export default function TripExecutionScreen() {
     }
   };
 
+  // FRD-MOB-TRIPEXEC-01/02 — transisi status tidak boleh terjadi karena salah tap.
+  // react-native-web tidak punya Alert, jadi di web pakai confirm().
+  const confirmStart = () => {
+    const go = () => void run(start, 'Gagal memulai trip');
+    if (Platform.OS === 'web') {
+      if (globalThis.confirm?.('Mulai perjalanan?')) go();
+      return;
+    }
+    Alert.alert('Mulai perjalanan?', undefined, [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Mulai', onPress: go },
+    ]);
+  };
+
+  const confirmComplete = () => {
+    const message = 'Selesaikan trip dan lanjut unggah bukti pengiriman.';
+    const go = () =>
+      void run(async () => {
+        await complete();
+        router.push(`/pod/${trip.id}/capture`);
+      }, 'Gagal menyelesaikan trip');
+    if (Platform.OS === 'web') {
+      if (globalThis.confirm?.(`Selesaikan trip?\n\n${message}`)) go();
+      return;
+    }
+    Alert.alert('Selesaikan trip?', message, [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Selesaikan', onPress: go },
+    ]);
+  };
+
   const handlePrimary = async () => {
     if (status === 'scheduled' || status === 'assigned') {
       await run(() => setStatus('accepted'), 'Gagal menerima trip');
       return;
     }
     if (status === 'accepted') {
-      await run(start, 'Gagal memulai trip');
+      confirmStart();
       return;
     }
     if (status === 'in_progress') {
@@ -113,10 +146,7 @@ export default function TripExecutionScreen() {
     }
     if (status === 'arrived') {
       // FRD-MOB-TRIPEXEC-02 — complete first, then continue to POD capture.
-      await run(async () => {
-        await complete();
-        router.push(`/pod/${trip.id}/capture`);
-      }, 'Gagal menyelesaikan trip');
+      confirmComplete();
     }
   };
 
@@ -146,7 +176,7 @@ export default function TripExecutionScreen() {
       >
         {/* Map */}
         <View style={styles.map}>
-          <RouteMap trail={trail} live={live.coords} />
+          <RouteMap trail={trail} live={live.coords} planned={routePlan.points} />
           <View style={styles.mapPill}>
             <View style={styles.mapPillDot} />
             <Text variant="labelSm" style={styles.mapPillText}>
@@ -470,15 +500,19 @@ function QuickTile({
 function RouteMap({
   trail,
   live,
+  planned,
 }: {
   trail: { latitude: number; longitude: number }[];
   live?: { latitude: number; longitude: number } | null;
+  planned: { latitude: number; longitude: number }[];
 }) {
   // Server telemetry can be minutes old (or empty on a fresh install). The
   // device fix is the real current position, so it is always drawn on top.
   const points = trail.length > 0 ? trail : live ? [live] : [];
   const last = points[points.length - 1];
+  const hasPlan = planned.length > 1;
   const markers = [
+    ...(hasPlan ? [{ ...planned[planned.length - 1], color: colors.error }] : []),
     ...(last ? [{ ...last, color: '#EA580C' }] : []),
     ...(live ? [{ ...live, color: colors.primaryContainer }] : []),
   ];
@@ -486,6 +520,7 @@ function RouteMap({
   return (
     <MapCanvas
       points={points}
+      plannedPoints={planned}
       markers={markers}
       follow={live ?? null}
       height={260}

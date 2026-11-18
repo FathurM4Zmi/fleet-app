@@ -92,7 +92,7 @@ export default function LoginScreen() {
       // wrong PIN either, so keep the counter and the entered value.
       if (apiError.status === 429) {
         setErrorKind('rate');
-        setError('Terlalu banyak percobaan masuk. Tunggu satu menit lalu coba lagi.');
+        setError('Terlalu banyak percobaan. Coba lagi dalam 1 menit.');
         return;
       }
 
@@ -114,15 +114,18 @@ export default function LoginScreen() {
       // specific reason (e.g. SIM kedaluwarsa) when it sends one; otherwise keep
       // the anti-enumeration wording.
       const serverMessage = apiError.message?.trim();
-      const specificReason =
-        serverMessage && !/invalid|tidak cocok|kredensial|salah/i.test(serverMessage)
+      // SIM kedaluwarsa = akun diblokir; pakai kalimat FRD, bukan pesan teknis.
+      const licenseBlocked = /sim|license|kedaluwarsa|expired/i.test(serverMessage ?? '');
+      const specificReason = licenseBlocked
+        ? 'Akun diblokir: SIM Anda telah kedaluwarsa. Hubungi supervisor.'
+        : serverMessage && !/invalid|tidak cocok|kredensial|salah/i.test(serverMessage)
           ? serverMessage
           : null;
       setError(
         specificReason ??
           (remaining === 0
             ? 'Akun terkunci sementara. Hubungi supervisor untuk membuka.'
-            : `Nomor HP atau PIN tidak cocok. Sisa ${remaining} kesempatan sebelum akun terkunci sementara.`),
+            : `PIN atau kode salah. Silakan coba lagi. Sisa ${remaining} kesempatan sebelum akun terkunci sementara.`),
       );
     } finally {
       submitting.current = false;

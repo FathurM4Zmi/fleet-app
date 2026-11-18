@@ -33,6 +33,7 @@ export default function SelectRouteScreen() {
 
   const selected =
     picked ??
+    routeOptions.find((option) => option.selected)?.key ??
     routeOptions.find((option) => option.recommended)?.key ??
     routeOptions[0]?.key ??
     '';
@@ -57,7 +58,7 @@ export default function SelectRouteScreen() {
     if (!option) return;
     Alert.alert(
       'Terapkan rute ini?',
-      `${option.title} • ${option.minutes} menit • ${option.km} km. Rute disarankan belum diterapkan sampai Anda mengonfirmasi.`,
+      `${option.title} • ${option.minutes} menit • ${option.km} km. Rute disarankan, belum diterapkan. Konfirmasi untuk menyimpan.`,
       [
         { text: 'Batal', style: 'cancel' },
         { text: 'Terapkan', onPress: () => void apply() },
@@ -137,7 +138,7 @@ export default function SelectRouteScreen() {
         {routeOptions.length === 0 ? (
           <EmptyState
             icon="route"
-            title="Belum ada saran rute"
+            title="Belum ada rute disarankan untuk perjalanan ini"
             description={query.error?.message ?? 'Dispatcher belum menyiapkan alternatif rute untuk trip ini.'}
           />
         ) : null}

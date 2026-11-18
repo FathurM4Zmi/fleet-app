@@ -40,10 +40,6 @@ export default function PodCaptureScreen() {
     );
   }
 
-  // FRD-MOB-POD-01 — photo and recipient signature are both mandatory.
-  const ready =
-    photoUris.length > 0 && hasSignature && recipientName.trim().length > 0;
-
   const addPhoto = async () => {
     if (photoUris.length >= MAX_PHOTOS) return;
     const uri = await capturePhoto();
@@ -51,7 +47,17 @@ export default function PodCaptureScreen() {
   };
 
   const handleSave = async () => {
-    if (!ready || saving) return;
+    if (saving) return;
+    // FRD-MOB-POD-01 — foto & tanda tangan sama-sama wajib; tombol tetap bisa
+    // ditekan supaya alasannya dijelaskan, bukan sekadar disabled.
+    if (photoUris.length === 0 || !hasSignature) {
+      setSaveError('Foto atau tanda tangan penerima wajib diisi.');
+      return;
+    }
+    if (recipientName.trim().length === 0) {
+      setSaveError('Nama penerima wajib diisi.');
+      return;
+    }
     setSaving(true);
     setSaveError(null);
     try {
@@ -249,7 +255,7 @@ export default function PodCaptureScreen() {
         <Button
           label={saving ? 'Mengirim…' : 'Simpan Bukti'}
           icon="success"
-          disabled={!ready || saving}
+          disabled={saving}
           onPress={handleSave}
         />
       </View>

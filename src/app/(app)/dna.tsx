@@ -47,7 +47,7 @@ export default function DnaScreen() {
         <ScreenHeader title="DNA Saya" onBack />
         <EmptyState
           icon="error"
-          title="DNA belum tersedia"
+          title="Skor belum tersedia. Selesaikan beberapa trip terlebih dahulu."
           description={query.error?.message ?? 'Coba muat ulang beberapa saat lagi.'}
         />
       </Screen>
@@ -123,7 +123,7 @@ export default function DnaScreen() {
             <View style={styles.dropHead}>
               <Icon name="warning" size={20} color={colors.critical} />
               <Text variant="bodyBold" style={styles.flex}>
-                Skor kesehatan turun {Math.abs(dnaSummary.delta)} poin
+                Skor kesehatan turun {Math.abs(dnaSummary.delta)} poin sejak periode lalu.
               </Text>
             </View>
             <Text variant="caption" color="textSecondary">

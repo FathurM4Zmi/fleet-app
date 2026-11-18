@@ -568,6 +568,8 @@ export interface RouteOption {
   statusLabel: string;
   statusTone: 'success' | 'warning' | 'neutral';
   recommended?: boolean;
+  /** True when this is the option the driver already applied on the server. */
+  selected: boolean;
   /** Endpoints of the route, when the API provides them (map preview). */
   originLat?: number;
   originLng?: number;

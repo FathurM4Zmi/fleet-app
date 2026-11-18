@@ -57,6 +57,19 @@ export default function PerformanceScreen() {
     );
   }
 
+  if (performance && performanceKpis.length === 0) {
+    return (
+      <Screen>
+        <ScreenHeader title="Kinerja Saya" onBack />
+        <EmptyState
+          icon="performance"
+          title="Belum ada aktivitas pada periode ini."
+          description="Selesaikan trip atau DVIR dulu agar skor kinerja bisa dihitung."
+        />
+      </Screen>
+    );
+  }
+
   return (
     <Screen>
       <ScreenHeader

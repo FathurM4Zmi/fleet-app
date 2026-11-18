@@ -77,7 +77,7 @@ export default function PodSuccessScreen() {
             </View>
           </View>
           <Text variant="headlineMd" align="center">
-            Bukti Pengiriman Tersimpan
+            Bukti pengiriman tersimpan.
           </Text>
           <View style={styles.lockLine}>
             <Icon name="lock" size={14} color={colors.textSecondary} />

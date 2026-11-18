@@ -90,7 +90,7 @@ export default function DvirSubmittedScreen() {
               <Icon name="check" size={28} color={colors.onPrimary} />
             </View>
           </View>
-          <Text variant="headlineMd">Laporan DVIR terkirim</Text>
+          <Text variant="headlineMd">Laporan DVIR terkirim untuk ditinjau.</Text>
           <Text variant="caption" color="textSecondary" style={styles.bannerSub}>
             {failed ? 'Menunggu tinjauan supervisor' : 'Semua item lolos'} • {submittedTime}
           </Text>

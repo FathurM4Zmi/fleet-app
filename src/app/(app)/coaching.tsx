@@ -55,7 +55,7 @@ export default function CoachingScreen() {
         <ScreenHeader title="Coaching Saya" onBack />
         <EmptyState
           icon="school"
-          title="Belum ada rencana coaching"
+          title="Belum ada rencana coaching."
           description={
             coachingQuery.error?.message ??
             'Rencana coaching akan muncul di sini setelah supervisor menetapkannya.'

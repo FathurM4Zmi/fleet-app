@@ -47,7 +47,7 @@ export default function TripWarningsScreen() {
 
     const trimmed = reason.trim();
     if (trimmed.length < 3) {
-      setFormError('Alasan penyelesaian wajib diisi.');
+      setFormError('Alasan override wajib diisi.');
       return;
     }
 

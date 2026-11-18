@@ -133,7 +133,7 @@ export default function TripAssetsScreen() {
         {assets.length === 0 ? (
           <EmptyState
             icon="cargo"
-            title="Tidak ada aset"
+            title="Tidak ada aset pada perjalanan ini."
             description={
               query.error?.message ?? 'Dispatcher belum menautkan aset ke perjalanan ini.'
             }

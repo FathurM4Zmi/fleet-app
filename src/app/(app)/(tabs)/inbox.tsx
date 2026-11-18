@@ -10,6 +10,7 @@ import type { Trip } from '@/data/types';
 import { useTasks } from '@/hooks/api/useDriverData';
 import { useRealtime } from '@/hooks/useRealtime';
 import { useTrips } from '@/hooks/useTrips';
+import { notify } from '@/lib/notify';
 import { colors, radius, shadows, spacing } from '@/theme';
 
 type FilterKey = 'all' | 'draft' | 'new' | 'active' | 'done' | 'cancelled';
@@ -68,6 +69,8 @@ export default function InboxScreen() {
     setAcceptingId(tripId);
     try {
       await accept(tripId);
+      // FRD-MOB-INBOX-02 — konfirmasi bahwa tugas sudah masuk daftar aktif.
+      notify('Tugas diterima.');
     } catch (error) {
       Alert.alert(
         'Gagal menerima tugas',
@@ -186,7 +189,7 @@ export default function InboxScreen() {
         ListEmptyComponent={
           <EmptyState
             icon="inbox"
-            title="Tidak ada trip"
+            title="Belum ada tugas untuk Anda."
             description="Belum ada penugasan pada filter ini. Coba pilih filter lain."
           />
         }

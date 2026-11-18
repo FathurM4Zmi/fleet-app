@@ -66,6 +66,10 @@ export default function DamageReportScreen() {
   const canSubmit =
     Boolean(vehicle) && description.trim().length > 0 && photos.length > 0 && !saving;
 
+  // Tombol tetap aktif selama deskripsi terisi agar driver mendapat pesan
+  // "Foto kerusakan wajib…" saat menekan kirim tanpa foto (FRD-MOB-DEF-03).
+  const formComplete = Boolean(vehicle) && description.trim().length > 0 && !saving;
+
   const addPhoto = async () => {
     if (photos.length >= MAX_PHOTOS) return;
     const uri = await capturePhoto();
@@ -73,6 +77,14 @@ export default function DamageReportScreen() {
   };
 
   const submit = async () => {
+    if (photos.length === 0) {
+      setError(
+        requiresPhoto
+          ? 'Foto kerusakan wajib untuk tingkat High atau Out-of-service.'
+          : 'Foto kerusakan wajib dilampirkan.',
+      );
+      return;
+    }
     if (!canSubmit || !vehicle) return;
     setSaving(true);
     setError(null);
@@ -138,7 +150,7 @@ export default function DamageReportScreen() {
             <View style={styles.flex}>
               <Text variant="bodyBold">{vehicle?.plate ?? '—'}</Text>
               <Text variant="labelMd" color="secondary">
-                {vehicle?.model ?? '—'} • CDD Box
+                {vehicle?.model ?? '—'}
               </Text>
             </View>
             <View style={styles.unitBadge}>
@@ -339,7 +351,7 @@ export default function DamageReportScreen() {
           <Button
             label={saving ? 'Mengirim…' : 'Kirim Laporan'}
             iconAfter="send"
-            disabled={!canSubmit}
+            disabled={!formComplete}
             onPress={submit}
           />
         )}

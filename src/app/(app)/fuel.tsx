@@ -474,7 +474,7 @@ export default function FuelLogScreen() {
           <View style={styles.savedRow}>
             <Icon name="cloudDone" size={20} color={colors.success} />
             <Text variant="labelLg" color="success">
-              Catatan BBM tersimpan
+              Catatan BBM tersimpan.
             </Text>
           </View>
         ) : (

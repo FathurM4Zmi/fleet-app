@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
 import {
@@ -84,7 +84,6 @@ export default function DocumentDetailScreen() {
   }
 
   const tone = STATUS_TONE[document.status];
-  const expiring = document.status !== 'valid';
   const previewUri = photoPath ? mediaUrl(photoPath) : document.photoUrl;
 
   return (
@@ -206,14 +205,6 @@ export default function DocumentDetailScreen() {
           ))}
         </Card>
 
-        {/* Notice */}
-        <View style={styles.notice}>
-          <Icon name="lock" size={18} color={colors.textSecondary} />
-          <Text variant="caption" color="textSecondary" style={styles.flex}>
-            Judul dan masa berlaku dikelola administrator. Foto yang Anda unggah langsung
-            tersimpan sebagai berkas dokumen Anda.
-          </Text>
-        </View>
       </ScreenBody>
 
       <BottomBar>
@@ -228,20 +219,6 @@ export default function DocumentDetailScreen() {
           onPress={replacePhoto}
           disabled={uploading}
         />
-        {expiring ? (
-          <Button
-            label="Hubungi Supervisor"
-            icon="headset"
-            variant="secondary"
-            size="md"
-            onPress={() =>
-              Alert.alert(
-                'Hubungi Supervisor',
-                'Supervisor belum terhubung ke aplikasi. Hubungi dispatcher melalui kanal resmi.',
-              )
-            }
-          />
-        ) : null}
       </BottomBar>
     </Screen>
   );
@@ -329,17 +306,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     borderWidth: 1,
     borderColor: '#DBEAFE',
-  },
-
-  notice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm + 2,
-    marginTop: spacing.lg,
-    padding: spacing.md,
-    borderRadius: radius.card,
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
 });
