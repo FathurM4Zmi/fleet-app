@@ -17,17 +17,17 @@ export function OfflineBanner() {
     <View style={[styles.banner, { paddingTop: insets.top + spacing.xs }]}>
       <Icon name="sync" size={16} color={colors.onPrimary} />
       <Text variant="labelSm" color="onPrimary" style={styles.text}>
-        {syncing ? 'Menyinkronkan data…' : `${pending} data menunggu dikirim`}
+        {syncing ? 'Menyinkronkan data…' : 'Tersimpan offline. Akan tersinkron saat online.'}
       </Text>
       {!syncing ? (
         <Pressable
           onPress={() => void sync()}
           accessibilityRole="button"
-          accessibilityLabel="Kirim data yang menunggu"
+          accessibilityLabel={`Kirim ${pending} data yang menunggu`}
           hitSlop={8}
         >
           <Text variant="labelSm" color="onPrimary" style={styles.action}>
-            Kirim
+            {`Kirim (${pending})`}
           </Text>
         </Pressable>
       ) : null}

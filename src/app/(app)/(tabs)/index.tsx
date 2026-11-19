@@ -1,5 +1,6 @@
-import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useMemo } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
@@ -15,10 +16,12 @@ import {
 } from '@/components/ui';
 import { toDriver, toVehicle } from '@/data/adapters';
 import type { Trip, Vehicle } from '@/data/types';
-import { useDna, useHome, useVehicle } from '@/hooks/api/useDriverData';
+import { useDna, useDvirQueue, useHome, useTasks, useVehicle } from '@/hooks/api/useDriverData';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useRealtime } from '@/hooks/useRealtime';
 import { useTrips } from '@/hooks/useTrips';
 import { formatDate, formatKm, formatWindow, scoreTone } from '@/lib/format';
+import { notify } from '@/lib/notify';
 import { emptyDriver } from '@/store/app';
 import { colors, radius, shadows, spacing } from '@/theme';
 
@@ -39,21 +42,98 @@ export default function HomeScreen() {
   const home = useHome();
   const dna = useDna();
   const vehicleQuery = useVehicle();
+  const tasksQuery = useTasks({ take: 100 });
+  const dvirQueue = useDvirQueue();
   const { unreadCount } = useNotifications();
-  const { upcoming, active, accept } = useTrips();
+  const { upcoming, active, accept, refetch: refetchTrips } = useTrips();
+
+  // FRD-MOB-HOME-03 / INBOX-02 — trip baru dan skor DNA tampil tanpa refresh manual.
+  useRealtime('trips', () => void refetchTrips());
+  useRealtime('dna', () => {
+    void dna.refetch();
+    void home.refetch();
+  });
+
+  // Setelah trip selesai, beranda harus berhenti menampilkan trip itu sebagai aktif.
+  // Penghitung DVIR/tugas juga ikut disegarkan, supaya tidak ada sisa angka dari
+  // trip yang sudah selesai.
+  const { refetch: refetchHome } = home;
+  const { refetch: refetchTasks } = tasksQuery;
+  const { refetch: refetchDvir } = dvirQueue;
+  useFocusEffect(
+    useCallback(() => {
+      void refetchTrips();
+      void refetchHome();
+      void refetchTasks();
+      void refetchDvir();
+    }, [refetchTrips, refetchHome, refetchTasks, refetchDvir]),
+  );
 
   const driver = home.data ? toDriver(home.data.profile, dna.data?.score ?? 0) : emptyDriver;
   const loading = home.loading;
-  const newTasks = upcoming.filter((item) => item.status === 'assigned');
-  // New assignments get their own card below, so the "next trip" card prefers
-  // a trip the driver has already accepted.
-  const trip = active[0] ?? upcoming.find((item) => item.status === 'accepted') ?? (newTasks.length > 0 ? undefined : upcoming[0]);
+  // "Belum dikonfirmasi" = Assigned atau Scheduled. Keduanya harus tampil sebagai
+  // tugas baru, bukan sebagai trip aktif.
+  const newTasks = upcoming.filter(
+    (item) => item.status === 'assigned' || item.status === 'scheduled',
+  );
+  // Only a trip the driver has already accepted may appear as the active trip.
+  const trip = active[0] ?? upcoming.find((item) => item.status === 'accepted');
   const vehicle = vehicleQuery.data ? toVehicle(vehicleQuery.data) : undefined;
   const dnaTone = scoreTone(driver.dnaScore);
   const dnaLabel =
     dnaTone === 'success' ? 'Baik' : dnaTone === 'warning' ? 'Cukup' : 'Perlu perhatian';
   const licenseDays = daysUntil(driver.licenseExpiry);
   const firstName = driver.name.split(' ')[0];
+  // Dihitung server (FRD-MOB-HOME) dan hanya mencakup trip hari ini.
+  const pendingDvir = home.data?.pendingDvir ?? 0;
+  // `GET /api/driver/home` menghitung SEMUA task berstatus Assigned/InTransit,
+  // termasuk task dari trip yang sudah selesai (data demo lama). Untuk beranda,
+  // hanya task milik trip yang masih berjalan/menunggu yang bisa dikerjakan.
+  const actionableTripIds = useMemo(
+    () => new Set([...active, ...upcoming].map((item) => item.id)),
+    [active, upcoming],
+  );
+  const openTasks = useMemo(
+    () =>
+      (tasksQuery.data ?? []).filter(
+        (task) =>
+          (task.status === 'Assigned' || task.status === 'InTransit') &&
+          task.tripId != null &&
+          actionableTripIds.has(task.tripId),
+      ).length,
+    [tasksQuery.data, actionableTripIds],
+  );
+  const workload = [
+    pendingDvir > 0 ? `${pendingDvir} DVIR menunggu` : null,
+    openTasks > 0 ? `${openTasks} tugas terbuka` : null,
+  ].filter(Boolean);
+
+  // "Lihat ›" harus membuka DVIR yang benar-benar menunggu, bukan Inbox yang kosong.
+  const queuedDvir = dvirQueue.data?.[0];
+  const openWorkload = () => {
+    if (queuedDvir) {
+      router.push(
+        `/dvir/${queuedDvir.tripId}/${
+          queuedDvir.requiredType === 'PostTrip' ? 'post-trip' : 'pre-trip'
+        }`,
+      );
+      return;
+    }
+    router.navigate('/inbox');
+  };
+
+  // FRD-MOB-INBOX-02 — konfirmasi setelah tugas baru diterima dari beranda.
+  const handleAccept = async (tripId: string) => {
+    try {
+      await accept(tripId);
+      notify('Tugas diterima.');
+    } catch (error) {
+      Alert.alert(
+        'Gagal menerima tugas',
+        error instanceof Error ? error.message : 'Periksa koneksi lalu coba lagi.',
+      );
+    }
+  };
 
   return (
     <Screen style={{ backgroundColor: colors.surface }}>
@@ -148,7 +228,7 @@ export default function HomeScreen() {
                     vehicle={vehicle?.id === item.vehicleId ? vehicle : undefined}
                     kicker={`#${item.code}`}
                     onReject={() => router.push(`/trip/${item.id}/reject`)}
-                    onAccept={() => accept(item.id)}
+                    onAccept={() => void handleAccept(item.id)}
                   />
                 ))}
               </View>
@@ -161,12 +241,12 @@ export default function HomeScreen() {
                 vehicle={vehicle}
                 kicker="TRIP BERIKUTNYA"
                 onReject={() => router.push(`/trip/${trip.id}/reject`)}
-                onAccept={() => accept(trip.id)}
+                onAccept={() => void handleAccept(trip.id)}
                 onOpen={() => router.push(`/trip/${trip.id}/execution`)}
               />
             ) : newTasks.length > 0 ? null : (
               <Card shadow>
-                <Text variant="titleMd">Tidak ada trip aktif</Text>
+                <Text variant="titleMd">Belum ada tugas. Istirahatlah dulu.</Text>
                 <Text variant="bodyMd" color="textSecondary" style={styles.emptyBody}>
                   Penugasan baru akan muncul di Inbox dan lewat notifikasi.
                 </Text>
@@ -219,6 +299,28 @@ export default function HomeScreen() {
                 </Pressable>
               </View>
             ) : null}
+            {/* DVIR & open task reminder — angka dari GET /api/driver/home */}
+            {workload.length > 0 ? (
+              <View style={styles.reminder}>
+                <View style={styles.reminderLeft}>
+                  <View style={styles.reminderIcon}>
+                    <Icon name="checklist" size={20} color={colors.primaryContainer} />
+                  </View>
+                  <Text variant="bodyMd" style={styles.reminderText}>
+                    {workload.join(' • ')}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={openWorkload}
+                  accessibilityRole="button"
+                  accessibilityLabel="Lihat tugas dan DVIR"
+                >
+                  <Text variant="labelMd" color="primaryContainer">
+                    Lihat ›
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
           </>
         )}
       </ScreenBody>
@@ -242,8 +344,16 @@ function TripSummaryCard({
   onReject?: () => void;
   onOpen?: () => void;
 }) {
-  const assigned = trip.status === 'assigned';
-  const inProgress = trip.status === 'in_progress';
+  const assigned = trip.status === 'assigned' || trip.status === 'scheduled';
+  const arrived = trip.status === 'arrived';
+  const inProgress = trip.status === 'in_progress' || arrived;
+  const statusLabel = arrived
+    ? 'Tiba di Tujuan'
+    : trip.status === 'in_progress'
+      ? 'Dalam Perjalanan'
+      : assigned
+        ? 'Menunggu Konfirmasi'
+        : 'Dikonfirmasi';
 
   return (
     <Card shadow style={styles.tripCard}>
@@ -252,7 +362,7 @@ function TripSummaryCard({
           {kicker}
         </Text>
         <Badge
-          label={inProgress ? 'Dalam Perjalanan' : assigned ? 'Menunggu Konfirmasi' : 'Dikonfirmasi'}
+          label={statusLabel}
           tone={inProgress ? 'warning' : 'info'}
         />
       </View>

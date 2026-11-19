@@ -15,7 +15,8 @@ import { Button, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui'
 import { toCoaching } from '@/data/adapters';
 import { useCoaching } from '@/hooks/api/useDriverData';
 import { insightApi } from '@/lib/api/endpoints';
-import { capturePhoto, captureVideo } from '@/lib/photo';
+import { capturePhoto } from '@/lib/photo';
+import { uploadImage } from '@/lib/upload';
 import { colors, radius, spacing } from '@/theme';
 
 const NOTE_LIMIT = 200;
@@ -27,8 +28,8 @@ export default function CoachingUpdateScreen() {
   const [note, setNote] = useState('');
   const [photoA, setPhotoA] = useState<string>();
   const [photoB, setPhotoB] = useState<string>();
-  const [video, setVideo] = useState<string>();
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!coachingPlan) {
@@ -37,7 +38,7 @@ export default function CoachingUpdateScreen() {
         <ScreenHeader title="Perbarui Progres" onBack />
         <EmptyState
           icon="school"
-          title="Belum ada rencana coaching"
+          title="Belum ada rencana coaching."
           description={coachingQuery.error?.message ?? 'Supervisor belum menetapkan rencana coaching.'}
         />
       </Screen>
@@ -48,13 +49,39 @@ export default function CoachingUpdateScreen() {
   const total = coachingPlan.milestones.length;
   const percent = total ? Math.round((done / total) * 100) : 0;
 
+  // The backend only allows Pending → InProgress and InProgress → Completed.
+  // Posting 'InProgress' to a plan that is already Completed/Cancelled trips the
+  // domain guard in CoachingPlan.Start() and comes back as 422, so resolve the
+  // transition from the plan state the GET returned instead of sending it blind.
+  const alreadyClosed =
+    coachingPlan.status === 'Completed' || coachingPlan.status === 'Cancelled';
+
   const save = async () => {
     if (saving || !coachingPlan.id) return;
+    if (alreadyClosed) {
+      setError('Rencana coaching ini sudah ditutup, progres tidak bisa diubah lagi.');
+      return;
+    }
+
     setSaving(true);
     setError(null);
     try {
-      await insightApi.updateCoaching(coachingPlan.id, 'Completed');
-      router.back();
+      // Saving progress must NOT close the plan: the backend only returns a
+      // Pending/InProgress plan, so sending 'Completed' here made the whole
+      // coaching screen fall back to "Belum ada rencana coaching".
+      const evidencePaths: string[] = [];
+      for (const uri of [photoA, photoB]) {
+        if (uri) evidencePaths.push(await uploadImage(uri, 'coaching'));
+      }
+
+      await insightApi.updateCoaching(
+        coachingPlan.id,
+        'InProgress',
+        note.trim() || undefined,
+        evidencePaths.length > 0 ? evidencePaths : undefined,
+      );
+      // FRD-MOB-COACH — tampilkan konfirmasi dulu, jangan langsung tutup sheet.
+      setSaved(true);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Gagal menyimpan progres.');
     } finally {
@@ -63,9 +90,8 @@ export default function CoachingUpdateScreen() {
   };
 
   const evidence = [
-    { key: 'photo-1', label: 'Foto 1', uri: photoA, set: setPhotoA, capture: capturePhoto },
-    { key: 'photo-2', label: 'Foto 2', uri: photoB, set: setPhotoB, capture: capturePhoto },
-    { key: 'video', label: 'Video', uri: video, set: setVideo, capture: captureVideo },
+    { key: 'photo-1', label: 'Foto 1', uri: photoA, set: setPhotoA },
+    { key: 'photo-2', label: 'Foto 2', uri: photoB, set: setPhotoB },
   ];
 
   return (
@@ -202,7 +228,7 @@ export default function CoachingUpdateScreen() {
 
           <View>
             <Text variant="labelSm" color="textMuted" style={[styles.tracked, styles.sectionHead]}>
-              FOTO / VIDEO BUKTI
+              FOTO BUKTI
             </Text>
 
             <View style={styles.evidenceRow}>
@@ -210,7 +236,7 @@ export default function CoachingUpdateScreen() {
                 <Pressable
                   key={tile.key}
                   onPress={async () => {
-                    const uri = await tile.capture();
+                    const uri = await capturePhoto();
                     if (uri) tile.set(uri);
                   }}
                   accessibilityRole="button"
@@ -219,11 +245,7 @@ export default function CoachingUpdateScreen() {
                 >
                   {tile.uri ? (
                     <>
-                      {tile.key === 'video' ? (
-                        <Icon name="play" size={22} color={colors.onPrimary} />
-                      ) : (
-                        <Image source={{ uri: tile.uri }} style={styles.evidenceImage} resizeMode="cover" />
-                      )}
+                      <Image source={{ uri: tile.uri }} style={styles.evidenceImage} resizeMode="cover" />
                       <Pressable
                         onPress={() => tile.set(undefined)}
                         accessibilityRole="button"
@@ -249,17 +271,36 @@ export default function CoachingUpdateScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
-          <Button
-            label={saving ? 'Menyimpan…' : 'Simpan Progres'}
-            disabled={saving}
-            onPress={save}
-          />
-          {error ? (
-            <Text variant="caption" color="critical" align="center">
-              {error}
-            </Text>
-          ) : null}
-          <Button label="Batal" variant="secondary" onPress={() => router.back()} />
+          {saved ? (
+            <>
+              <View style={styles.savedRow}>
+                <Icon name="cloudDone" size={20} color={colors.success} />
+                <Text variant="labelLg" color="success">
+                  Progres coaching tersimpan.
+                </Text>
+              </View>
+              <Button label="Tutup" onPress={() => router.back()} />
+            </>
+          ) : (
+            <>
+              <Button
+                label={saving ? 'Menyimpan…' : 'Simpan Progres'}
+                disabled={saving || alreadyClosed}
+                onPress={save}
+              />
+              {alreadyClosed ? (
+                <Text variant="caption" color="textSecondary" align="center">
+                  Rencana sudah {coachingPlan.status === 'Cancelled' ? 'dibatalkan' : 'selesai'}.
+                </Text>
+              ) : null}
+              {error ? (
+                <Text variant="caption" color="critical" align="center">
+                  {error}
+                </Text>
+              ) : null}
+              <Button label="Batal" variant="secondary" onPress={() => router.back()} />
+            </>
+          )}
         </View>
       </View>
     </Screen>
@@ -415,5 +456,12 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.divider,
+  },
+  savedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
   },
 });

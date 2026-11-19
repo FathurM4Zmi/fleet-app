@@ -3,13 +3,15 @@ import { StyleSheet, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { Badge, Button, Card, Text, type BadgeTone } from '@/components/ui';
 import type { Trip, TripStatus, Vehicle } from '@/data/types';
-import { formatWindow } from '@/lib/format';
+import { formatRecency, formatWindow } from '@/lib/format';
 import { colors, spacing } from '@/theme';
 
 const STATUS: Record<TripStatus, { label: string; tone: BadgeTone; icon: IconName }> = {
+  scheduled: { label: 'Draft', tone: 'neutral', icon: 'assignment' },
   assigned: { label: 'Baru', tone: 'info', icon: 'assignment' },
   accepted: { label: 'Dikonfirmasi', tone: 'info', icon: 'success' },
   in_progress: { label: 'Dikerjakan', tone: 'warning', icon: 'truck' },
+  arrived: { label: 'Tiba di Tujuan', tone: 'warning', icon: 'location' },
   completed: { label: 'Selesai', tone: 'success', icon: 'success' },
   rejected: { label: 'Dibatalkan', tone: 'critical', icon: 'close' },
 };
@@ -39,6 +41,8 @@ export function TripCard({
 }: TripCardProps) {
   const status = STATUS[trip.status];
   const cancelled = trip.status === 'rejected';
+  // Completed trips show when the driver actually finished, not the planned slot.
+  const finishedAt = trip.status === 'completed' ? trip.completedAt : undefined;
 
   return (
     <Card padded={false} style={styles.card}>
@@ -67,8 +71,10 @@ export function TripCard({
         <View style={styles.meta}>
           <View style={styles.metaItem}>
             <Icon name="schedule" size={18} color={colors.textSecondary} />
-            <Text variant="bodyMd" color="onSurface">
-              {formatWindow(trip.scheduledAt, trip.distanceKm)}
+            <Text variant="bodyMd" color="onSurface" numberOfLines={1} style={styles.metaText}>
+              {finishedAt
+                ? `Selesai ${formatRecency(finishedAt)}`
+                : formatWindow(trip.scheduledAt, trip.distanceKm)}
             </Text>
           </View>
           <View style={[styles.metaItem, styles.metaItemRight]}>
@@ -158,6 +164,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.divider,
   },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  metaText: { flexShrink: 1 },
   metaItemRight: { justifyContent: 'flex-end' },
   note: {
     flexDirection: 'row',

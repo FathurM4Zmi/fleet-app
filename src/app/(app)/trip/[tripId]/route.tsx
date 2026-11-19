@@ -1,17 +1,28 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Circle, Polyline } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
+import { MapCanvas } from '@/components/MapCanvas';
 import { Card, EmptyState, Screen, ScreenBody, Text } from '@/components/ui';
 import { useTripTracking } from '@/hooks/api/useDriverData';
+import { useLiveLocation } from '@/hooks/useLiveLocation';
+import { useRealtime } from '@/hooks/useRealtime';
 import { useTrip } from '@/hooks/useTrip';
+import { useTripRoutePlan } from '@/hooks/useTripRoutePlan';
+import { tripOpsApi } from '@/lib/api/endpoints';
 import { addHours, estimatedDurationHours, formatTime } from '@/lib/format';
+import { pathLengthKm } from '@/lib/geo';
 import { colors, radius, shadows, spacing } from '@/theme';
 
-const MAP_WIDTH = 340;
-const MAP_HEIGHT = 180;
+const MAP_HEIGHT = 220;
+
+/** FRD-MOB-TRK-04 — ambang GPS dianggap terputus. */
+const STALE_MINUTES = 10;
+
+/** Server hanya mengirim jejak 6 jam terakhir (lihat GetMyTripTrackingQuery). */
+const TRAIL_WINDOW_HOURS = 6;
 
 export default function TripRouteScreen() {
   const insets = useSafeAreaInsets();
@@ -19,6 +30,31 @@ export default function TripRouteScreen() {
   const { trip, vehicle } = useTrip(tripId);
   const trackingQuery = useTripTracking(tripId);
   const tracking = trackingQuery.data;
+  const routePlan = useTripRoutePlan(tripId);
+  const live = useLiveLocation();
+
+  // FRD-MOB-TRK-02 — jejak baru dari server langsung memperbarui peta.
+  useRealtime('tracking', () => void trackingQuery.refetch());
+
+  // FRD-MOB-TRK-04 — jam berjalan sendiri agar banner muncul tanpa perlu aksi.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // FRD-MOB-TRK-02 — posisi perangkat dikirim ke server selama trip berjalan,
+  // supaya jejak di peta (dan dispatcher) ikut bergerak. Server menakar
+  // interval/jarak, jadi setiap fix boleh dikirim; gagal = offline, coba lagi nanti.
+  useEffect(() => {
+    if (!tripId || !live.coords || trip?.status !== 'in_progress') return;
+    void tripOpsApi
+      .reportPosition(tripId, {
+        latitude: live.coords.latitude,
+        longitude: live.coords.longitude,
+      })
+      .catch(() => undefined);
+  }, [tripId, live.coords, trip?.status]);
 
   if (!trip) {
     return (
@@ -39,7 +75,7 @@ export default function TripRouteScreen() {
         </View>
         <EmptyState
           icon="map"
-          title="Trip tidak ditemukan"
+          title="Tidak ada perjalanan aktif."
           description="Penugasan ini mungkin sudah dibatalkan oleh dispatcher."
         />
       </Screen>
@@ -47,8 +83,26 @@ export default function TripRouteScreen() {
   }
 
   const etaIso = addHours(trip.scheduledAt, estimatedDurationHours(trip.distanceKm));
-  const remainingKm = Math.max(0, Math.round(trip.distanceKm * 0.4));
+
+  // Sisa jarak hanya bisa dihitung jujur dari jejak GPS: sebelum trip mulai
+  // sisanya = jarak rencana, tapi begitu trip berjalan lebih dari jendela jejak
+  // (6 jam) server tidak lagi punya titik awal — tampilkan "—" daripada menebak.
+  const startedEvent = trip.timeline.find((event) => event.id === 'started');
+  const startedAgoMs = startedEvent?.done ? now - new Date(startedEvent.at).getTime() : null;
+  const remainingKm =
+    startedAgoMs == null
+      ? Math.round(trip.distanceKm)
+      : startedAgoMs > TRAIL_WINDOW_HOURS * 3_600_000
+        ? null
+        : Math.max(0, Math.round(trip.distanceKm - pathLengthKm(tracking?.trail ?? [])));
+
   const speed = tracking?.speed ?? 0;
+  const gpsLive = Boolean(live.coords) || Boolean(tracking?.isLive);
+  const position = live.coords ?? tracking;
+  const staleMinutes = tracking?.lastSeenAt
+    ? Math.max(0, Math.floor((now - new Date(tracking.lastSeenAt).getTime()) / 60_000))
+    : 0;
+  const noSignal = staleMinutes >= STALE_MINUTES;
 
   return (
     <Screen>
@@ -65,20 +119,34 @@ export default function TripRouteScreen() {
           Posisi Trip
         </Text>
         <View style={styles.gpsPill}>
-          <View style={[styles.gpsDot, !tracking?.isLive && styles.gpsDotStale]} />
-          <Text variant="labelSm" color={tracking?.isLive ? '#6EE7B7' : '#FCD34D'}>
-            {tracking?.isLive ? 'GPS AKTIF' : 'SINYAL TERAKHIR'}
+          <View style={[styles.gpsDot, !gpsLive && styles.gpsDotStale]} />
+          <Text variant="labelSm" color={gpsLive ? '#6EE7B7' : '#FCD34D'}>
+            {gpsLive ? 'GPS AKTIF' : 'SINYAL TERAKHIR'}
           </Text>
         </View>
       </View>
 
       <ScreenBody bottomPadding={spacing.xxl} style={styles.body}>
+        {noSignal ? (
+          <View style={styles.noSignal}>
+            <Icon name="warning" size={20} color={colors.warning} />
+            <Text variant="caption" color={colors.warning} style={styles.flex}>
+              Sinyal kendaraan terputus selama {staleMinutes} menit.
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.map}>
-          <TrailMap trail={tracking?.trail ?? []} />
+          <TrailMap
+            trail={tracking?.trail ?? []}
+            live={live.coords}
+            planned={routePlan.points}
+            height={MAP_HEIGHT}
+          />
           <View style={styles.mapFooter}>
             <Text variant="labelSm" color="textSecondary">
-              {tracking?.latitude != null && tracking?.longitude != null
-                ? `${tracking.latitude.toFixed(5)}, ${tracking.longitude.toFixed(5)}`
+              {position?.latitude != null && position?.longitude != null
+                ? `${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`
                 : 'Koordinat belum tersedia'}
             </Text>
             <Text variant="labelSm" color="textMuted">
@@ -90,7 +158,11 @@ export default function TripRouteScreen() {
         <View style={styles.etaBar}>
           <EtaCell label="ETA" value={formatTime(etaIso)} />
           <View style={styles.etaDivider} />
-          <EtaCell label="Sisa Jarak" value={`${remainingKm} km`} highlight />
+          <EtaCell
+            label="Sisa Jarak"
+            value={remainingKm == null ? '—' : `${remainingKm} km`}
+            highlight
+          />
           <View style={styles.etaDivider} />
           <EtaCell label="Kecepatan" value={`${Math.round(speed)} km/h`} />
         </View>
@@ -106,6 +178,28 @@ export default function TripRouteScreen() {
 
         <Card shadow>
           <TelemetryRow icon="speed" label="Kecepatan" value={`${Math.round(speed)} km/h`} />
+          <View style={styles.divider} />
+          <TelemetryRow
+            icon="fuel"
+            label="Level BBM"
+            value={
+              tracking?.fuelLevelPct != null
+                ? `${Math.round(tracking.fuelLevelPct)}%`
+                : 'Tidak tersedia'
+            }
+          />
+          <View style={styles.divider} />
+          <TelemetryRow
+            icon="power"
+            label="Mesin"
+            value={
+              tracking?.ignitionOn == null
+                ? 'Tidak tersedia'
+                : tracking.ignitionOn
+                  ? 'Menyala'
+                  : 'Mati'
+            }
+          />
           <View style={styles.divider} />
           <TelemetryRow
             icon="sensors"
@@ -138,54 +232,39 @@ export default function TripRouteScreen() {
   );
 }
 
-/** Draws the real GPS trail; shows a neutral grid when no points exist. */
-function TrailMap({ trail }: { trail: { latitude: number; longitude: number }[] }) {
-  if (trail.length < 2) {
-    return (
-      <View style={styles.mapEmpty}>
-        <Icon name="map" size={40} color={colors.textMuted} />
-        <Text variant="labelMd" color="textMuted">
-          Belum ada jejak posisi
-        </Text>
-      </View>
-    );
-  }
-
-  const lats = trail.map((point) => point.latitude);
-  const lngs = trail.map((point) => point.longitude);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-  const latSpan = maxLat - minLat || 1e-6;
-  const lngSpan = maxLng - minLng || 1e-6;
-
-  const pad = 16;
-  const points = trail
-    .map((point) => {
-      const x = pad + ((point.longitude - minLng) / lngSpan) * (MAP_WIDTH - pad * 2);
-      const y = MAP_HEIGHT - pad - ((point.latitude - minLat) / latSpan) * (MAP_HEIGHT - pad * 2);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
-
-  const last = trail[trail.length - 1];
-  const lastX = pad + ((last.longitude - minLng) / lngSpan) * (MAP_WIDTH - pad * 2);
-  const lastY = MAP_HEIGHT - pad - ((last.latitude - minLat) / latSpan) * (MAP_HEIGHT - pad * 2);
+/** Real map view of the GPS trail; the planned route is drawn as a dashed line. */
+function TrailMap({
+  trail,
+  live,
+  planned,
+  height,
+}: {
+  trail: { latitude: number; longitude: number }[];
+  live?: { latitude: number; longitude: number } | null;
+  planned: { latitude: number; longitude: number }[];
+  height: number;
+}) {
+  // The device fix is the driver's real position right now; the server trail is
+  // history and may be empty when telemetry has not arrived yet.
+  const points = trail.length > 0 ? trail : live ? [live] : [];
+  const last = points[points.length - 1];
+  const hasPlan = planned.length > 1;
+  const markers = [
+    ...(hasPlan ? [{ ...planned[0], color: colors.primaryContainer }] : []),
+    ...(hasPlan ? [{ ...planned[planned.length - 1], color: colors.error }] : []),
+    ...(last ? [{ ...last, color: colors.primaryContainer }] : []),
+    ...(live ? [{ ...live, color: colors.success }] : []),
+  ];
 
   return (
-    <Svg width="100%" height={MAP_HEIGHT} viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}>
-      <Polyline
-        points={points}
-        fill="none"
-        stroke={colors.primaryContainer}
-        strokeWidth={4}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <Circle cx={lastX} cy={lastY} r={7} fill={colors.primaryContainer} />
-      <Circle cx={lastX} cy={lastY} r={3} fill="#FFFFFF" />
-    </Svg>
+    <MapCanvas
+      points={points}
+      plannedPoints={planned}
+      markers={markers}
+      follow={live ?? null}
+      height={height}
+      emptyLabel="Belum ada jejak posisi"
+    />
   );
 }
 
@@ -207,7 +286,7 @@ function TelemetryRow({
   label,
   value,
 }: {
-  icon: 'speed' | 'sensors' | 'schedule';
+  icon: 'speed' | 'sensors' | 'schedule' | 'fuel' | 'power';
   label: string;
   value: string;
 }) {
@@ -248,6 +327,17 @@ const styles = StyleSheet.create({
   gpsDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#34D399' },
   gpsDotStale: { backgroundColor: '#FCD34D' },
   body: { paddingHorizontal: spacing.gutter },
+  noSignal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    backgroundColor: colors.warningContainer,
+    borderWidth: 1,
+    borderColor: colors.warning,
+  },
   map: {
     marginTop: spacing.md,
     borderRadius: radius.card,

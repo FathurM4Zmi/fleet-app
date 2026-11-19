@@ -35,13 +35,15 @@ export const useTripAssets = (tripId: string | undefined) =>
 
 /** BBM. */
 export const useFuelLogs = (take = 50) => useApiQuery(() => fuelApi.logs(take), [take]);
+export const useFuelStations = (take = 100) => useApiQuery(() => fuelApi.stations(take), [take]);
 export const useFuelCard = () => useApiQuery(fuelApi.card);
 export const useFuelTransactions = (take = 50) =>
   useApiQuery(() => fuelApi.cardTransactions(take), [take]);
 
 /** Coaching / kinerja / aktivitas / DNA. */
 export const useCoaching = () => useApiQuery(insightApi.coaching);
-export const usePerformance = () => useApiQuery(insightApi.performance);
+export const usePerformance = (period: 'week' | 'month' = 'month') =>
+  useApiQuery(() => insightApi.performance(period), [period]);
 export const useActivity = (days = 30, take = 50) =>
   useApiQuery(() => insightApi.activity(days, take), [days, take]);
 export const useDna = () => useApiQuery(insightApi.dna);
@@ -55,7 +57,11 @@ export const useCompliance = () => useApiQuery(safetyApi.compliance);
 /** Kendaraan & dokumen. */
 export const useVehicle = () => useApiQuery(vehicleApi.current);
 export const useVehicleDocuments = (vehicleId?: string) =>
-  useApiQuery(() => vehicleApi.documents(vehicleId), [vehicleId]);
+  useApiQuery(() => vehicleApi.documents(vehicleId), [vehicleId], {
+    // `GET /api/driver/vehicle/documents` wajib `?vehicleId=`; memanggil sebelum
+    // unit dimuat hanya menghasilkan 400 "The value '' is invalid.".
+    enabled: Boolean(vehicleId),
+  });
 export const useOdometerCorrections = () => useApiQuery(vehicleApi.odometerCorrections);
 export const useDocuments = () => useApiQuery(documentApi.list);
 export const useDocument = (id: string | undefined) =>

@@ -4,6 +4,7 @@ import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
 import {
+  Badge,
   BottomBar,
   Button,
   Card,
@@ -12,10 +13,13 @@ import {
   ScreenHeader,
   Text,
 } from '@/components/ui';
+import { toDamageReport } from '@/data/adapters';
 import { capturePhoto } from '@/lib/photo';
-import { useVehicle } from '@/hooks/api/useDriverData';
+import { useDamageReports, useVehicle } from '@/hooks/api/useDriverData';
+import { useRealtime } from '@/hooks/useRealtime';
 import { ApiError } from '@/lib/api/client';
 import { safetyApi } from '@/lib/api/endpoints';
+import { formatRelative } from '@/lib/format';
 import { enqueue } from '@/lib/offline/queue';
 import { uploadImage } from '@/lib/upload';
 import { colors, radius, shadows, spacing, typography } from '@/theme';
@@ -32,9 +36,22 @@ const SEVERITY_TONE: Record<(typeof SEVERITIES)[number], { bg: string; border: s
   'Berhenti Layanan': { bg: colors.criticalContainer, border: colors.critical, fg: colors.critical },
 };
 
+const WORK_ORDER_TONE = (status?: string): 'success' | 'warning' | 'info' | 'neutral' => {
+  const value = (status ?? '').toLowerCase();
+  if (value === 'done' || value === 'closed') return 'success';
+  if (value === 'inprogress' || value === 'assigned') return 'info';
+  if (value === 'open') return 'warning';
+  return 'neutral';
+};
+
 export default function DamageReportScreen() {
   const vehicleQuery = useVehicle();
   const vehicle = vehicleQuery.data;
+  const reportsQuery = useDamageReports(20);
+  const reports = (reportsQuery.data ?? []).map(toDamageReport);
+
+  // FRD-MOB-DEF-05 — status WO berubah di server tanpa refresh manual.
+  useRealtime('vehicle', () => void reportsQuery.refetch());
 
   const [category, setCategory] = useState<string>('Mesin');
   const [severity, setSeverity] = useState<(typeof SEVERITIES)[number]>('Rendah');
@@ -49,6 +66,10 @@ export default function DamageReportScreen() {
   const canSubmit =
     Boolean(vehicle) && description.trim().length > 0 && photos.length > 0 && !saving;
 
+  // Tombol tetap aktif selama deskripsi terisi agar driver mendapat pesan
+  // "Foto kerusakan wajib…" saat menekan kirim tanpa foto (FRD-MOB-DEF-03).
+  const formComplete = Boolean(vehicle) && description.trim().length > 0 && !saving;
+
   const addPhoto = async () => {
     if (photos.length >= MAX_PHOTOS) return;
     const uri = await capturePhoto();
@@ -56,6 +77,14 @@ export default function DamageReportScreen() {
   };
 
   const submit = async () => {
+    if (photos.length === 0) {
+      setError(
+        requiresPhoto
+          ? 'Foto kerusakan wajib untuk tingkat High atau Out-of-service.'
+          : 'Foto kerusakan wajib dilampirkan.',
+      );
+      return;
+    }
     if (!canSubmit || !vehicle) return;
     setSaving(true);
     setError(null);
@@ -91,6 +120,7 @@ export default function DamageReportScreen() {
       }
 
       setSubmitted(true);
+      void reportsQuery.refetch();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Gagal mengirim laporan kerusakan.');
     } finally {
@@ -120,7 +150,7 @@ export default function DamageReportScreen() {
             <View style={styles.flex}>
               <Text variant="bodyBold">{vehicle?.plate ?? '—'}</Text>
               <Text variant="labelMd" color="secondary">
-                {vehicle?.model ?? '—'} • CDD Box
+                {vehicle?.model ?? '—'}
               </Text>
             </View>
             <View style={styles.unitBadge}>
@@ -131,6 +161,60 @@ export default function DamageReportScreen() {
           </View>
         </Card>
 
+        {/* Work orders — FRD-MOB-DEF-04/05 */}
+        <View style={styles.section}>
+          <View style={styles.woHead}>
+            <Text variant="labelMd" color="textSecondary" style={styles.upper}>
+              WORK ORDER KENDARAAN
+            </Text>
+            <Text variant="labelMd" color="secondary">
+              {reports.length} WO
+            </Text>
+          </View>
+          {reports.length === 0 ? (
+            <Card>
+              <View style={styles.woEmpty}>
+                <Icon name="workOrder" size={20} color={colors.textMuted} />
+                <Text variant="caption" color="textSecondary" style={styles.flex}>
+                  Belum ada work order. Temuan DVIR dan laporan kerusakan akan tampil di sini.
+                </Text>
+              </View>
+            </Card>
+          ) : (
+            <View style={styles.woList}>
+              {reports.map((report) => (
+                <Card key={report.id} style={styles.woCard}>
+                  <View style={styles.woTop}>
+                    <View style={styles.woIdentity}>
+                      <View style={styles.woIcon}>
+                        <Icon name="workOrder" size={18} color={colors.warning} />
+                      </View>
+                      <View style={styles.flex}>
+                        <Text variant="labelSm" color="textMuted" style={styles.tracked}>
+                          {report.code ?? 'WORK ORDER'}
+                        </Text>
+                        <Text variant="bodyBold" numberOfLines={1}>
+                          {report.category} • {report.severity}
+                        </Text>
+                      </View>
+                    </View>
+                    <Badge
+                      label={report.statusLabel ?? 'Menunggu triase'}
+                      tone={WORK_ORDER_TONE(report.status)}
+                      dot
+                    />
+                  </View>
+                  <Text variant="caption" color="textSecondary" numberOfLines={2}>
+                    {report.description}
+                  </Text>
+                  <Text variant="caption" color="textMuted">
+                    Dilaporkan {formatRelative(report.submittedAt)}
+                  </Text>
+                </Card>
+              ))}
+            </View>
+          )}
+        </View>
 
         {/* Category */}
         <View style={styles.section}>
@@ -267,7 +351,7 @@ export default function DamageReportScreen() {
           <Button
             label={saving ? 'Mengirim…' : 'Kirim Laporan'}
             iconAfter="send"
-            disabled={!canSubmit}
+            disabled={!formComplete}
             onPress={submit}
           />
         )}
@@ -399,4 +483,20 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     height: 56,
   },
+
+  woHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  woEmpty: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  woList: { gap: spacing.sm },
+  woCard: { gap: spacing.xs + 2 },
+  woTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.sm },
+  woIdentity: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
+  woIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.input,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.warningContainer,
+  },
+  tracked: { letterSpacing: 0.6 },
 });

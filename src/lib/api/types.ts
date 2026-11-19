@@ -11,6 +11,7 @@ export type TripStatusWire =
   | 'Assigned'
   | 'Acknowledged'
   | 'InProgress'
+  | 'Arrived'
   | 'Completed'
   | 'Cancelled'
   | 'Settled'
@@ -50,6 +51,8 @@ export interface DriverTrip {
   scheduledEnd: string;
   status: TripStatusWire;
   actualStartAt: string | null;
+  /** Set when the driver taps "Sampai di Titik" (status `Arrived`). */
+  arrivedAt: string | null;
   actualEndAt: string | null;
   actualDistanceKm: number | null;
   declineReason: string | null;
@@ -70,6 +73,8 @@ export interface LoginResponse {
   twoFactorChallengeToken: string | null;
   token: string | null;
   expiresAt: string | null;
+  /** FRD-MOB-LOGIN-02 — dipakai untuk memperpanjang sesi tanpa login ulang. */
+  refreshToken?: string | null;
   user: { id: string; email: string; fullName: string; role: string; isActive: boolean } | null;
 }
 
@@ -133,6 +138,13 @@ export interface AppNotification {
   createdAt: string;
 }
 
+export interface NotificationPreference {
+  id: string;
+  notificationType: string;
+  channel: string;
+  isEnabled: boolean;
+}
+
 export interface PagedResult<T> {
   items: T[];
   page: number;
@@ -157,6 +169,9 @@ export interface TripTracking {
   lastSeenAt: string | null;
   isLive: boolean;
   trail: TrackingPoint[];
+  /** FRD-MOB-TRK-03 — telemetri ringkas; null bila kendaraan tidak mengirimkannya. */
+  fuelLevelPct: number | null;
+  ignitionOn: boolean | null;
 }
 
 export interface RouteOption {
@@ -170,6 +185,11 @@ export interface RouteOption {
   statusTone: string;
   recommended: boolean;
   selected: boolean;
+  /** Route geometry — used by the map preview. */
+  originLat?: number;
+  originLng?: number;
+  destLat?: number;
+  destLng?: number;
 }
 
 export interface TripWarning {
@@ -195,6 +215,15 @@ export interface TripWarnings {
   history: TripWarningHistory[];
 }
 
+/** FRD-MOB-ASSET-04 — one chain-of-custody row (read-only). */
+export interface TripAssetCustody {
+  at: string;
+  actor: string;
+  action: string;
+  location: string | null;
+  note: string | null;
+}
+
 export interface TripAsset {
   key: string;
   code: string;
@@ -203,6 +232,15 @@ export interface TripAsset {
   statusTone: string;
   footNote: string;
   footIcon: string;
+  isReefer: boolean;
+  temperatureC: number | null;
+  humidityPct: number | null;
+  tempMinC: number | null;
+  tempMaxC: number | null;
+  alarmState: string | null;
+  alarmLabel: string | null;
+  telemetryAt: string | null;
+  custody: TripAssetCustody[];
 }
 
 export interface FuelLog {
@@ -215,6 +253,20 @@ export interface FuelLog {
   receiptPath: string | null;
   createdAt: string;
   syncStatus: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  locationName?: string | null;
+}
+
+/** SPBU aktif berkoordinat (FRD-MOB-FUEL-02) — dipakai peta saat mencatat BBM. */
+export interface FuelStation {
+  id: string;
+  code: string;
+  name: string;
+  address: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface FuelCard {
@@ -250,6 +302,8 @@ export interface CoachingPlan {
   title: string;
   description: string;
   targetDate: string;
+  /** `Pending` | `InProgress` | `Completed` | `Cancelled` — drives which progress update is legal. */
+  status: string;
   milestones: CoachingMilestone[];
 }
 
@@ -354,6 +408,8 @@ export interface SafetyEvent {
   metric: string;
   metricNote: string;
   hasPhoto: boolean;
+  /** FRD-MOB-SAF-02 — tautan video vendor; null bila tidak ada. */
+  videoUrl: string | null;
 }
 
 export interface ComplianceItem {
@@ -426,15 +482,19 @@ export interface DriverDocumentDetail {
   status: string;
   statusLabel: string;
   rows: DriverDocumentRow[];
+  /** Path berkas di server (`uploads/...`); dipakai sebagai pratinjau. */
+  photoPath: string;
 }
 
 export interface DriverDocumentSummary {
   key: string;
   title: string;
+  documentType: string;
   note: string;
   status: string;
   statusLabel: string;
   hint: string | null;
+  photoPath: string;
 }
 
 export interface SettlementLine {
@@ -464,6 +524,33 @@ export interface Settlement {
   periods: SettlementPeriod[];
   lines: SettlementLine[];
   steps: SettlementStep[];
+}
+
+/** One trip row inside a settlement slip (FRD-MOB-SETTLE-02). */
+export interface SettlementSlipLine {
+  tripId: string;
+  code: string;
+  destination: string;
+  completedAt: string;
+  distanceKm: number;
+  ratePerKm: number;
+  amount: number;
+}
+
+/** `GET /api/driver/settlements/{period}` — source of the "Lihat Slip" sheet. */
+export interface SettlementSlip {
+  slipNumber: string;
+  periodKey: string;
+  periodLabel: string;
+  driverName: string;
+  status: string;
+  totalAmount: number;
+  tripCount: number;
+  ratePerKm: number;
+  periodStart: string;
+  periodEnd: string;
+  lines: SettlementSlipLine[];
+  generatedAt: string;
 }
 
 export interface UploadResult {

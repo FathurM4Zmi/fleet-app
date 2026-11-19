@@ -35,6 +35,17 @@ export const formatTime = (iso: string): string => TIME_ONLY.format(new Date(iso
 /** `1234` -> `1.234` (Indonesian thousands separator). */
 export const formatNumber = (value: number): string => new Intl.NumberFormat('id-ID').format(value);
 
+/**
+ * FCARD-05 / PRD-MOB Fuel Card — the full card number must never be rendered.
+ * Keeps only the last four digits, whatever the server sends.
+ */
+export const maskCardNumber = (value: string): string => {
+  const digits = value.replace(/\D/g, '');
+  if (digits.length < 4) return '•••• •••• •••• ••••';
+  const last4 = digits.slice(-4);
+  return `•••• •••• •••• ${last4}`;
+};
+
 export const formatKm = (value: number): string => `${formatNumber(value)} km`;
 
 export const formatKg = (value: number): string => `${formatNumber(value)} kg`;

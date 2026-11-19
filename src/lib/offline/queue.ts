@@ -5,7 +5,14 @@ import { apiRequest, ApiError } from '@/lib/api/client';
 const STORAGE_KEY = 'fleetops.driver.outbox';
 const MAX_ATTEMPTS = 5;
 
-export type OutboxKind = 'dvir' | 'pod' | 'fuel' | 'damage' | 'incident' | 'odometer';
+export type OutboxKind =
+  | 'dvir'
+  | 'pod'
+  | 'fuel'
+  | 'damage'
+  | 'incident'
+  | 'odometer'
+  | 'trip';
 
 export interface OutboxItem {
   id: string;

@@ -6,22 +6,11 @@ import * as ImagePicker from 'expo-image-picker';
  * the captured photo, or `undefined` when the driver cancels.
  */
 export async function capturePhoto(): Promise<string | undefined> {
-  return captureMedia('images');
-}
-
-/** Same flow as `capturePhoto`, but records video instead of stills. */
-export async function captureVideo(): Promise<string | undefined> {
-  return captureMedia('videos');
-}
-
-async function captureMedia(
-  mediaTypes: 'images' | 'videos',
-): Promise<string | undefined> {
   const permission = await ImagePicker.requestCameraPermissionsAsync();
 
   const result = permission.granted
-    ? await ImagePicker.launchCameraAsync({ mediaTypes: [mediaTypes], quality: 0.6 })
-    : await ImagePicker.launchImageLibraryAsync({ mediaTypes: [mediaTypes], quality: 0.6 });
+    ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.6 })
+    : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.6 });
 
   if (result.canceled) return undefined;
   return result.assets[0]?.uri;

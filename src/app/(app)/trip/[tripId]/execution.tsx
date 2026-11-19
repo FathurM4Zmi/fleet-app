@@ -5,18 +5,23 @@ import {
   Animated,
   Easing,
   Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
-import Svg, { Circle, G, Path, Polygon, Rect, Text as SvgText } from 'react-native-svg';
-
 import { Icon, type IconName } from '@/components/Icon';
+import { MapCanvas } from '@/components/MapCanvas';
 import { Badge, Button, Card, EmptyState, Screen, ScreenHeader, Text } from '@/components/ui';
+import { useTripTracking } from '@/hooks/api/useDriverData';
+import { useLiveLocation } from '@/hooks/useLiveLocation';
+import { useRealtime } from '@/hooks/useRealtime';
 import { useTrip } from '@/hooks/useTrip';
-import { addHours, estimatedDurationHours, formatKm, formatTime } from '@/lib/format';
+import { useTripRoutePlan } from '@/hooks/useTripRoutePlan';
+import { tripOpsApi } from '@/lib/api/endpoints';
+import { addHours, estimatedDurationHours, formatKm, formatRecency, formatTime } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme';
 
 const NOTE_LIMIT = 200;
@@ -24,10 +29,39 @@ const NOTE_PRESETS = ['+ Macet', '+ Berhenti', '+ Reroute'] as const;
 
 export default function TripExecutionScreen() {
   const { tripId } = useLocalSearchParams<{ tripId: string }>();
-  const { trip, vehicle, completeEvent } = useTrip(tripId);
+  const { trip, vehicle, start, arrive, complete, setStatus } = useTrip(tripId);
+  const trackingQuery = useTripTracking(tripId);
+  const tracking = trackingQuery.data;
+  const trail = tracking?.trail ?? [];
+  const routePlan = useTripRoutePlan(tripId);
+  const live = useLiveLocation();
 
   const [note, setNote] = useState('');
-  const [arriving, setArriving] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  // FRD-MOB-TRK-02 — jejak baru dari server langsung memperbarui peta.
+  useRealtime('tracking', () => void trackingQuery.refetch());
+
+  // Selama trip berjalan, tarik telemetri berkala supaya peta tetap segar
+  // meski kanal realtime sedang terputus.
+  const refetchTracking = trackingQuery.refetch;
+  const running = trip?.status === 'in_progress' || trip?.status === 'arrived';
+  useEffect(() => {
+    if (!running) return;
+    const timer = setInterval(() => void refetchTracking(), 15_000);
+    return () => clearInterval(timer);
+  }, [running, refetchTracking]);
+
+  // Kirim posisi perangkat ke server agar jejak (dan dispatcher) ikut bergerak.
+  useEffect(() => {
+    if (!tripId || !live.coords || trip?.status !== 'in_progress') return;
+    void tripOpsApi
+      .reportPosition(tripId, {
+        latitude: live.coords.latitude,
+        longitude: live.coords.longitude,
+      })
+      .catch(() => undefined);
+  }, [tripId, live.coords, trip?.status]);
 
   if (!trip) {
     return (
@@ -42,36 +76,97 @@ export default function TripExecutionScreen() {
     );
   }
 
-  const arrived = trip.timeline.find((event) => event.label === 'Tiba di tujuan')?.done ?? false;
-  const completed = trip.status === 'completed';
-  const activeIndex = completed ? 3 : arrived ? 2 : 1;
+  const status = trip.status;
+  const completed = status === 'completed' || status === 'rejected';
+  const arrived = status === 'arrived' || completed;
+  const activeIndex = completed ? 3 : arrived ? 2 : status === 'in_progress' ? 1 : 0;
 
   const etaIso = addHours(trip.scheduledAt, estimatedDurationHours(trip.distanceKm));
   const remainingKm = Math.max(0, Math.round(trip.distanceKm * (arrived ? 0 : 0.4)));
   const etaLabel = arrived ? 'Tiba' : `Est. ${formatTime(etaIso)} WIB`;
 
-  const handleArrive = async () => {
-    if (arriving) return;
-    setArriving(true);
+  const run = async (action: () => Promise<void>, failureTitle: string) => {
+    if (busy) return;
+    setBusy(true);
     try {
-      await completeEvent('Tiba di tujuan');
-      router.push(`/pod/${trip.id}/capture`);
+      await action();
     } catch (error) {
       Alert.alert(
-        'Gagal menyelesaikan trip',
+        failureTitle,
         error instanceof Error ? error.message : 'Periksa koneksi lalu coba lagi.',
       );
     } finally {
-      setArriving(false);
+      setBusy(false);
     }
   };
+
+  // FRD-MOB-TRIPEXEC-01/02 — transisi status tidak boleh terjadi karena salah tap.
+  // react-native-web tidak punya Alert, jadi di web pakai confirm().
+  const confirmStart = () => {
+    const go = () => void run(start, 'Gagal memulai trip');
+    if (Platform.OS === 'web') {
+      if (globalThis.confirm?.('Mulai perjalanan?')) go();
+      return;
+    }
+    Alert.alert('Mulai perjalanan?', undefined, [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Mulai', onPress: go },
+    ]);
+  };
+
+  const confirmComplete = () => {
+    const message = 'Selesaikan trip dan lanjut unggah bukti pengiriman.';
+    const go = () =>
+      void run(async () => {
+        await complete();
+        router.push(`/pod/${trip.id}/capture`);
+      }, 'Gagal menyelesaikan trip');
+    if (Platform.OS === 'web') {
+      if (globalThis.confirm?.(`Selesaikan trip?\n\n${message}`)) go();
+      return;
+    }
+    Alert.alert('Selesaikan trip?', message, [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Selesaikan', onPress: go },
+    ]);
+  };
+
+  const handlePrimary = async () => {
+    if (status === 'scheduled' || status === 'assigned') {
+      await run(() => setStatus('accepted'), 'Gagal menerima trip');
+      return;
+    }
+    if (status === 'accepted') {
+      confirmStart();
+      return;
+    }
+    if (status === 'in_progress') {
+      await run(arrive, 'Gagal menandai tiba di tujuan');
+      return;
+    }
+    if (status === 'arrived') {
+      // FRD-MOB-TRIPEXEC-02 — complete first, then continue to POD capture.
+      confirmComplete();
+    }
+  };
+
+  const primaryLabel =
+    status === 'scheduled' || status === 'assigned'
+      ? 'Terima Trip'
+      : status === 'accepted'
+        ? 'Mulai Perjalanan'
+        : status === 'in_progress'
+          ? 'Sampai di Titik'
+          : status === 'arrived'
+            ? 'Selesaikan Trip'
+            : 'Trip Selesai';
 
   return (
     <Screen>
       <ScreenHeader
         title="Trip Aktif"
         onBack
-        right={<WorkingBadge />}
+        right={completed ? <FinishedBadge /> : <WorkingBadge />}
       />
 
       <ScrollView
@@ -81,7 +176,7 @@ export default function TripExecutionScreen() {
       >
         {/* Map */}
         <View style={styles.map}>
-          <RouteMap />
+          <RouteMap trail={trail} live={live.coords} planned={routePlan.points} />
           <View style={styles.mapPill}>
             <View style={styles.mapPillDot} />
             <Text variant="labelSm" style={styles.mapPillText}>
@@ -92,7 +187,8 @@ export default function TripExecutionScreen() {
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Pusatkan lokasi"
+            accessibilityLabel="Buka peta posisi"
+            onPress={() => router.push(`/trip/${trip.id}/route`)}
             style={styles.mapRecenter}
           >
             <Icon name="recenter" size={22} color={colors.primaryContainer} />
@@ -244,12 +340,39 @@ export default function TripExecutionScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button
-          label={arriving ? 'Menyimpan…' : arrived ? 'Lanjut ke POD' : 'Sampai di Titik'}
-          icon="pin"
-          disabled={completed || arriving}
-          onPress={() => void handleArrive()}
-        />
+        {completed ? (
+          <View style={styles.finished}>
+            <View style={styles.finishedRow}>
+              <View style={styles.finishedIcon}>
+                <Icon name="success" size={22} color={colors.success} />
+              </View>
+              <View style={styles.flex}>
+                <Text variant="bodyBold">
+                  {status === 'rejected' ? 'Trip sudah ditutup' : 'Trip sudah selesai'}
+                </Text>
+                <Text variant="caption" color="textSecondary">
+                  {status === 'rejected'
+                    ? 'Penugasan ini tidak dilanjutkan.'
+                    : trip.completedAt
+                      ? `Selesai ${formatRecency(trip.completedAt)}`
+                      : 'Semua tahapan trip ini sudah tercatat.'}
+                </Text>
+              </View>
+            </View>
+            <Button
+              label="Kembali ke Halaman Beranda"
+              icon="home"
+              onPress={() => router.replace('/')}
+            />
+          </View>
+        ) : (
+          <Button
+            label={busy ? 'Menyimpan…' : primaryLabel}
+            icon="pin"
+            disabled={busy}
+            onPress={() => void handlePrimary()}
+          />
+        )}
       </View>
     </Screen>
   );
@@ -265,13 +388,13 @@ function WorkingBadge() {
           toValue: 0.3,
           duration: 700,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.timing(pulse, {
           toValue: 1,
           duration: 700,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ]),
     );
@@ -284,6 +407,17 @@ function WorkingBadge() {
       <Animated.View style={[styles.workingDot, { opacity: pulse }]} />
       <Text variant="labelMd" color="primaryContainer">
         Dikerjakan
+      </Text>
+    </View>
+  );
+}
+
+function FinishedBadge() {
+  return (
+    <View style={styles.finishedBadge}>
+      <Icon name="success" size={16} color={colors.success} />
+      <Text variant="labelMd" color="success">
+        Selesai
       </Text>
     </View>
   );
@@ -363,71 +497,36 @@ function QuickTile({
   );
 }
 
-function RouteMap() {
+function RouteMap({
+  trail,
+  live,
+  planned,
+}: {
+  trail: { latitude: number; longitude: number }[];
+  live?: { latitude: number; longitude: number } | null;
+  planned: { latitude: number; longitude: number }[];
+}) {
+  // Server telemetry can be minutes old (or empty on a fresh install). The
+  // device fix is the real current position, so it is always drawn on top.
+  const points = trail.length > 0 ? trail : live ? [live] : [];
+  const last = points[points.length - 1];
+  const hasPlan = planned.length > 1;
+  const markers = [
+    ...(hasPlan ? [{ ...planned[planned.length - 1], color: colors.error }] : []),
+    ...(last ? [{ ...last, color: '#EA580C' }] : []),
+    ...(live ? [{ ...live, color: colors.primaryContainer }] : []),
+  ];
+
   return (
-    <Svg viewBox="0 0 390 260" width="100%" height="100%">
-      <Rect fill="#EBF0F5" width="390" height="260" />
-      <Path d="M0 60 Q 120 40 240 70 T 390 40" stroke="#DFE5EC" strokeWidth="32" fill="none" />
-      <Path d="M-20 200 Q 140 180 260 220 T 410 190" stroke="#E2E7EE" strokeWidth="24" fill="none" />
-
-      <Path d="M60 0 L80 260" stroke="#FFFFFF" strokeWidth="5" />
-      <Path d="M210 0 L190 260" stroke="#FFFFFF" strokeWidth="4" />
-      <Path d="M330 0 L310 260" stroke="#FFFFFF" strokeWidth="4" />
-      <Path d="M0 135 L390 120" stroke="#FFFFFF" strokeWidth="6" />
-      <Path d="M0 85 L390 95" stroke="#FFFFFF" strokeWidth="3" />
-      <Path d="M0 210 L390 175" stroke="#FFFFFF" strokeWidth="3.5" />
-
-      <Rect fill="#DCEBDC" opacity="0.65" rx="6" width="115" height="60" x="250" y="25" />
-      <SvgText fill="#5F8862" fontFamily="Inter" fontSize="9" fontWeight="700" x="258" y="42">
-        KAWASAN INDUSTRI
-      </SvgText>
-      <Rect fill="#E3E8EE" opacity="0.8" rx="6" width="90" height="70" x="25" y="150" />
-
-      <Path
-        d="M 52 72 Q 130 95 195 130 T 315 178"
-        stroke="#1B4DFF"
-        strokeWidth="9"
-        opacity="0.18"
-        strokeLinecap="round"
-        fill="none"
-      />
-      <Path
-        d="M 52 72 Q 130 95 195 130 T 315 178"
-        stroke="#1B4DFF"
-        strokeWidth="4.5"
-        strokeLinecap="round"
-        fill="none"
-      />
-
-      <G x={52} y={72}>
-        <Circle r="14" fill="#1B4DFF" stroke="#FFFFFF" strokeWidth="2.5" />
-        <SvgText fill="#FFFFFF" fontFamily="Inter" fontSize="11" fontWeight="700" textAnchor="middle" x="0" y="4.5">
-          1
-        </SvgText>
-        <Rect fill="#111827" opacity="0.9" rx="4" width="68" height="20" x="-34" y="16" />
-        <SvgText fill="#FFFFFF" fontFamily="Inter" fontSize="10" fontWeight="600" textAnchor="middle" x="0" y="29.5">
-          Site Jkt 1
-        </SvgText>
-      </G>
-
-      <G x={315} y={178}>
-        <Circle r="14" fill="#DC2626" stroke="#FFFFFF" strokeWidth="2.5" />
-        <SvgText fill="#FFFFFF" fontFamily="Inter" fontSize="11" fontWeight="700" textAnchor="middle" x="0" y="4.5">
-          2
-        </SvgText>
-        <Rect fill="#DC2626" rx="4" width="48" height="20" x="-24" y="16" />
-        <SvgText fill="#FFFFFF" fontFamily="Inter" fontSize="10" fontWeight="600" textAnchor="middle" x="0" y="29.5">
-          Tujuan
-        </SvgText>
-      </G>
-
-      {/* Current vehicle position (map centre). */}
-      <G x={195} y={130}>
-        <Circle r="22" fill="#EA580C" opacity="0.25" />
-        <Circle r="12" fill="#EA580C" stroke="#FFFFFF" strokeWidth="2.5" />
-        <Polygon fill="#FFFFFF" points="0,-7 5,5 0,2 -5,5" transform="rotate(48)" />
-      </G>
-    </Svg>
+    <MapCanvas
+      points={points}
+      plannedPoints={planned}
+      markers={markers}
+      follow={live ?? null}
+      height={260}
+      rounded={false}
+      emptyLabel="Menunggu posisi kendaraan"
+    />
   );
 }
 
@@ -450,6 +549,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.infoContainer,
   },
   workingDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primaryContainer },
+  finishedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs + 2,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: radius.pill,
+    backgroundColor: colors.successContainer,
+  },
+  finished: { gap: spacing.md },
+  finishedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  finishedIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.successContainer,
+  },
 
   // Map
   map: { height: 260, borderBottomWidth: 1, borderBottomColor: colors.divider },
@@ -620,6 +738,7 @@ const styles = StyleSheet.create({
 
   // Footer
   footer: {
+    gap: spacing.sm,
     paddingHorizontal: spacing.gutter,
     paddingTop: spacing.md,
     paddingBottom: spacing.xl,

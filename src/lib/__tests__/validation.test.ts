@@ -22,9 +22,10 @@ describe('DVIR item validation', () => {
 });
 
 describe('POD validation', () => {
-  it('requires at least one photo', () => {
+  it('requires a photo and the recipient signature', () => {
     expect(isPodComplete({ photoUris: [] })).toBe(false);
-    expect(isPodComplete({ photoUris: ['uploads/pod/1.jpg'] })).toBe(true);
+    expect(isPodComplete({ photoUris: ['uploads/pod/1.jpg'] })).toBe(false);
+    expect(isPodComplete({ photoUris: ['uploads/pod/1.jpg'], hasSignature: true })).toBe(true);
   });
 });
 

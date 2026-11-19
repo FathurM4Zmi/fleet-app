@@ -18,8 +18,10 @@ import type {
   DvirRecord,
   FuelCard,
   FuelLog,
+  FuelStation,
   FuelTransaction,
   LoginResponse,
+  NotificationPreference,
   OdometerCorrection,
   OtpRequestResult,
   PagedResult,
@@ -27,6 +29,7 @@ import type {
   RouteOption,
   SafetyEvent,
   Settlement,
+  SettlementSlip,
   TrackingPoint,
   TripAsset,
   TripTracking,
@@ -69,6 +72,14 @@ export const authApi = {
       anonymous: true,
       timeoutMs: AUTH_TIMEOUT_MS,
     }),
+  /** FRD-MOB-LOGIN-02 — tukar refresh token dengan sesi baru. */
+  refresh: (refreshToken: string) =>
+    apiRequest<LoginResponse>(`${AUTH}/refresh`, {
+      method: 'POST',
+      body: { refreshToken },
+      anonymous: true,
+      timeoutMs: AUTH_TIMEOUT_MS,
+    }),
   changePin: (currentPin: string, newPin: string) =>
     apiRequest<void>(`${AUTH}/pin/change`, { method: 'POST', body: { currentPin, newPin } }),
 };
@@ -95,6 +106,7 @@ export const tripApi = {
   decline: (id: string, reason: string) =>
     apiRequest<void>(`${BASE}/trips/${id}/decline`, { method: 'POST', body: { reason } }),
   start: (id: string) => apiRequest<void>(`${BASE}/trips/${id}/start`, { method: 'POST' }),
+  arrive: (id: string) => apiRequest<void>(`${BASE}/trips/${id}/arrive`, { method: 'POST' }),
   complete: (id: string, actualDistanceKm?: number) =>
     apiRequest<void>(`${BASE}/trips/${id}/complete`, {
       method: 'POST',
@@ -110,9 +122,20 @@ export const tripOpsApi = {
   selectRoute: (tripId: string, routeId: string) =>
     apiRequest<void>(`${BASE}/trips/${tripId}/routes/${routeId}/select`, { method: 'POST' }),
   warnings: (tripId: string) => apiRequest<TripWarnings>(`${BASE}/trips/${tripId}/warnings`),
+  /** FRD-MOB-ALT-03 — tandai peringatan ditangani; alasan wajib. */
+  resolveWarning: (tripId: string, alertId: string, reason: string) =>
+    apiRequest<void>(`${BASE}/trips/${tripId}/warnings/${alertId}/resolve`, {
+      method: 'POST',
+      body: { reason },
+    }),
   assets: (tripId: string) => apiRequest<TripAsset[]>(`${BASE}/trips/${tripId}/assets`),
   checkAsset: (tripId: string, assetId: string) =>
     apiRequest<void>(`${BASE}/trips/${tripId}/assets/${assetId}/check`, { method: 'POST' }),
+  /** FRD-MOB-TRK-02 — kirim posisi GPS perangkat; server yang menakar intervalnya. */
+  reportPosition: (
+    tripId: string,
+    payload: { latitude: number; longitude: number; speed?: number | null; heading?: number | null },
+  ) => apiRequest<void>(`${BASE}/trips/${tripId}/positions`, { method: 'POST', body: payload }),
 };
 
 /* ── DVIR (M17) ─────────────────────────────────────────────────────── */
@@ -162,12 +185,32 @@ export const notificationApi = {
   list: (params: { isRead?: boolean; page?: number; pageSize?: number } = {}) =>
     apiRequest<PagedResult<AppNotification>>(`${BASE}/notifications`, { query: params }),
   read: (id: string) => apiRequest<void>(`${BASE}/notifications/${id}/read`, { method: 'POST' }),
+  /** FRD-MOB-NOTIF-04 — preferensi milik driver sendiri. */
+  preferences: () => apiRequest<NotificationPreference[]>(`${BASE}/notification-preferences`),
+  setPreference: (notificationType: string, isEnabled: boolean) =>
+    apiRequest<{ id: string }>(`${BASE}/notification-preferences`, {
+      method: 'PUT',
+      body: { notificationType, isEnabled },
+    }),
+  /** FRD-MOB-NOTIF-02 — daftarkan token push perangkat. */
+  registerDevice: (token: string, platform: string) =>
+    apiRequest<void>(`${BASE}/devices`, {
+      method: 'POST',
+      body: { token, platform },
+    }),
+  unregisterDevice: (token: string) =>
+    apiRequest<void>(`${BASE}/devices/unregister`, {
+      method: 'POST',
+      body: { token, platform: null },
+    }),
 };
 
 /* ── BBM & kartu (M07/M22) ──────────────────────────────────────────── */
 
 export const fuelApi = {
   logs: (take = 50) => apiRequest<FuelLog[]>(`${BASE}/fuel`, { query: { take } }),
+  stations: (take = 100) =>
+    apiRequest<FuelStation[]>(`${BASE}/fuel/stations`, { query: { take } }),
   submit: (payload: {
     vehicleId: string;
     liters: number;
@@ -177,6 +220,9 @@ export const fuelApi = {
     receiptPath: string;
     tripId?: string | null;
     notes?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+    locationName?: string | null;
   }) => apiRequest<{ id: string }>(`${BASE}/fuel`, { method: 'POST', body: payload }),
   card: () => apiRequest<FuelCard | null>(`${BASE}/fuel-card`),
   cardTransactions: (take = 50) =>
@@ -187,9 +233,18 @@ export const fuelApi = {
 
 export const insightApi = {
   coaching: () => apiRequest<Coaching>(`${BASE}/coaching`),
-  updateCoaching: (planId: string, status: 'InProgress' | 'Completed') =>
-    apiRequest<void>(`${BASE}/coaching/${planId}/progress`, { method: 'POST', body: { status } }),
-  performance: () => apiRequest<Performance>(`${BASE}/performance`),
+  updateCoaching: (
+    planId: string,
+    status: 'InProgress' | 'Completed',
+    note?: string,
+    evidencePaths?: string[],
+  ) =>
+    apiRequest<void>(`${BASE}/coaching/${planId}/progress`, {
+      method: 'POST',
+      body: { status, note, evidencePaths },
+    }),
+  performance: (period: 'week' | 'month' = 'month') =>
+    apiRequest<Performance>(`${BASE}/performance`, { query: { period } }),
   activity: (days = 30, take = 50) =>
     apiRequest<ActivityEntry[]>(`${BASE}/activity`, { query: { days, take } }),
   dna: () => apiRequest<Dna>(`${BASE}/dna`),
@@ -239,12 +294,23 @@ export const vehicleApi = {
 export const documentApi = {
   list: () => apiRequest<DriverDocumentSummary[]>(`${BASE}/documents`),
   detail: (id: string) => apiRequest<DriverDocumentDetail>(`${BASE}/documents/${id}`),
+  /** FRD-MOB-PROFILE-02 — `photoPath` comes from `uploadImage(uri, 'dokumen')`. */
+  replacePhoto: (id: string, photoPath: string) =>
+    apiRequest<void>(`${BASE}/documents/${id}/photo`, {
+      method: 'POST',
+      body: { photoPath },
+    }),
 };
 
 /* ── Settlement (M15) ───────────────────────────────────────────────── */
 
 export const settlementApi = {
   summary: (months = 3) => apiRequest<Settlement>(`${BASE}/settlement`, { query: { months } }),
+  /** `period` is the `yyyy-MM` key from `summary().periods`; omit for the current month. */
+  slip: (period?: string) =>
+    apiRequest<SettlementSlip>(
+      `${BASE}/settlements/${encodeURIComponent(period ?? 'current')}`,
+    ),
 };
 
 /* ── Upload (foto DVIR / POD / BBM / kerusakan / insiden) ───────────── */

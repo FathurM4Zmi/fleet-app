@@ -1,4 +1,6 @@
-import { API_BASE_URL, API_TIMEOUT_MS } from './config';
+import { Platform } from 'react-native';
+
+import { API_BASE_URL, API_TIMEOUT_MS, UPLOAD_TIMEOUT_MS } from './config';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -30,12 +32,32 @@ export class ApiError extends Error {
 
 export type TokenProvider = () => Promise<string | null>;
 export type UnauthorizedHandler = () => void;
+/** FRD-MOB-LOGIN-02 — returns true when a new access token was obtained. */
+export type RefreshHandler = () => Promise<boolean>;
 
 let tokenProvider: TokenProvider = async () => null;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
+let refreshHandler: RefreshHandler | null = null;
+let refreshing: Promise<boolean> | null = null;
 
 export function setTokenProvider(provider: TokenProvider) {
   tokenProvider = provider;
+}
+
+export function setRefreshHandler(handler: RefreshHandler | null) {
+  refreshHandler = handler;
+}
+
+/**
+ * Coalesces concurrent 401s into a single refresh call, so five parallel
+ * requests do not each burn a refresh token.
+ */
+function tryRefresh(): Promise<boolean> {
+  if (!refreshHandler) return Promise.resolve(false);
+  refreshing ??= refreshHandler().finally(() => {
+    refreshing = null;
+  });
+  return refreshing;
 }
 
 /**
@@ -90,53 +112,96 @@ function notifyUnauthorized(status: number) {
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? API_TIMEOUT_MS);
-  const abortFromCaller = () => controller.abort();
-  options.signal?.addEventListener('abort', abortFromCaller);
+  for (let attempt = 0; ; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? API_TIMEOUT_MS);
+    const abortFromCaller = () => controller.abort();
+    options.signal?.addEventListener('abort', abortFromCaller);
 
-  const headers: Record<string, string> = { Accept: 'application/json' };
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
-  if (!options.anonymous) {
-    const token = await tokenProvider();
-    if (token) headers.Authorization = `Bearer ${token}`;
-  }
+    try {
+      const headers: Record<string, string> = { Accept: 'application/json' };
+      if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+      if (!options.anonymous) {
+        const token = await tokenProvider();
+        if (token) headers.Authorization = `Bearer ${token}`;
+      }
 
-  try {
-    const response = await fetch(buildUrl(path, options.query), {
-      method: options.method ?? 'GET',
-      headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
-      signal: controller.signal,
-    });
+      const response = await fetch(buildUrl(path, options.query), {
+        method: options.method ?? 'GET',
+        headers,
+        body: options.body === undefined ? undefined : JSON.stringify(options.body),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
+      if (response.ok) {
+        if (response.status === 204) return undefined as T;
+        const text = await response.text();
+        return (text ? JSON.parse(text) : undefined) as T;
+      }
+
       const error = await parseError(response);
+
+      // FRD-MOB-LOGIN-02 — access token kedaluwarsa: perpanjang sekali lalu ulangi
+      // permintaan dengan token baru. Endpoint refresh sendiri memakai `anonymous`,
+      // jadi tidak mungkin rekursif.
+      if (error.status === 401 && !options.anonymous && attempt === 0 && (await tryRefresh())) {
+        continue;
+      }
+
       notifyUnauthorized(error.status);
       throw error;
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      if ((error as Error)?.name === 'AbortError') {
+        throw new ApiError(0, 'Permintaan melebihi batas waktu. Periksa koneksi.');
+      }
+      throw new ApiError(0, 'Tidak dapat terhubung ke server. Periksa koneksi.');
+    } finally {
+      clearTimeout(timeout);
+      options.signal?.removeEventListener('abort', abortFromCaller);
     }
-    if (response.status === 204) return undefined as T;
-
-    const text = await response.text();
-    return (text ? JSON.parse(text) : undefined) as T;
-  } catch (error) {
-    if (error instanceof ApiError) throw error;
-    if ((error as Error)?.name === 'AbortError') {
-      throw new ApiError(0, 'Permintaan melebihi batas waktu. Periksa koneksi.');
-    }
-    throw new ApiError(0, 'Tidak dapat terhubung ke server. Periksa koneksi.');
-  } finally {
-    clearTimeout(timeout);
-    options.signal?.removeEventListener('abort', abortFromCaller);
   }
+}
+
+/**
+ * Reads the upload response without assuming it is JSON: the contract says
+ * `{ path, url }`, but a plain-text path must not be reported as a network
+ * failure just because `response.json()` threw.
+ */
+function parseUploadResponse(text: string, status: number): { path: string; url: string } {
+  const body = text.trim();
+  if (!body) {
+    throw new ApiError(status, 'Server tidak mengembalikan path berkas. Coba unggah lagi.');
+  }
+
+  let rawPath: string | undefined;
+  let rawUrl: string | undefined;
+  try {
+    const parsed = JSON.parse(body) as { path?: string; url?: string } | string;
+    if (typeof parsed === 'string') {
+      rawPath = parsed;
+    } else {
+      rawPath = parsed.path;
+      rawUrl = parsed.url;
+    }
+  } catch {
+    // Plain-text body — some deployments return the stored path directly.
+    rawPath = body;
+  }
+
+  const storedPath = rawPath?.trim().replace(/^\/+/, '');
+  if (!storedPath) {
+    throw new ApiError(status, 'Server tidak mengembalikan path berkas. Coba unggah lagi.');
+  }
+  return { path: storedPath, url: rawUrl ?? `${API_BASE_URL}/${storedPath}` };
 }
 
 /**
  * Multipart upload for DVIR / POD / fuel receipt photos.
  * The backend returns the relative path that is stored in `photoPaths`.
  *
- * Uses the same timeout and error mapping as `apiRequest` so a stalled upload
- * cannot hang the form forever.
+ * Uses a dedicated (larger) timeout so a slow mobile connection is not
+ * mistaken for a dead server, and the same error mapping as `apiRequest`.
  */
 export async function apiUpload(
   path: string,
@@ -144,17 +209,29 @@ export async function apiUpload(
   field = 'file',
 ): Promise<{ path: string; url: string }> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), UPLOAD_TIMEOUT_MS);
 
   try {
     const form = new FormData();
-    // React Native accepts the `{ uri, name, type }` shape directly.
-    form.append(field, file as unknown as Blob);
+    // React Native accepts the `{ uri, name, type }` shape directly. Never set
+    // Content-Type by hand: the runtime has to add the multipart boundary.
+    // On web there is no such shape: FormData would stringify the object to
+    // "[object Object]", the request would arrive without a file part and the
+    // server answers 400. Fetch the blob:/data: URI into a real Blob first.
+    if (Platform.OS === 'web') {
+      const blob = await (await fetch(file.uri)).blob();
+      form.append(field, blob, file.name);
+    } else {
+      form.append(field, file as unknown as Blob);
+    }
 
     const token = await tokenProvider();
     const response = await fetch(`${API_BASE_URL}${path}`, {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      headers: {
+        Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : null),
+      },
       body: form,
       signal: controller.signal,
     });
@@ -164,13 +241,18 @@ export async function apiUpload(
       notifyUnauthorized(error.status);
       throw error;
     }
-    return (await response.json()) as { path: string; url: string };
+    return parseUploadResponse(await response.text(), response.status);
   } catch (error) {
     if (error instanceof ApiError) throw error;
     if ((error as Error)?.name === 'AbortError') {
-      throw new ApiError(0, 'Unggahan melebihi batas waktu. Periksa koneksi.');
+      throw new ApiError(0, 'Unggahan melebihi batas waktu. Periksa koneksi lalu coba lagi.');
     }
-    throw new ApiError(0, 'Tidak dapat mengunggah foto. Periksa koneksi.');
+    // Dev builds print the resolved host: a stale LAN IP is the usual cause of
+    // a network-level upload failure while login (cached session) still works.
+    throw new ApiError(
+      0,
+      `Tidak dapat mengunggah foto. Periksa koneksi.${__DEV__ ? ` (${API_BASE_URL})` : ''}`,
+    );
   } finally {
     clearTimeout(timeout);
   }

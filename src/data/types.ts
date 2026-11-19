@@ -38,9 +38,11 @@ export interface Vehicle {
 }
 
 export type TripStatus =
+  | 'scheduled'
   | 'assigned'
   | 'accepted'
   | 'in_progress'
+  | 'arrived'
   | 'completed'
   | 'rejected';
 
@@ -77,6 +79,8 @@ export interface Trip {
   distanceKm: number;
   /** ISO datetime. */
   scheduledAt: string;
+  /** ISO datetime when the driver tapped "Selesaikan Trip"; absent until then. */
+  completedAt?: string;
   vehicleId: string;
   /** Plate/model come from the trip response so list cards avoid a second fetch. */
   vehiclePlate?: string;
@@ -235,6 +239,8 @@ export interface CoachingPlan {
   description: string;
   /** e.g. `25 Apr`. */
   targetDate: string;
+  /** Backend state: `Pending` | `InProgress` | `Completed` | `Cancelled`. */
+  status: string;
   milestones: CoachingMilestone[];
 }
 
@@ -291,6 +297,8 @@ export interface ActivityEntry {
   /** e.g. `08:02`. */
   time: string;
   tone: ActivityTone;
+  /** FRD-MOB-ACT-03 — entri dari antrian offline yang belum tersinkron. */
+  pending?: boolean;
 }
 
 export type SettlementStepState = 'done' | 'active' | 'upcoming';
@@ -377,6 +385,12 @@ export interface DamageReport {
   photoUris: string[];
   /** ISO datetime. */
   submittedAt: string;
+  /** Work-order number shown in the defect report list (FRD-MOB-DEF-04). */
+  code?: string;
+  /** Raw server status (`Open`, `InProgress`, …). */
+  status?: string;
+  /** Localised status label from the server. */
+  statusLabel?: string;
 }
 
 export interface FuelCardAccount {
@@ -468,6 +482,17 @@ export interface DocumentDetail {
   statusLabel: string;
   warning?: { title: string; body: string };
   rows: DocumentRow[];
+  /** Preview image of the physical card. */
+  photoUrl?: string;
+}
+
+/** Row in the profile's DOKUMEN list — one entry per document on the server. */
+export interface ProfileDocument {
+  key: string;
+  title: string;
+  documentType: string;
+  status: DocumentStatus;
+  statusLabel: string;
 }
 
 export interface VehicleSpec {
@@ -526,6 +551,8 @@ export interface SafetyEvent {
   metricNote: string;
   /** Renders a photo thumbnail tile when true. */
   hasPhoto: boolean;
+  /** FRD-MOB-SAF-02 — tautan video vendor (dibuka di luar aplikasi). */
+  videoUrl: string | null;
 }
 
 /** One selectable route on the Pilih Rute screen. */
@@ -541,6 +568,13 @@ export interface RouteOption {
   statusLabel: string;
   statusTone: 'success' | 'warning' | 'neutral';
   recommended?: boolean;
+  /** True when this is the option the driver already applied on the server. */
+  selected: boolean;
+  /** Endpoints of the route, when the API provides them (map preview). */
+  originLat?: number;
+  originLng?: number;
+  destLat?: number;
+  destLng?: number;
 }
 
 export type TripWarningSeverity = 'critical' | 'warning' | 'info';
@@ -578,4 +612,27 @@ export interface TripAsset {
   footNote: string;
   /** Icon shown beside the footer note. */
   footIcon: 'lock' | 'search';
+  /** FRD-MOB-ASSET-02 — present only for cold-chain assets. */
+  reefer?: TripAssetReefer;
+  /** FRD-MOB-ASSET-04 — chain-of-custody, newest first. */
+  custody: TripAssetCustodyRow[];
+}
+
+export interface TripAssetReefer {
+  temperatureC: number | null;
+  humidityPct: number | null;
+  minC: number | null;
+  maxC: number | null;
+  alarm: 'normal' | 'alarm' | 'unknown';
+  label: string;
+  at: string | null;
+}
+
+export interface TripAssetCustodyRow {
+  key: string;
+  at: string;
+  actor: string;
+  action: string;
+  location?: string;
+  note?: string;
 }

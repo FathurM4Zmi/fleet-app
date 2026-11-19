@@ -1,12 +1,20 @@
 import { router, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
 import { Badge, Button, Card, Screen, Sheet, Text, TextField } from '@/components/ui';
-import { toDriver, toVehicle } from '@/data/adapters';
-import { useDna, useHome, useVehicle } from '@/hooks/api/useDriverData';
+import { toDriver, toProfileDocument, toSettlement, toVehicle } from '@/data/adapters';
+import type { DocumentStatus } from '@/data/types';
+import {
+  useCoaching,
+  useDna,
+  useDocuments,
+  useHome,
+  useSettlement,
+  useVehicle,
+} from '@/hooks/api/useDriverData';
 import { profileApi } from '@/lib/api/endpoints';
 import { formatDate, scoreTone } from '@/lib/format';
 import { emptyDriver } from '@/store/app';
@@ -25,15 +33,49 @@ interface MenuEntry {
   href: Href;
 }
 
+/** Document types seeded by the API (FRD-MOB-PROFILE-02). */
+const DOC_ICON: Record<string, IconName> = {
+  SIM: 'idCard',
+  KTP: 'contactCard',
+  'Sertifikat Homolog': 'verified',
+  STNK: 'document',
+  SKCK: 'shield',
+  KIR: 'verified',
+  'Foto Kendaraan': 'truck',
+};
+
+const DOC_TONE: Record<DocumentStatus, 'success' | 'warning' | 'critical'> = {
+  valid: 'success',
+  expiring: 'warning',
+  expired: 'critical',
+};
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const home = useHome();
   const dna = useDna();
   const vehicleQuery = useVehicle();
+  const documentsQuery = useDocuments();
+  const coachingQuery = useCoaching();
+  const settlementQuery = useSettlement();
   const { logout } = useAuth();
   const driver = home.data ? toDriver(home.data.profile, dna.data?.score ?? 0) : emptyDriver;
 
   const vehicle = vehicleQuery.data ? toVehicle(vehicleQuery.data) : undefined;
+
+  const documents = (documentsQuery.data ?? []).map(toProfileDocument);
+  const expiredDocuments = documents.filter((document) => document.status === 'expired').length;
+
+  const coachingPlan = coachingQuery.data?.plan ?? null;
+  const coachingLabel = !coachingPlan
+    ? 'Tidak ada'
+    : coachingPlan.status === 'Completed'
+      ? 'Selesai'
+      : coachingPlan.status === 'Cancelled'
+        ? 'Dibatalkan'
+        : 'Berjalan';
+
+  const settlement = settlementQuery.data ? toSettlement(settlementQuery.data).summary : null;
 
   const [editOpen, setEditOpen] = useState(false);
   const [draftName, setDraftName] = useState(driver.name);
@@ -89,7 +131,7 @@ export default function ProfileScreen() {
       icon: 'school',
       iconColor: colors.onSurfaceVariant,
       label: 'Coaching dan Sertifikasi',
-      value: '2 aktif',
+      value: coachingLabel,
       href: '/coaching',
     },
     {
@@ -98,7 +140,10 @@ export default function ProfileScreen() {
       iconColor: colors.warning,
       label: 'Kepatuhan',
       value: '',
-      badge: { label: '1 kedaluwarsa', tone: 'warning' },
+      badge:
+        expiredDocuments > 0
+          ? { label: `${expiredDocuments} kedaluwarsa`, tone: 'warning' }
+          : undefined,
       href: '/compliance',
     },
     {
@@ -110,11 +155,19 @@ export default function ProfileScreen() {
       href: '/activity',
     },
     {
+      key: 'notificationPreferences',
+      icon: 'notifications',
+      iconColor: colors.onSurfaceVariant,
+      label: 'Preferensi Notifikasi',
+      value: '',
+      href: '/notification-preferences' as Href,
+    },
+    {
       key: 'settlement',
       icon: 'payments',
       iconColor: colors.primary,
       label: 'Settlement',
-      value: 'Rp 8.450.000',
+      value: settlement?.total ?? '—',
       tone: 'neutral',
       href: '/settlement',
     },
@@ -141,33 +194,6 @@ export default function ProfileScreen() {
       label: 'Peristiwa Safety',
       value: 'Lihat riwayat',
       href: '/safety',
-    },
-  ];
-
-  const documents = [
-    {
-      key: 'sim',
-      icon: 'idCard' as IconName,
-      label: 'SIM BII Umum',
-      status: 'Segera Habis',
-      tone: 'warning' as const,
-      href: '/documents/sim' as Href,
-    },
-    {
-      key: 'ktp',
-      icon: 'contactCard' as IconName,
-      label: 'KTP',
-      status: 'Valid',
-      tone: 'success' as const,
-      href: '/documents/ktp' as Href,
-    },
-    {
-      key: 'homolog',
-      icon: 'verified' as IconName,
-      label: 'Sertifikat Homolog',
-      status: 'Valid',
-      tone: 'success' as const,
-      href: '/documents/homolog' as Href,
     },
   ];
 
@@ -228,14 +254,17 @@ export default function ProfileScreen() {
                 {driver.phone}
               </Text>
             </View>
-            <View style={[styles.chip, styles.chipEmergency]}>
-              <Icon name="emergency" size={15} color="#BB3100" />
-              <Text variant="labelMd" color="#912400">
-                Kontak darurat: Istri (0813-8899-12)
-              </Text>
-            </View>
           </View>
         </Card>
+
+        {/* FRD-MOB-PROFILE-03 — data inti hanya boleh diubah administrator. */}
+        <View style={styles.note}>
+          <Icon name="lock" size={18} color={colors.secondary} />
+          <Text variant="caption" color="secondary" style={styles.noteText}>
+            Data ini hanya dapat diubah oleh administrator. SIM berlaku sampai{' '}
+            {driver.licenseExpiry ? formatDate(driver.licenseExpiry) : '—'}.
+          </Text>
+        </View>
 
         {/* DNA + vehicle strip */}
         <View style={styles.strip}>
@@ -247,8 +276,14 @@ export default function ProfileScreen() {
                 </Text>
               </View>
               <View style={styles.stripValue}>
-                <Text variant="headlineMd">DNA {driver.dnaScore}</Text>
-                <Text variant="labelMd" color={dnaTone === 'success' ? 'success' : 'warning'}>
+                <Text variant="headlineMd" numberOfLines={1}>
+                  DNA {driver.dnaScore}
+                </Text>
+                <Text
+                  variant="labelSm"
+                  numberOfLines={1}
+                  color={dnaTone === 'success' ? 'success' : 'warning'}
+                >
                   {dnaTone === 'success' ? 'Baik' : 'Perlu perhatian'}
                 </Text>
               </View>
@@ -262,8 +297,10 @@ export default function ProfileScreen() {
                   Unit Armada
                 </Text>
               </View>
-              <View style={styles.stripValue}>
-                <Text variant="titleMd">{vehicle?.plate ?? '—'}</Text>
+              <View style={styles.stripValueRow}>
+                <Text variant="titleMd" numberOfLines={1} style={styles.flexShrink}>
+                  {vehicle?.plate ?? '—'}
+                </Text>
                 <Icon name="truck" size={18} color={colors.secondary} />
               </View>
             </View>
@@ -315,19 +352,30 @@ export default function ProfileScreen() {
             DOKUMEN
           </Text>
           <Card padded={false} shadow>
+            {documents.length === 0 ? (
+              <View style={styles.docRow}>
+                <Text variant="bodyMd" color="textSecondary">
+                  {documentsQuery.loading ? 'Memuat dokumen…' : 'Belum ada dokumen terdaftar.'}
+                </Text>
+              </View>
+            ) : null}
             {documents.map((document, index) => (
               <View key={document.key}>
                 <Pressable
-                  onPress={() => router.push(document.href)}
+                  onPress={() => router.push(`/documents/${document.key}` as Href)}
                   accessibilityRole="button"
                   style={({ pressed }) => [styles.docRow, pressed && styles.menuRowPressed]}
                 >
                   <View style={styles.docLeft}>
-                    <Icon name={document.icon} size={20} color={colors.secondary} />
-                    <Text variant="bodyBold">{document.label}</Text>
+                    <Icon
+                      name={DOC_ICON[document.documentType] ?? 'document'}
+                      size={20}
+                      color={colors.secondary}
+                    />
+                    <Text variant="bodyBold">{document.documentType}</Text>
                   </View>
                   <View style={styles.menuRight}>
-                    <Badge label={document.status} tone={document.tone} />
+                    <Badge label={document.statusLabel} tone={DOC_TONE[document.status]} />
                     <Icon name="forward" size={18} color={colors.secondary} />
                   </View>
                 </Pressable>
@@ -337,25 +385,21 @@ export default function ProfileScreen() {
           </Card>
         </View>
 
-        <View style={styles.note}>
-          <Icon name="lock" size={18} color={colors.secondary} />
-          <Text variant="caption" color="secondary" style={styles.noteText}>
-            Nama dan nomor HP dapat Anda perbarui sendiri. Data lain hanya dapat diubah
-            administrator. SIM berlaku sampai{' '}
-            {driver.licenseExpiry ? formatDate(driver.licenseExpiry) : '—'}.
-          </Text>
-        </View>
-
         <Pressable
           onPress={() => {
-            Alert.alert(
-              'Keluar dari akun?',
-              'Data yang belum terkirim tetap disimpan di perangkat dan akan dikirim saat Anda masuk kembali.',
-              [
-                { text: 'Batal', style: 'cancel' },
-                { text: 'Keluar', style: 'destructive', onPress: () => void logout() },
-              ],
-            );
+            const message =
+              'Data yang belum terkirim tetap disimpan di perangkat dan akan dikirim saat Anda masuk kembali.';
+            // react-native-web ships a no-op Alert (dist/exports/Alert is an
+            // empty class), so a confirmation dialog on web silently did
+            // nothing and the logout button never fired.
+            if (Platform.OS === 'web') {
+              if (globalThis.confirm?.(`Keluar dari akun?\n\n${message}`)) void logout();
+              return;
+            }
+            Alert.alert('Keluar dari akun?', message, [
+              { text: 'Batal', style: 'cancel' },
+              { text: 'Keluar', style: 'destructive', onPress: () => void logout() },
+            ]);
           }}
           accessibilityRole="button"
           style={styles.logout}
@@ -470,7 +514,6 @@ const styles = StyleSheet.create({
     borderColor: colors.outlineVariant,
     backgroundColor: colors.surfaceLow,
   },
-  chipEmergency: { backgroundColor: '#FFF4ED', borderColor: '#FFD0B8' },
   strip: { flexDirection: 'row', gap: spacing.sm + 2 },
   stripCard: { flex: 1 },
   stripInner: { padding: spacing.md, justifyContent: 'space-between', flex: 1 },
@@ -481,12 +524,14 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginBottom: spacing.sm,
   },
-  stripValue: {
+  stripValue: { gap: 2 },
+  stripValueRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.xs,
   },
+  flexShrink: { flexShrink: 1 },
   upper: { textTransform: 'uppercase' },
   section: { gap: spacing.sm },
   sectionTitle: { paddingHorizontal: 2 },

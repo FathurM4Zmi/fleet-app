@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Alert, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/Icon';
@@ -8,13 +8,16 @@ import { EmptyState, Screen, Text } from '@/components/ui';
 import { TripCard } from '@/components/TripCard';
 import type { Trip } from '@/data/types';
 import { useTasks } from '@/hooks/api/useDriverData';
+import { useRealtime } from '@/hooks/useRealtime';
 import { useTrips } from '@/hooks/useTrips';
+import { notify } from '@/lib/notify';
 import { colors, radius, shadows, spacing } from '@/theme';
 
-type FilterKey = 'all' | 'new' | 'active' | 'done' | 'cancelled';
+type FilterKey = 'all' | 'draft' | 'new' | 'active' | 'done' | 'cancelled';
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'all', label: 'Semua' },
+  { key: 'draft', label: 'Draft' },
   { key: 'new', label: 'Baru' },
   { key: 'active', label: 'Dikerjakan' },
   { key: 'done', label: 'Selesai' },
@@ -23,10 +26,12 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 
 const matches = (trip: Trip, filter: FilterKey): boolean => {
   switch (filter) {
+    case 'draft':
+      return trip.status === 'scheduled';
     case 'new':
       return trip.status === 'assigned';
     case 'active':
-      return trip.status === 'accepted' || trip.status === 'in_progress';
+      return trip.status === 'accepted' || trip.status === 'in_progress' || trip.status === 'arrived';
     case 'done':
       return trip.status === 'completed';
     case 'cancelled':
@@ -38,16 +43,34 @@ const matches = (trip: Trip, filter: FilterKey): boolean => {
 
 export default function InboxScreen() {
   const insets = useSafeAreaInsets();
-  const { accept, trips } = useTrips();
+  const { accept, trips, refetch } = useTrips();
   const tasks = useTasks({ take: 100 });
   const [filter, setFilter] = useState<FilterKey>('all');
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
+
+  // FRD-MOB-INBOX-02 — trip baru ditugaskan langsung muncul tanpa refresh.
+  useRealtime('trips', () => void refetch());
+
+  // Setelah menyelesaikan trip, status dan jam selesai asli harus langsung
+  // terlihat saat driver kembali ke Inbox (layar tab tetap ter-mount).
+  const firstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (firstFocus.current) {
+        firstFocus.current = false;
+        return;
+      }
+      void refetch();
+    }, [refetch]),
+  );
 
   const handleAccept = async (tripId: string) => {
     if (acceptingId) return;
     setAcceptingId(tripId);
     try {
       await accept(tripId);
+      // FRD-MOB-INBOX-02 — konfirmasi bahwa tugas sudah masuk daftar aktif.
+      notify('Tugas diterima.');
     } catch (error) {
       Alert.alert(
         'Gagal menerima tugas',
@@ -64,11 +87,19 @@ export default function InboxScreen() {
   );
 
   const counts = useMemo(() => {
-    const map: Record<FilterKey, number> = { all: 0, new: 0, active: 0, done: 0, cancelled: 0 };
+    const map: Record<FilterKey, number> = {
+      all: 0,
+      draft: 0,
+      new: 0,
+      active: 0,
+      done: 0,
+      cancelled: 0,
+    };
     for (const trip of trips) {
       map.all += 1;
+      if (trip.status === 'scheduled') map.draft += 1;
       if (trip.status === 'assigned') map.new += 1;
-      if (trip.status === 'accepted' || trip.status === 'in_progress') map.active += 1;
+      if (trip.status === 'accepted' || trip.status === 'in_progress' || trip.status === 'arrived') map.active += 1;
       if (trip.status === 'completed') map.done += 1;
       if (trip.status === 'rejected') map.cancelled += 1;
     }
@@ -97,6 +128,7 @@ export default function InboxScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Segarkan data"
+              onPress={() => void refetch()}
               style={styles.iconButton}
             >
               <Icon name="sync" size={24} color={colors.ink} />
@@ -145,44 +177,46 @@ export default function InboxScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView
+      <FlatList
+        data={visible}
+        keyExtractor={(trip) => trip.id}
         style={styles.list}
         contentContainerStyle={[styles.listContent, { paddingBottom: spacing.xxl }]}
         showsVerticalScrollIndicator={false}
-      >
-        {visible.length === 0 ? (
+        initialNumToRender={8}
+        windowSize={7}
+        removeClippedSubviews
+        ListEmptyComponent={
           <EmptyState
             icon="inbox"
-            title="Tidak ada trip"
+            title="Belum ada tugas untuk Anda."
             description="Belum ada penugasan pada filter ini. Coba pilih filter lain."
           />
-        ) : (
-          visible.map((trip) => (
-            <TripCard
-              key={trip.id}
-              trip={trip}
-              vehicle={
-                trip.vehiclePlate
-                  ? {
-                      id: trip.vehicleId,
-                      plate: trip.vehiclePlate,
-                      model: trip.vehicleModel ?? '—',
-                      type: '—',
-                      odometerKm: 0,
-                      status: 'in_use',
-                    }
-                  : undefined
-              }
-              hasPod={deliveredTrips.has(trip.id)}
-              onPress={() => router.push(`/trip/${trip.id}`)}
-              onAccept={() => void handleAccept(trip.id)}
-              onReject={() => router.push(`/trip/${trip.id}/reject`)}
-              primaryLabel={trip.status === 'in_progress' ? 'Buka Rute' : undefined}
-              onPrimary={() => router.push(`/trip/${trip.id}/execution`)}
-            />
-          ))
+        }
+        renderItem={({ item: trip }) => (
+          <TripCard
+            trip={trip}
+            vehicle={
+              trip.vehiclePlate
+                ? {
+                    id: trip.vehicleId,
+                    plate: trip.vehiclePlate,
+                    model: trip.vehicleModel ?? '—',
+                    type: '—',
+                    odometerKm: 0,
+                    status: 'in_use',
+                  }
+                : undefined
+            }
+            hasPod={deliveredTrips.has(trip.id)}
+            onPress={() => router.push(`/trip/${trip.id}`)}
+            onAccept={() => void handleAccept(trip.id)}
+            onReject={() => router.push(`/trip/${trip.id}/reject`)}
+            primaryLabel={trip.status === 'in_progress' || trip.status === 'arrived' ? 'Buka Rute' : undefined}
+            onPrimary={() => router.push(`/trip/${trip.id}/execution`)}
+          />
         )}
-      </ScrollView>
+      />
     </Screen>
   );
 }

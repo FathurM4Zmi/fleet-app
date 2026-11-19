@@ -1,7 +1,10 @@
 import { Stack } from 'expo-router';
+import { useEffect } from 'react';
 import { View } from 'react-native';
 
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { useOsNotificationFallback } from '@/hooks/useOsNotificationFallback';
+import { startRealtime, stopRealtime } from '@/lib/realtime';
 
 /**
  * `(tabs)` is the anchor, so every pushed screen (trip detail, DVIR, POD)
@@ -13,6 +16,18 @@ export const unstable_settings = {
 };
 
 export default function AppLayout() {
+  // Banner OS cadangan selama token Expo push belum tersedia (FRD-MOB-NOTIF-02).
+  useOsNotificationFallback();
+
+  // This stack only mounts for an authenticated driver, so it owns the socket
+  // lifetime: open on mount, close when the session ends (FRD-MOB-NOTIF-02).
+  useEffect(() => {
+    startRealtime();
+    return () => {
+      void stopRealtime();
+    };
+  }, []);
+
   return (
     <View style={{ flex: 1 }}>
       <OfflineBanner />

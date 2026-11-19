@@ -1,5 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
 import {
@@ -15,6 +16,11 @@ import {
 } from '@/components/ui';
 import { toDocumentDetail } from '@/data/adapters';
 import { useDocument } from '@/hooks/api/useDriverData';
+import { mediaUrl } from '@/lib/api/config';
+import { documentApi } from '@/lib/api/endpoints';
+import { loadDocumentPhoto, saveDocumentPhoto } from '@/lib/documentPhotos';
+import { capturePhoto } from '@/lib/photo';
+import { uploadImage } from '@/lib/upload';
 import { colors, radius, spacing } from '@/theme';
 import type { DocumentStatus } from '@/data/types';
 
@@ -28,6 +34,41 @@ export default function DocumentDetailScreen() {
   const { documentKey } = useLocalSearchParams<{ documentKey: string }>();
   const query = useDocument(documentKey);
   const document = query.data ? toDocumentDetail(query.data) : undefined;
+
+  // Driver-uploaded replacement photo, kept on the device.
+  const [photoPath, setPhotoPath] = useState<string | undefined>();
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void loadDocumentPhoto(documentKey).then((path) => {
+      if (active) setPhotoPath(path);
+    });
+    return () => {
+      active = false;
+    };
+  }, [documentKey]);
+
+  const replacePhoto = async () => {
+    if (uploading || !document) return;
+    setUploadError(null);
+    try {
+      const uri = await capturePhoto();
+      if (!uri) return;
+      setUploading(true);
+      const path = await uploadImage(uri, 'dokumen');
+      // FRD-MOB-PROFILE-02 — simpan ke server dulu, baru jadikan cache lokal.
+      await documentApi.replacePhoto(document.key, path);
+      await saveDocumentPhoto(document.key, path);
+      setPhotoPath(path);
+      await query.refetch();
+    } catch (caught) {
+      setUploadError(caught instanceof Error ? caught.message : 'Gagal mengunggah foto.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (!document) {
     return (
@@ -43,7 +84,7 @@ export default function DocumentDetailScreen() {
   }
 
   const tone = STATUS_TONE[document.status];
-  const expiring = document.status !== 'valid';
+  const previewUri = photoPath ? mediaUrl(photoPath) : document.photoUrl;
 
   return (
     <Screen>
@@ -73,12 +114,21 @@ export default function DocumentDetailScreen() {
           </View>
 
           <View style={styles.previewBody}>
-            <View style={styles.photoTile}>
-              <Icon name="profile" size={30} color={colors.textMuted} />
-              <Text variant="labelSm" color="textMuted" style={styles.upper}>
-                FOTO
-              </Text>
-            </View>
+            {previewUri ? (
+              <Image
+                source={{ uri: previewUri }}
+                style={styles.photoImage}
+                resizeMode="cover"
+                accessibilityIgnoresInvertColors
+              />
+            ) : (
+              <View style={styles.photoTile}>
+                <Icon name="profile" size={30} color={colors.textMuted} />
+                <Text variant="labelSm" color={colors.textMuted} style={styles.upper}>
+                  FOTO
+                </Text>
+              </View>
+            )}
             <View style={styles.lines}>
               <View style={[styles.line, styles.lineW80]} />
               <View style={[styles.line, styles.lineW100]} />
@@ -155,20 +205,20 @@ export default function DocumentDetailScreen() {
           ))}
         </Card>
 
-        {/* Notice */}
-        <View style={styles.notice}>
-          <Icon name="lock" size={18} color={colors.textSecondary} />
-          <Text variant="caption" color="textSecondary" style={styles.flex}>
-            Hanya administrator yang dapat memperbarui dokumen ini.
-          </Text>
-        </View>
       </ScreenBody>
 
       <BottomBar>
-        <Button label="Unggah Foto Baru" icon="upload" />
-        {expiring ? (
-          <Button label="Hubungi Supervisor" icon="headset" variant="secondary" size="md" />
+        {uploadError ? (
+          <Text variant="caption" color="critical" align="center">
+            {uploadError}
+          </Text>
         ) : null}
+        <Button
+          label={uploading ? 'Mengunggah…' : 'Unggah Foto Baru'}
+          icon="upload"
+          onPress={replacePhoto}
+          disabled={uploading}
+        />
       </BottomBar>
     </Screen>
   );
@@ -200,6 +250,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.divider,
     gap: spacing.xs,
+  },
+  photoImage: {
+    width: 64,
+    height: 80,
+    borderRadius: radius.input,
+    backgroundColor: '#F1F5F9',
   },
   lines: { flex: 1, gap: spacing.sm },
   line: { height: 10, borderRadius: radius.pill, backgroundColor: '#F1F5F9' },
@@ -250,17 +306,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     borderWidth: 1,
     borderColor: '#DBEAFE',
-  },
-
-  notice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm + 2,
-    marginTop: spacing.lg,
-    padding: spacing.md,
-    borderRadius: radius.card,
-    backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
 });

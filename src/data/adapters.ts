@@ -7,6 +7,7 @@ import type {
   ActivityEntry as ActivityEntryWire,
   Coaching as CoachingWire,
   Compliance as ComplianceWire,
+  DamageReport as DamageReportWire,
   Dna as DnaWire,
   DriverDocumentDetail as DocumentDetailWire,
   DriverDocumentSummary as DocumentSummaryWire,
@@ -27,6 +28,7 @@ import type {
   TripWarning as TripWarningWire,
   TripWarningHistory as TripWarningHistoryWire,
 } from '@/lib/api/types';
+import { mediaUrl } from '@/lib/api/config';
 import { formatDate, formatDayDate, formatNumber, formatTime } from '@/lib/format';
 import type {
   ActivityCategory,
@@ -36,8 +38,10 @@ import type {
   CoachingPlan,
   CoachingSession,
   ComplianceChecklistItem,
+  DamageReport,
   DnaSummary,
   DocumentDetail,
+  ProfileDocument,
   DocumentStatus,
   Driver,
   FuelCardAccount,
@@ -87,10 +91,11 @@ const lower = (value: string | null | undefined) => (value ?? '').toLowerCase();
 /* ── Trip ───────────────────────────────────────────────────────────── */
 
 const TRIP_STATUS: Record<string, TripStatus> = {
-  Scheduled: 'assigned',
+  Scheduled: 'scheduled',
   Assigned: 'assigned',
   Acknowledged: 'accepted',
   InProgress: 'in_progress',
+  Arrived: 'arrived',
   Completed: 'completed',
   Settled: 'completed',
   Cancelled: 'rejected',
@@ -121,8 +126,8 @@ export function toTrip(dto: DriverTripWire): Trip {
     {
       id: 'arrived',
       label: 'Tiba di tujuan',
-      at: dto.actualEndAt ?? dto.scheduledEnd,
-      done: Boolean(dto.actualEndAt),
+      at: dto.arrivedAt ?? dto.actualEndAt ?? dto.scheduledEnd,
+      done: Boolean(dto.arrivedAt) || Boolean(dto.actualEndAt),
     },
   ];
 
@@ -140,6 +145,7 @@ export function toTrip(dto: DriverTripWire): Trip {
     weightKg: dto.weightKg ?? 0,
     distanceKm: dto.plannedDistanceKm ?? dto.actualDistanceKm ?? 0,
     scheduledAt: dto.scheduledStart,
+    completedAt: dto.actualEndAt ?? undefined,
     vehicleId: dto.vehicleId,
     vehiclePlate: dto.vehiclePlate ?? undefined,
     vehicleModel: dto.vehicleModel ?? undefined,
@@ -390,6 +396,22 @@ export function toActivity(dto: ActivityEntryWire): ActivityEntry {
   };
 }
 
+/** FRD-MOB-DEF-04/05 — damage reports are work orders on the backend. */
+export function toDamageReport(dto: DamageReportWire): DamageReport {
+  return {
+    id: dto.id,
+    vehicleId: dto.vehicleId,
+    category: dto.category,
+    severity: dto.severity,
+    description: dto.description,
+    photoUris: dto.photoPaths,
+    submittedAt: dto.submittedAt,
+    code: dto.code,
+    status: dto.status,
+    statusLabel: dto.statusLabel,
+  };
+}
+
 /* ── Coaching ───────────────────────────────────────────────────────── */
 
 const MILESTONE_STATE = (state: string): CoachingMilestone['state'] => {
@@ -421,6 +443,7 @@ export function toCoaching(dto: CoachingWire): {
           title: dto.plan.title,
           description: dto.plan.description,
           targetDate: dto.plan.targetDate,
+          status: dto.plan.status,
           milestones,
         }
       : null,
@@ -495,6 +518,7 @@ export function toSafetyEvent(dto: SafetyEventWire): SafetyEvent {
     metric: dto.metric,
     metricNote: dto.metricNote,
     hasPhoto: dto.hasPhoto,
+    videoUrl: dto.videoUrl ?? null,
   };
 }
 
@@ -581,6 +605,17 @@ export function toDocumentDetail(dto: DocumentDetailWire): DocumentDetail {
       mono: row.mono,
       badge: row.badge,
     })),
+    photoUrl: dto.photoPath ? mediaUrl(dto.photoPath) : undefined,
+  };
+}
+
+export function toProfileDocument(dto: DocumentSummaryWire): ProfileDocument {
+  return {
+    key: dto.key,
+    title: dto.title,
+    documentType: dto.documentType,
+    status: DOC_STATUS(dto.status),
+    statusLabel: dto.statusLabel,
   };
 }
 
@@ -610,18 +645,50 @@ export function toRouteOption(dto: RouteOptionWire): RouteOption {
       : lower(dto.statusTone) === 'warning' ? 'warning'
       : 'neutral',
     recommended: dto.recommended,
+    selected: dto.selected,
+    originLat: dto.originLat,
+    originLng: dto.originLng,
+    destLat: dto.destLat,
+    destLng: dto.destLng,
   };
 }
 
+/**
+ * Server mengirim nama tipe alert apa adanya (mis. `GeofenceBreach`). Driver
+ * tidak boleh melihat enum mentah, jadi tipe yang dikenal diterjemahkan ke
+ * kalimat FRD-MOB-Alerts.
+ */
+const WARNING_TITLE: Record<string, string> = {
+  GeofenceBreach: 'Anda keluar dari zona rute yang ditentukan.',
+  RouteDetour: 'Anda keluar dari zona rute yang ditentukan.',
+  GeofenceExit: 'Anda keluar dari zona yang dipantau.',
+  GeofenceEntry: 'Anda memasuki zona yang dipantau.',
+  Overspeed: 'Melebihi batas kecepatan.',
+  Idle: 'Mesin idle melebihi ambang.',
+  DataGap: 'Sinyal kendaraan terputus.',
+  MaintenanceOverdue: 'Jadwal perawatan preventif terlewat.',
+  DocumentExpiry: 'Dokumen kendaraan akan kedaluwarsa.',
+  FuelAnomaly: 'Konsumsi BBM menyimpang dari baseline.',
+  FuelOdometerRegression: 'Odometer mundur dari entri sebelumnya.',
+  FuelDuplicateFill: 'Dua pengisian mirip dalam waktu singkat.',
+  FuelPriceAnomaly: 'Harga BBM menyimpang dari harga umum.',
+  FuelMissingOdometer: 'Entri BBM tanpa odometer.',
+};
+
+const warningTitle = (title: string): string => WARNING_TITLE[title] ?? title;
+
 export function toTripWarning(dto: TripWarningWire): TripWarning {
+  const severity = lower(dto.severity);
   return {
     key: dto.key,
+    // Server mengirim Critical/High/Medium/Low — High dipetakan ke tone warning agar
+    // tidak tampil biru seperti info.
     severity:
-      lower(dto.severity) === 'critical' ? 'critical'
-      : lower(dto.severity) === 'warning' ? 'warning'
+      severity === 'critical' ? 'critical'
+      : severity === 'high' || severity === 'warning' ? 'warning'
       : 'info',
     severityLabel: dto.severityLabel,
-    title: dto.title,
+    title: warningTitle(dto.title),
     note: dto.note ?? '',
     sla: dto.sla ?? undefined,
     timeLabel: dto.timeLabel ?? undefined,
@@ -630,10 +697,11 @@ export function toTripWarning(dto: TripWarningWire): TripWarning {
 }
 
 export function toTripWarningHistory(dto: TripWarningHistoryWire): TripWarningHistoryEntry {
-  return { key: dto.key, title: dto.title, note: dto.note ?? '', time: dto.time };
+  return { key: dto.key, title: warningTitle(dto.title), note: dto.note ?? '', time: dto.time };
 }
 
 export function toTripAsset(dto: TripAssetWire): TripAsset {
+  const alarm = dto.alarmState === 'alarm' || dto.alarmState === 'normal' ? dto.alarmState : 'unknown';
   return {
     key: dto.key,
     code: dto.code,
@@ -642,10 +710,32 @@ export function toTripAsset(dto: TripAssetWire): TripAsset {
     statusTone: lower(dto.statusTone) === 'success' ? 'success' : 'warning',
     footNote: dto.footNote,
     footIcon: lower(dto.footIcon) === 'lock' ? 'lock' : 'search',
+    reefer: dto.isReefer
+      ? {
+          temperatureC: dto.temperatureC,
+          humidityPct: dto.humidityPct,
+          minC: dto.tempMinC,
+          maxC: dto.tempMaxC,
+          alarm,
+          label: dto.alarmLabel ?? 'Belum ada data suhu',
+          at: dto.telemetryAt,
+        }
+      : undefined,
+    custody: dto.custody.map((row, index) => ({
+      key: `${dto.key}-custody-${index}`,
+      at: row.at,
+      actor: row.actor,
+      action: row.action,
+      location: row.location ?? undefined,
+      note: row.note ?? undefined,
+    })),
   };
 }
 
 /* ── Settlement ─────────────────────────────────────────────────────── */
+
+/** Backend wording used as the `status` value when no rate card matches the period. */
+const RATE_MISSING_STATUS = 'Tarif belum ditetapkan';
 
 export function toSettlement(dto: SettlementWire): {
   summary: {
@@ -654,30 +744,34 @@ export function toSettlement(dto: SettlementWire): {
     status: string;
     paidNote: string;
     punctuality: string;
+    rateMissing: boolean;
   };
   lines: SettlementTripLine[];
   history: SettlementPeriod[];
   steps: SettlementStep[];
 } {
   const current = dto.periods[0];
+  // FRD-MOB-SET-03 — tanpa rate card, angka 0 menyesatkan; tampilkan "—" + pesan.
+  const rateMissing = dto.status === RATE_MISSING_STATUS;
   return {
     summary: {
       period: current?.label ?? 'Periode berjalan',
-      total: rupiah(Number(dto.amount)),
+      total: rateMissing ? '—' : rupiah(Number(dto.amount)),
       status: dto.status,
       paidNote: `${dto.tripCount} trip selesai`,
       punctuality: 'Estimasi',
+      rateMissing,
     },
     lines: dto.lines.map((line) => ({
       key: line.key,
       destination: line.destination,
       meta: line.meta,
-      amount: rupiah(Number(line.amount)),
+      amount: rateMissing ? '—' : rupiah(Number(line.amount)),
     })),
     history: dto.periods.map((period) => ({
       key: period.key,
       label: period.label,
-      amount: rupiah(Number(period.amount)),
+      amount: period.status === RATE_MISSING_STATUS ? '—' : rupiah(Number(period.amount)),
       status: period.status,
     })),
     steps: dto.steps.map((step) => ({

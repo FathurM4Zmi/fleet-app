@@ -1,9 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { setTokenProvider, setUnauthorizedHandler } from '@/lib/api/client';
+import { setRefreshHandler, setTokenProvider, setUnauthorizedHandler } from '@/lib/api/client';
 import { authApi } from '@/lib/api/endpoints';
 import type { LoginResponse } from '@/lib/api/types';
-import { clearSession, currentToken, loadSession, saveSession, type StoredSession } from '@/lib/auth/session';
+import { clearSession, currentRefreshToken, currentToken, loadSession, saveSession, type StoredSession } from '@/lib/auth/session';
+import { registerForPush, unregisterPush } from '@/lib/push';
 
 type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
@@ -39,6 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // FRD-MOB-NOTIF-02 — daftarkan token push begitu sesi aktif; lepas saat logout.
+  useEffect(() => {
+    if (status === 'authenticated') void registerForPush();
+  }, [status]);
+
   // A 401 from any request means the token is no longer valid. Drop it and let
   // the protected stack send the driver back to login.
   useEffect(() => {
@@ -59,11 +65,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       driverId: response.user?.id ?? '',
       name: response.user?.fullName ?? 'Driver',
       expiresAt: response.expiresAt,
+      refreshToken: response.refreshToken ?? null,
     };
     await saveSession(next);
     setSession(next);
     setStatus('authenticated');
   }, []);
+
+  // FRD-MOB-LOGIN-02 — access token kedaluwarsa diperpanjang otomatis memakai refresh
+  // token; driver hanya kembali ke login bila refresh ikut ditolak server.
+  useEffect(() => {
+    setRefreshHandler(async () => {
+      const stored = currentRefreshToken();
+      if (!stored) return false;
+      try {
+        const response = await authApi.refresh(stored);
+        if (!response.token) return false;
+        await persist(response);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    return () => setRefreshHandler(null);
+  }, [persist]);
 
   const loginWithPin = useCallback(
     async (identifier: string, pin: string) => {
@@ -92,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     // Pending offline items are intentionally kept: dropping them on logout
     // would silently lose submitted evidence. They flush on the next login.
+    await unregisterPush();
     await clearSession();
     setSession(null);
     setStatus('anonymous');

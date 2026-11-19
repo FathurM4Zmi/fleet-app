@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/Icon';
-import { Card, Screen, ScreenBody, ScreenHeader, Text } from '@/components/ui';
+import { Card, Screen, ScreenBody, ScreenHeader, SegmentedControl, Text } from '@/components/ui';
 import { ACTIVITY_FILTERS } from '@/data/constants';
 import { toActivity } from '@/data/adapters';
-import type { ActivityCategory, ActivityTone } from '@/data/types';
+import type { ActivityCategory, ActivityEntry, ActivityTone } from '@/data/types';
 import { useActivity } from '@/hooks/api/useDriverData';
-import { formatDayDate } from '@/lib/format';
+import { useOutbox } from '@/hooks/useOutbox';
+import { formatDayDate, formatTime } from '@/lib/format';
+import type { OutboxKind } from '@/lib/offline/queue';
 import { colors, radius, spacing } from '@/theme';
 
 const CATEGORY_ICON: Record<ActivityCategory, IconName> = {
@@ -17,6 +19,26 @@ const CATEGORY_ICON: Record<ActivityCategory, IconName> = {
   fuel: 'fuel',
   trip: 'truck',
 };
+
+/** Aksi offline muncul di kategori yang sama dengan aslinya. */
+const OUTBOX_CATEGORY: Record<OutboxKind, ActivityCategory> = {
+  dvir: 'dvir',
+  pod: 'pod',
+  fuel: 'fuel',
+  damage: 'trip',
+  incident: 'trip',
+  odometer: 'trip',
+  trip: 'trip',
+};
+
+const RANGES = [
+  { label: 'Hari ini', value: '1' },
+  { label: '7 hari', value: '7' },
+  { label: '30 hari', value: '30' },
+  { label: '90 hari', value: '90' },
+] as const;
+
+type RangeValue = (typeof RANGES)[number]['value'];
 
 const TONE: Record<ActivityTone, { fg: string; bg: string }> = {
   success: { fg: colors.success, bg: colors.successContainer },
@@ -28,14 +50,32 @@ type Filter = ActivityCategory | 'all';
 
 export default function ActivityScreen() {
   const [filter, setFilter] = useState<Filter>('all');
-  const query = useActivity(30, 100);
+  const [range, setRange] = useState<RangeValue>('30');
+  const days = Number(range);
+  const query = useActivity(days, 100);
+  const { items: outbox } = useOutbox();
   const activityEntries = (query.data ?? []).map(toActivity);
-  const activityDay = formatDayDate(new Date().toISOString());
+  const [today] = useState(() => Date.now());
+  const activityDay = formatDayDate(new Date(today).toISOString());
+  const rangeStart = formatDayDate(
+    new Date(today - Math.max(0, days - 1) * 24 * 60 * 60 * 1000).toISOString(),
+  );
 
-  const visible =
-    filter === 'all'
-      ? activityEntries
-      : activityEntries.filter((entry) => entry.category === filter);
+  // FRD-MOB-ACT-03 — aksi yang masih di antrian offline tampil sebagai pending,
+  // jadi driver tidak mengira aksinya hilang saat sinyal putus.
+  const pendingEntries: ActivityEntry[] = outbox.map((item) => ({
+    key: `pending-${item.id}`,
+    category: OUTBOX_CATEGORY[item.kind],
+    title: item.label,
+    detail: 'Menunggu sinkronisasi.',
+    time: formatTime(item.createdAt),
+    tone: 'warning',
+    pending: true,
+  }));
+
+  const visible = [...pendingEntries, ...activityEntries].filter(
+    (entry) => filter === 'all' || entry.category === filter,
+  );
 
   return (
     <Screen>
@@ -83,12 +123,23 @@ export default function ActivityScreen() {
           })}
         </ScrollView>
 
+        {/* ACT-04 — rentang tanggal */}
+        <View style={styles.rangeBlock}>
+          <Text variant="labelSm" color="textSecondary" style={styles.tracked}>
+            RENTANG TANGGAL
+          </Text>
+          <SegmentedControl options={RANGES} value={range} onChange={setRange} />
+          <Text variant="caption" color="textMuted">
+            {rangeStart} — {activityDay}
+          </Text>
+        </View>
+
         <Card style={styles.section}>
           <View style={styles.cardHead}>
             <View style={styles.cardHeadLeft}>
               <Icon name="calendar" size={18} color={colors.textSecondary} />
               <Text variant="labelSm" color="onSurfaceVariant" style={styles.tracked}>
-                HARI INI • {activityDay.toUpperCase()}
+                {days} HARI TERAKHIR • S.D. {activityDay.toUpperCase()}
               </Text>
             </View>
             <View style={styles.countChip}>
@@ -100,7 +151,7 @@ export default function ActivityScreen() {
 
           {visible.length === 0 ? (
             <Text variant="caption" color="textSecondary" style={styles.empty}>
-              Belum ada aktivitas pada kategori ini.
+              Belum ada aktivitas tercatat.
             </Text>
           ) : (
             <View style={styles.timeline}>
@@ -120,6 +171,13 @@ export default function ActivityScreen() {
                         <Text variant="bodyBold" style={styles.flex}>
                           {entry.title}
                         </Text>
+                        {entry.pending ? (
+                          <View style={styles.pendingChip}>
+                            <Text variant="labelSm" color={colors.warning}>
+                              PENDING
+                            </Text>
+                          </View>
+                        ) : null}
                         <Text variant="labelSm" color="textMuted">
                           {entry.time}
                         </Text>
@@ -134,17 +192,6 @@ export default function ActivityScreen() {
             </View>
           )}
         </Card>
-
-        <Pressable
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.rangeButton, pressed && styles.pressed]}
-        >
-          <View style={styles.rangeLeft}>
-            <Icon name="calendar" size={22} color={colors.textSecondary} />
-            <Text variant="labelLg">Rentang: {activityDay}</Text>
-          </View>
-          <Icon name="expand" size={22} color={colors.textSecondary} />
-        </Pressable>
       </ScreenBody>
     </Screen>
   );
@@ -153,7 +200,6 @@ export default function ActivityScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   tracked: { letterSpacing: 0.8, textTransform: 'uppercase' },
-  pressed: { opacity: 0.85 },
 
   banner: {
     flexDirection: 'row',
@@ -227,20 +273,14 @@ const styles = StyleSheet.create({
   rowBody: { flex: 1, gap: 2, paddingTop: 2 },
   rowTop: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm },
   detail: { marginTop: 1 },
-
-  rangeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 52,
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.borderIdle,
-    backgroundColor: colors.surface,
+  pendingChip: {
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.warningContainer,
   },
-  rangeLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 4 },
+
+  rangeBlock: { marginTop: spacing.md, gap: spacing.sm },
+  rangeRow: { marginTop: spacing.md },
 
   footer: { marginTop: spacing.md },
 });

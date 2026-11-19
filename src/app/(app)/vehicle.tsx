@@ -16,6 +16,7 @@ import {
 } from '@/components/ui';
 import { toVehicle, toVehicleDetail, toVehicleDocument } from '@/data/adapters';
 import { useVehicle, useVehicleDocuments } from '@/hooks/api/useDriverData';
+import { useRealtime } from '@/hooks/useRealtime';
 import { colors, radius, spacing } from '@/theme';
 import type { DocumentStatus } from '@/data/types';
 
@@ -34,6 +35,12 @@ const DOC_ICON: Record<string, IconName> = {
 export default function VehicleScreen() {
   const vehicleQuery = useVehicle();
   const documentsQuery = useVehicleDocuments(vehicleQuery.data?.vehicleId);
+
+  // FRD-MOB-VEH-03 — ring skor kesehatan ikut berubah saat server memperbarui DNA.
+  useRealtime('vehicle', () => {
+    void vehicleQuery.refetch();
+    void documentsQuery.refetch();
+  });
   const detail = vehicleQuery.data
     ? toVehicleDetail(
         vehicleQuery.data,
@@ -48,7 +55,7 @@ export default function VehicleScreen() {
         <ScreenHeader title="Kendaraan Saya" onBack />
         <EmptyState
           icon="truck"
-          title="Belum ada kendaraan"
+          title="Belum ada kendaraan yang ditugaskan."
           description={
             vehicleQuery.error?.message ??
             'Belum ada unit yang ditugaskan. Hubungi dispatcher untuk penugasan.'
@@ -94,6 +101,16 @@ export default function VehicleScreen() {
             <MetaCell label="Tahun" value={detail.year} />
           </View>
         </Card>
+
+        {/* FRD-MOB-VEH-01 — status unit yang diblokir harus terlihat driver. */}
+        {vehicle.status === 'blocked' ? (
+          <View style={styles.blockedBanner}>
+            <Icon name="warning" size={20} color={colors.critical} />
+            <Text variant="labelLg" color="critical" style={styles.flex}>
+              Kendaraan ini tidak tersedia untuk ditugaskan.
+            </Text>
+          </View>
+        ) : null}
 
         {/* Health ring */}
         <Card shadow style={styles.healthCard}>
@@ -315,6 +332,17 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   healthNote: { marginTop: 2 },
+  blockedBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.critical,
+    backgroundColor: colors.criticalContainer,
+  },
   healthDelta: {
     flexDirection: 'row',
     alignItems: 'center',

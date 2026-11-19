@@ -46,3 +46,5 @@ yarn-error.*
 .claude/
 .codebuddy/
 .opencode/
+STITCH_API_KEY.md
+.STITCH_API_KEY.md

@@ -20,13 +20,17 @@ export async function uploadImage(uri: string, prefix = 'bukti'): Promise<string
     return uri.replace(/^\//, '');
   }
 
-  const fileName = uri.split('/').pop() ?? `${prefix}.jpg`;
-  const extension = (fileName.split('.').pop() ?? 'jpg').toLowerCase();
+  // Camera URIs can carry a query string (`?width=…`) or percent-escapes; both
+  // would end up in the multipart filename and make the server reject the part.
+  const rawName = uri.split('?')[0]?.split('/').pop() ?? '';
+  const fileName = decodeURIComponent(rawName);
+  const hasExtension = /\.[a-z0-9]{2,5}$/i.test(fileName);
+  const extension = hasExtension ? fileName.split('.').pop()!.toLowerCase() : 'jpg';
   const type = MIME_BY_EXTENSION[extension] ?? 'image/jpeg';
 
   const result = await apiUpload('/api/driver/uploads', {
     uri,
-    name: fileName.includes('.') ? fileName : `${prefix}.jpg`,
+    name: hasExtension ? fileName : `${prefix}-${Date.now()}.jpg`,
     type,
   });
   return result.path;

@@ -294,11 +294,7 @@ function ChecklistRow({
     <Card style={failed ? styles.rowFailed : undefined}>
       <View style={styles.rowHeader}>
         <View style={styles.rowLabel}>
-          {failed ? (
-            <Icon name="error" size={20} color={colors.critical} />
-          ) : (
-            <View style={styles.rowBullet} />
-          )}
+          {failed ? <Icon name="error" size={20} color={colors.critical} /> : null}
           <Text variant={failed ? 'bodyBold' : 'titleMd'} numberOfLines={1} style={styles.flex}>
             {item.label}
           </Text>
@@ -409,7 +405,7 @@ function PhotoTile({ uri, onCapture }: { uri?: string; onCapture: () => void }) 
       <View style={styles.photoIcon}>
         <Icon name="camera" size={22} color={colors.critical} />
       </View>
-      <Text variant="titleMd">Foto kondisi wajib diunggah</Text>
+      <Text variant="titleMd">Foto kondisi wajib diunggah untuk item yang gagal.</Text>
       <Text variant="labelSm" color="textMuted" style={styles.photoHint}>
         Ketuk untuk buka kamera (kualitas tinggi &amp; geotag)
       </Text>
@@ -532,13 +528,6 @@ const styles = StyleSheet.create({
   rowFailed: { borderWidth: 2, borderColor: '#F4B5B5' },
   rowHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   rowLabel: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
-  rowBullet: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: colors.textMuted,
-  },
   toggle: {
     flexDirection: 'row',
     alignItems: 'center',

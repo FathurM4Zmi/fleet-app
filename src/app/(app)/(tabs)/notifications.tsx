@@ -7,7 +7,9 @@ import { Icon, type IconName } from '@/components/Icon';
 import { EmptyState, Screen, Text } from '@/components/ui';
 import type { Notification, NotificationSeverity } from '@/data/types';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useRealtime } from '@/hooks/useRealtime';
 import { formatRelative } from '@/lib/format';
+import { notify } from '@/lib/notify';
 import { colors, radius, shadows, spacing } from '@/theme';
 
 type FilterKey = 'all' | 'trip' | 'coaching' | 'document' | 'system';
@@ -28,8 +30,11 @@ const SEVERITY: Record<NotificationSeverity, { bg: string; fg: string; icon: Ico
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
-  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+  const { notifications, unreadCount, markRead, markAllRead, refetch } = useNotifications();
   const [filter, setFilter] = useState<FilterKey>('all');
+
+  // FRD-MOB-NOTIF-02 — notifikasi Critical muncul tanpa pull-to-refresh.
+  useRealtime('notifications', () => void refetch());
 
   const visible = useMemo(
     () =>
@@ -47,6 +52,8 @@ export default function NotificationsScreen() {
   const handleMarkAll = async () => {
     try {
       await markAllRead();
+      // FRD-MOB-NOTIF — konfirmasi bahwa tidak ada lagi yang belum dibaca.
+      notify('Semua notifikasi telah dibaca.');
     } catch (error) {
       Alert.alert(
         'Gagal menandai notifikasi',
@@ -111,7 +118,7 @@ export default function NotificationsScreen() {
         {visible.length === 0 ? (
           <EmptyState
             icon="notifications"
-            title="Tidak ada notifikasi"
+            title="Tidak ada notifikasi baru."
             description="Belum ada pemberitahuan pada filter ini."
           />
         ) : (

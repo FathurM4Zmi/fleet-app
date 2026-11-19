@@ -1,16 +1,17 @@
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from '@expo-google-fonts/inter';
-import { Stack } from 'expo-router';
+import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
+import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
+import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
+import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
+import { useFonts } from '@expo-google-fonts/inter/useFonts';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import 'react-native-reanimated';
 
+import {
+  configureForegroundNotifications,
+  subscribeToNotificationTaps,
+} from '@/lib/push';
 import { AppStoreProvider } from '@/store/app';
 import { AuthProvider, useAuth } from '@/store/auth';
 import { colors } from '@/theme';
@@ -57,6 +58,12 @@ export default function RootLayout() {
 function RootNavigator() {
   const { status } = useAuth();
 
+  // FRD-MOB-NOTIF-03 — ketuk notifikasi push membuka layar kontekstual.
+  useEffect(() => {
+    void configureForegroundNotifications();
+    return subscribeToNotificationTaps((target) => router.push(target as never));
+  }, []);
+
   // Wait for the stored token to be read before choosing a stack, otherwise a
   // signed-in driver briefly sees the login screen on cold start.
   if (status === 'loading') return null;
@@ -68,10 +75,17 @@ function RootNavigator() {
         contentStyle: { backgroundColor: colors.canvas },
       }}
     >
-      <Stack.Protected guard={status === 'authenticated'}>
+      {/*
+        `redirectTo` must point to a route OUTSIDE the protected group. Pointing it
+        at a screen in the same group makes the router navigate to a route the
+        guard has just disabled; that route redirects again to the same target and
+        React reports the loop as "Maximum update depth exceeded". So each guard
+        redirects to the *other* stack, which is accessible when it fires.
+      */}
+      <Stack.Protected guard={status === 'authenticated'} redirectTo="/(auth)/login">
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-      <Stack.Protected guard={status !== 'authenticated'}>
+      <Stack.Protected guard={status !== 'authenticated'} redirectTo="/(app)/(tabs)">
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
     </Stack>

@@ -18,7 +18,7 @@ function CenterActionButton({ onPress }: { onPress: () => void }) {
       style={({ pressed }) => [styles.fabWrap, pressed && styles.fabPressed]}
     >
       <View style={styles.fab}>
-        <Icon name="add" size={28} color={colors.onPrimary} />
+        <Icon name="menu" size={28} color={colors.onPrimary} />
       </View>
     </Pressable>
   );

@@ -32,9 +32,22 @@ function inferBaseUrl(): string {
 /** Empty/whitespace values must fall back, not become a relative URL. */
 const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 
-if (!configuredUrl && !__DEV__) {
+/**
+ * Native production builds must point at a real server: the fallback below is
+ * a dev-machine address that will never work on a phone. Web is different —
+ * the static export renders these modules in Node before any browser exists,
+ * so throwing here fails the whole deploy instead of the request.
+ */
+if (!configuredUrl && !__DEV__ && Platform.OS !== 'web') {
   throw new Error(
     'EXPO_PUBLIC_API_URL wajib diisi untuk build produksi. Set variabel ini di profil EAS.',
+  );
+}
+
+if (!configuredUrl && !__DEV__ && Platform.OS === 'web') {
+  console.warn(
+    '[FleetOps] EXPO_PUBLIC_API_URL belum diisi; memakai alamat lokal. ' +
+      'Set variabel ini di Vercel (Production + Preview) lalu redeploy.',
   );
 }
 
@@ -43,14 +56,28 @@ export const API_BASE_URL = (configuredUrl || inferBaseUrl()).replace(/\/+$/, ''
 export const API_TIMEOUT_MS = 20_000;
 
 /**
+ * Photos are a few megabytes each, so an upload gets a much larger budget than
+ * a JSON call. Anything shorter fails on a busy mobile network.
+ */
+export const UPLOAD_TIMEOUT_MS = 60_000;
+
+/**
  * Login must fail fast: the driver is standing at the gate and a 20s spinner
  * feels like a hang. Auth calls get a shorter budget than data requests.
  */
 export const AUTH_TIMEOUT_MS = 10_000;
 
-/** Absolute URL for a stored evidence path (`uploads/...`). */
+/**
+ * Absolute URL for a stored evidence path (`uploads/...`).
+ *
+ * Local and inline URIs (a freshly captured `file://`/`blob:` photo, a `data:`
+ * preview) already carry their own scheme and must be returned untouched —
+ * prefixing them with the API host produces a 404 against Metro.
+ */
+const ABSOLUTE_URI = /^(https?|file|blob|data|content):/i;
+
 export function mediaUrl(path: string | null | undefined): string | undefined {
   if (!path) return undefined;
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (ABSOLUTE_URI.test(path)) return path;
   return `${API_BASE_URL}/${path.replace(/^\/+/, '')}`;
 }
