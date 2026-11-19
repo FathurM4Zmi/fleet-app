@@ -105,12 +105,18 @@ export const tripApi = {
   accept: (id: string) => apiRequest<void>(`${BASE}/trips/${id}/accept`, { method: 'POST' }),
   decline: (id: string, reason: string) =>
     apiRequest<void>(`${BASE}/trips/${id}/decline`, { method: 'POST', body: { reason } }),
-  start: (id: string) => apiRequest<void>(`${BASE}/trips/${id}/start`, { method: 'POST' }),
+  /** BRL-011 — `odometerStartKm` menaikkan odometer kendaraan; turun → ditolak backend (422). */
+  start: (id: string, odometerStartKm?: number) =>
+    apiRequest<void>(`${BASE}/trips/${id}/start`, {
+      method: 'POST',
+      body: { odometerStartKm: odometerStartKm ?? null },
+    }),
   arrive: (id: string) => apiRequest<void>(`${BASE}/trips/${id}/arrive`, { method: 'POST' }),
-  complete: (id: string, actualDistanceKm?: number) =>
+  /** `odometerEndKm` ≥ odometer awal; jarak diturunkan server bila `actualDistanceKm` kosong. */
+  complete: (id: string, actualDistanceKm?: number, odometerEndKm?: number) =>
     apiRequest<void>(`${BASE}/trips/${id}/complete`, {
       method: 'POST',
-      body: { actualDistanceKm: actualDistanceKm ?? null },
+      body: { actualDistanceKm: actualDistanceKm ?? null, odometerEndKm: odometerEndKm ?? null },
     }),
 };
 
@@ -223,6 +229,10 @@ export const fuelApi = {
     latitude?: number | null;
     longitude?: number | null;
     locationName?: string | null;
+    /** Wajib akurat untuk konsumsi tank-to-tank (L/100km). Default server: true. */
+    isFullTank?: boolean;
+    fuelType?: 'Diesel' | 'Petrol' | 'Electric' | null;
+    invoiceNumber?: string | null;
   }) => apiRequest<{ id: string }>(`${BASE}/fuel`, { method: 'POST', body: payload }),
   card: () => apiRequest<FuelCard | null>(`${BASE}/fuel-card`),
   cardTransactions: (take = 50) =>

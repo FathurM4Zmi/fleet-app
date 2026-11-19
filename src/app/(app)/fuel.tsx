@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
 import { useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
 import { MapCanvas } from '@/components/MapCanvas';
@@ -62,6 +62,8 @@ export default function FuelLogScreen() {
   const [locating, setLocating] = useState(false);
   const [locationNote, setLocationNote] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  // Isi penuh = dasar hitung konsumsi tank-to-tank (L/100km). Default benar; matikan bila isi sebagian.
+  const [fullTank, setFullTank] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -177,6 +179,7 @@ export default function FuelLogScreen() {
         receiptPath,
         tripId: nextTrip?.id ?? null,
         notes: null,
+        isFullTank: fullTank,
         latitude: coords?.latitude ?? null,
         longitude: coords?.longitude ?? null,
         locationName: coords
@@ -359,6 +362,25 @@ export default function FuelLogScreen() {
             <Text variant="headlineMd" color={colors.primaryContainer}>
               Rp {formatNumber(total)}
             </Text>
+          </View>
+        </View>
+
+        {/* Isi penuh? — menentukan akurasi konsumsi BBM */}
+        <View style={styles.fieldGroup}>
+          <View style={styles.inputShell}>
+            <View style={styles.flex}>
+              <Text variant="labelMd" color="textSecondary">
+                ISI SAMPAI PENUH
+              </Text>
+              <Text variant="caption" color={colors.textSecondary}>
+                Matikan bila hanya mengisi sebagian tangki.
+              </Text>
+            </View>
+            <Switch
+              value={fullTank}
+              onValueChange={setFullTank}
+              accessibilityLabel="Isi sampai penuh"
+            />
           </View>
         </View>
 

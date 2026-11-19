@@ -37,6 +37,8 @@ export default function TripExecutionScreen() {
   const live = useLiveLocation();
 
   const [note, setNote] = useState('');
+  // MBR-005 / BRL-011: odometer dibaca di speedometer saat mulai & saat tiba.
+  const [odometer, setOdometer] = useState('');
   const [busy, setBusy] = useState(false);
 
   // FRD-MOB-TRK-02 — jejak baru dari server langsung memperbarui peta.
@@ -102,8 +104,20 @@ export default function TripExecutionScreen() {
 
   // FRD-MOB-TRIPEXEC-01/02 — transisi status tidak boleh terjadi karena salah tap.
   // react-native-web tidak punya Alert, jadi di web pakai confirm().
+  const odometerValue = Number(odometer.replace(/\./g, '').replace(',', '.'));
+  const odometerOk = odometer.trim() !== '' && Number.isFinite(odometerValue) && odometerValue > 0;
+  const needOdometer = (kind: 'awal' | 'akhir') => {
+    const message = `Isi odometer ${kind} (km) sesuai speedometer kendaraan.`;
+    if (Platform.OS === 'web') globalThis.alert?.(message);
+    else Alert.alert(`Odometer ${kind} belum diisi`, message);
+  };
+
   const confirmStart = () => {
-    const go = () => void run(start, 'Gagal memulai trip');
+    if (!odometerOk) return needOdometer('awal');
+    const go = () => {
+      void run(() => start(odometerValue), 'Gagal memulai trip');
+      setOdometer('');
+    };
     if (Platform.OS === 'web') {
       if (globalThis.confirm?.('Mulai perjalanan?')) go();
       return;
@@ -115,10 +129,11 @@ export default function TripExecutionScreen() {
   };
 
   const confirmComplete = () => {
+    if (!odometerOk) return needOdometer('akhir');
     const message = 'Selesaikan trip dan lanjut unggah bukti pengiriman.';
     const go = () =>
       void run(async () => {
-        await complete();
+        await complete(undefined, odometerValue);
         router.push(`/pod/${trip.id}/capture`);
       }, 'Gagal menyelesaikan trip');
     if (Platform.OS === 'web') {
@@ -268,6 +283,31 @@ export default function TripExecutionScreen() {
             </View>
           </Card>
         </View>
+
+        {/* Odometer — wajib saat mulai & saat selesai (BRL-011) */}
+        {(status === 'accepted' || status === 'arrived') && (
+          <View style={styles.section}>
+            <Text variant="labelMd" color="textSecondary" style={styles.sectionLabel}>
+              {status === 'accepted' ? 'ODOMETER AWAL (KM)' : 'ODOMETER AKHIR (KM)'}
+            </Text>
+            <Card shadow>
+              <TextInput
+                value={odometer}
+                onChangeText={(value) => setOdometer(value.replace(/[^\d.,]/g, '').slice(0, 10))}
+                placeholder="mis. 15250"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="numeric"
+                accessibilityLabel={status === 'accepted' ? 'Odometer awal' : 'Odometer akhir'}
+                style={styles.odometerInput}
+              />
+              {vehicle?.odometerKm ? (
+                <Text variant="caption" color={colors.textSecondary} style={styles.odometerHint}>
+                  Terakhir tercatat: {formatKm(vehicle.odometerKm)}. Tidak boleh lebih kecil.
+                </Text>
+              ) : null}
+            </Card>
+          </View>
+        )}
 
         {/* Travel notes */}
         <View style={styles.section}>
@@ -685,6 +725,16 @@ const styles = StyleSheet.create({
 
   // Notes
   noteWrap: { position: 'relative' },
+  odometerInput: {
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+    fontSize: 18,
+    color: colors.onSurface,
+  },
+  odometerHint: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+  },
   noteInput: {
     minHeight: 76,
     borderRadius: radius.input,
