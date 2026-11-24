@@ -176,6 +176,16 @@ Koreksi odometer: satu pengajuan `Pending` per kendaraan (409 bila dobel); nilai
 Dihitung dari trip selesai × `rate_cards.rate_per_km`. Status selalu **"Estimasi"**
 sampai modul finansial menutup periode — jangan tampilkan sebagai "Dibayar".
 
+## 13. Darurat & biaya perjalanan (2026-11-24)
+
+| Layar | Endpoint | Catatan |
+|---|---|---|
+| Tombol SOS (beranda) | `POST /sos` `{latitude?, longitude?, note?}` → `{alertId, notified}` | Tahan 1,5 dtk. Alert Critical `sos` + push FM & Dispatcher. **Tanpa** Idempotency-Key: SOS kedua yang sah tidak boleh ditahan |
+| Biaya Perjalanan | `GET /expenses?tripId=` | Riwayat + status `Submitted/Approved/Rejected` |
+| Biaya Perjalanan | `POST /trips/{id}/expenses` `{category, amount, receiptPath, incurredAt?, note?}` → 201 | `category`: `Toll, Parking, LoadingUnloading, Meal, Lodging, Other`; struk wajib; trip harus `InProgress/Arrived/Completed`; Idempotency-Key otomatis |
+
+Berkas bukti (`uploads/...`) **wajib login**: `mediaUrl()` menambahkan `?access_token=` karena gambar tidak bisa membawa header di Expo web.
+
 ---
 
 ## Offline & retry
