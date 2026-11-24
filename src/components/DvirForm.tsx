@@ -6,7 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { Button, Card, Screen, ScreenBody, ScreenHeader, SegmentedControl, Text } from '@/components/ui';
 import type { DvirItem, DvirResult } from '@/data/types';
+import { useApiQuery } from '@/hooks/api/useApiQuery';
 import { useDvirForm } from '@/hooks/useDvirForm';
+import { dvirApi } from '@/lib/api/endpoints';
 import { useTrip } from '@/hooks/useTrip';
 import { formatNumber } from '@/lib/format';
 import { capturePhoto } from '@/lib/photo';
@@ -40,7 +42,24 @@ export function DvirForm({ tripId, type }: DvirFormProps) {
     setPhoto,
     setOdometer,
     submit,
+    applyChecklist,
   } = useDvirForm(tripId, type);
+
+  // FRD-M17-04 — checklist mengikuti template unit di server. Offline/gagal → checklist standar
+  // bawaan tetap dipakai (inspeksi tidak boleh terhalang sinyal) dan ditandai di layar.
+  const vehicleId = trip?.vehicleId;
+  const checklistQuery = useApiQuery(
+    () => dvirApi.checklist(vehicleId as string, type === 'pre' ? 'PreTrip' : 'PostTrip'),
+    [vehicleId, type],
+    { enabled: Boolean(vehicleId) },
+  );
+  const template = checklistQuery.data;
+  useEffect(() => {
+    if (inspection && template && template.items.length > 0) {
+      applyChecklist(template.templateName, template.items);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- applyChecklist idempoten via reducer
+  }, [inspection?.id, template]);
 
   const insets = useSafeAreaInsets();
   const [odometerText, setOdometerText] = useState(() => String(vehicle?.odometerKm ?? ''));
@@ -185,6 +204,13 @@ export function DvirForm({ tripId, type }: DvirFormProps) {
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${Math.round(progress * 100)}%` }]} />
             </View>
+            <Text variant="labelSm" color="textSecondary" style={styles.templateNote}>
+              {inspection?.templateName
+                ? `Checklist: ${inspection.templateName}. Item bertanda Kritis yang gagal = unit tidak boleh jalan.`
+                : checklistQuery.error
+                  ? 'Checklist standar (offline). Item bertanda Kritis yang gagal = unit tidak boleh jalan.'
+                  : 'Item bertanda Kritis yang gagal = unit tidak boleh jalan.'}
+            </Text>
           </Card>
 
           {groups.map((group) => (
@@ -295,9 +321,14 @@ function ChecklistRow({
       <View style={styles.rowHeader}>
         <View style={styles.rowLabel}>
           {failed ? <Icon name="error" size={20} color={colors.critical} /> : null}
-          <Text variant={failed ? 'bodyBold' : 'titleMd'} numberOfLines={1} style={styles.flex}>
+          <Text variant={failed ? 'bodyBold' : 'titleMd'} numberOfLines={2} style={styles.flex}>
             {item.label}
           </Text>
+          {item.critical ? (
+            <View style={styles.criticalTag} accessibilityLabel="Item kritis">
+              <Text variant="labelSm" color={colors.critical}>Kritis</Text>
+            </View>
+          ) : null}
         </View>
         <View style={styles.toggle}>
           {RESULTS.map((option) => {
@@ -523,6 +554,14 @@ const styles = StyleSheet.create({
   progressFill: { height: '100%', borderRadius: 4, backgroundColor: colors.primaryContainer },
 
   group: { gap: spacing.sm },
+  templateNote: { marginTop: spacing.sm },
+  criticalTag: {
+    borderWidth: 1,
+    borderColor: colors.critical,
+    borderRadius: radius.sm,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
   groupTitle: { paddingHorizontal: 2, marginTop: spacing.xs },
 
   rowFailed: { borderWidth: 2, borderColor: '#F4B5B5' },

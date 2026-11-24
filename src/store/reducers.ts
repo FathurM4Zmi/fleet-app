@@ -39,6 +39,13 @@ export type AppAction =
   | { type: 'trip/reject'; tripId: string; reason: string }
   | { type: 'dvir/start'; tripId: string; inspectionType: 'pre' | 'post' }
   | {
+      type: 'dvir/applyChecklist';
+      tripId: string;
+      inspectionType: 'pre' | 'post';
+      templateName: string;
+      items: { id: string; label: string; group: string; critical: boolean }[];
+    }
+  | {
       type: 'dvir/setItem';
       tripId: string;
       inspectionType: 'pre' | 'post';
@@ -151,6 +158,24 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         dvir: upsertInspection(state, action.tripId, action.inspectionType, (entry) => entry),
+      };
+
+    // FRD-M17-04 — ganti checklist draft dengan template server, hanya bila belum ada jawaban
+    // (jawaban driver tidak pernah dibuang diam-diam).
+    case 'dvir/applyChecklist':
+      return {
+        ...state,
+        dvir: upsertInspection(state, action.tripId, action.inspectionType, (entry) =>
+          entry.status !== 'draft' ||
+          entry.items.some((item) => item.result !== null) ||
+          entry.templateName === action.templateName
+            ? entry
+            : {
+                ...entry,
+                templateName: action.templateName,
+                items: action.items.map((item) => ({ ...item, result: null })),
+              },
+        ),
       };
 
     case 'dvir/setItem':

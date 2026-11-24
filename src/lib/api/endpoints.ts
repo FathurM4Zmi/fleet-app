@@ -158,6 +158,9 @@ export interface DvirPayload {
 
 export const dvirApi = {
   queue: () => apiRequest<DvirQueueItem[]>(`${BASE}/dvir/queue`),
+  /** FRD-M17-04 — checklist yang berlaku untuk unit (template atau standar). */
+  checklist: (vehicleId: string, type: 'PreTrip' | 'PostTrip') =>
+    apiRequest<DvirChecklistDto>(`${BASE}/dvir/checklist`, { query: { vehicleId, type } }),
   history: (params: { vehicleId?: string; take?: number } = {}) =>
     apiRequest<DvirRecord[]>(`${BASE}/dvir`, { query: params }),
   submit: (payload: DvirPayload) =>
@@ -360,4 +363,31 @@ export const expenseApi = {
 export const sosApi = {
   trigger: (payload: { latitude?: number | null; longitude?: number | null; note?: string | null }) =>
     apiRequest<{ alertId: string | null; notified: boolean }>(`${BASE}/sos`, { method: 'POST', body: payload }),
+};
+
+export interface DvirChecklistDto {
+  templateId: string | null;
+  templateName: string;
+  inspectionType: string;
+  items: { key: string; group: string; label: string; critical: boolean }[];
+}
+
+/* ── Shift & kehadiran (FRD-M20-05) ─────────────────────────────────── */
+
+export interface ShiftDto {
+  id: string;
+  startAt: string;
+  endAt: string;
+  note: string | null;
+  status: string;
+  attendance: string;
+  clockInAt: string | null;
+  clockOutAt: string | null;
+  workedHours: number;
+}
+
+export const shiftApi = {
+  mine: () => apiRequest<ShiftDto[]>(`${BASE}/shifts`),
+  clockIn: (id: string) => apiRequest<ShiftDto>(`${BASE}/shifts/${id}/clock-in`, { method: 'POST' }),
+  clockOut: (id: string) => apiRequest<ShiftDto>(`${BASE}/shifts/${id}/clock-out`, { method: 'POST' }),
 };

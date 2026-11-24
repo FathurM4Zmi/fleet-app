@@ -3,21 +3,22 @@ import type { DvirItem } from './types';
 interface ChecklistSeed {
   group: string;
   label: string;
+  critical?: boolean;
 }
 
 /** Pre-trip inspection checklist. */
 const PRE_TRIP: ChecklistSeed[] = [
-  { group: 'Dokumen', label: 'STNK & KIR masih berlaku' },
-  { group: 'Dokumen', label: 'SIM B2 Umum dibawa' },
+  { group: 'Dokumen', label: 'STNK & KIR masih berlaku', critical: true },
+  { group: 'Dokumen', label: 'SIM B2 Umum dibawa', critical: true },
   { group: 'Dokumen', label: 'Surat jalan lengkap' },
-  { group: 'Eksterior', label: 'Lampu depan & sein berfungsi' },
-  { group: 'Eksterior', label: 'Lampu rem & mundur berfungsi' },
-  { group: 'Eksterior', label: 'Ban & tekanan angin normal' },
+  { group: 'Eksterior', label: 'Lampu depan & sein berfungsi', critical: true },
+  { group: 'Eksterior', label: 'Lampu rem & mundur berfungsi', critical: true },
+  { group: 'Eksterior', label: 'Ban & tekanan angin normal', critical: true },
   { group: 'Eksterior', label: 'Kaca spion lengkap & bersih' },
   { group: 'Mesin', label: 'Oli mesin pada level aman' },
   { group: 'Mesin', label: 'Air radiator cukup' },
-  { group: 'Mesin', label: 'Tidak ada kebocoran oli / air' },
-  { group: 'Kabin', label: 'Sabuk keselamatan berfungsi' },
+  { group: 'Mesin', label: 'Tidak ada kebocoran oli / air', critical: true },
+  { group: 'Kabin', label: 'Sabuk keselamatan berfungsi', critical: true },
   { group: 'Kabin', label: 'Klakson berfungsi' },
   { group: 'Kabin', label: 'Wiper & air pembersih kaca berfungsi' },
   { group: 'Keselamatan', label: 'APAR tersedia & belum kedaluwarsa' },
@@ -28,8 +29,8 @@ const PRE_TRIP: ChecklistSeed[] = [
 /** Post-trip inspection checklist. */
 const POST_TRIP: ChecklistSeed[] = [
   { group: 'Eksterior', label: 'Bodi & bak tidak rusak' },
-  { group: 'Eksterior', label: 'Lampu & sein masih berfungsi' },
-  { group: 'Eksterior', label: 'Ban tidak aus / bocor' },
+  { group: 'Eksterior', label: 'Lampu & sein masih berfungsi', critical: true },
+  { group: 'Eksterior', label: 'Ban tidak aus / bocor', critical: true },
   { group: 'Mesin', label: 'Oli mesin pada level aman' },
   { group: 'Mesin', label: 'Air radiator cukup' },
   { group: 'Kabin', label: 'Kabin bersih & tidak ada barang tertinggal' },
@@ -42,6 +43,7 @@ const toItems = (seeds: ChecklistSeed[], prefix: string): DvirItem[] =>
     id: `${prefix}-${String(index + 1).padStart(2, '0')}`,
     label: seed.label,
     group: seed.group,
+    critical: seed.critical ?? false,
     result: null,
   }));
 

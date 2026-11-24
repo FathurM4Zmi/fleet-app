@@ -108,6 +108,8 @@ export interface DvirItem {
   note?: string;
   /** Local file URI. Required when `result === 'fail'`. */
   photoUri?: string;
+  /** FRD-M17-04 — item kritis: gagal = unit tidak boleh jalan. */
+  critical?: boolean;
 }
 
 export type DvirStatus = 'draft' | 'submitted' | 'passed' | 'failed';
@@ -117,6 +119,8 @@ export interface DvirInspection {
   tripId: string;
   type: 'pre' | 'post';
   items: DvirItem[];
+  /** Nama template checklist dari server (kosong = checklist standar bawaan aplikasi). */
+  templateName?: string;
   odometerKm: number;
   status: DvirStatus;
   /** ISO datetime. */

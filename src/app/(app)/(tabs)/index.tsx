@@ -4,6 +4,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
+import { ShiftCard } from '@/components/ShiftCard';
 import { SosButton } from '@/components/SosButton';
 import {
   Badge,
@@ -189,6 +190,8 @@ export default function HomeScreen() {
           </>
         ) : (
           <>
+            <ShiftCard />
+
             {/* New incoming tasks */}
             {newTasks.length > 0 ? (
               <View style={styles.newTasksSection}>
