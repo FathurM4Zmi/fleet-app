@@ -78,6 +78,7 @@ export default function NotificationsScreen() {
             onPress={() => void handleMarkAll()}
             disabled={unreadCount === 0}
             accessibilityRole="button"
+            hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
             style={styles.markAll}
           >
             <Text variant="caption" color={unreadCount === 0 ? 'textMuted' : 'primaryContainer'}>
@@ -172,6 +173,7 @@ const styles = StyleSheet.create({
   markAll: { paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: radius.input },
   chips: { gap: spacing.sm, paddingTop: spacing.md },
   chip: {
+    minHeight: 44,
     height: 36,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.pill,

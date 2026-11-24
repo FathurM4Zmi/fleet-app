@@ -4,6 +4,8 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
+import { ShiftCard } from '@/components/ShiftCard';
+import { SosButton } from '@/components/SosButton';
 import {
   Badge,
   Button,
@@ -149,11 +151,12 @@ export default function HomeScreen() {
               {greeting()}, {firstName}
             </Text>
             <Text variant="labelMd" color="secondary">
-              Driver • {driver.site}
+              {driver.site && driver.site !== '—' ? `Driver • ${driver.site}` : 'Driver'}
             </Text>
           </View>
         </View>
 
+        <SosButton />
         <Pressable
           onPress={() => router.navigate('/notifications')}
           accessibilityRole="button"
@@ -187,21 +190,7 @@ export default function HomeScreen() {
           </>
         ) : (
           <>
-            {/* DNA / health score */}
-            <Card shadow style={styles.dnaCard}>
-              <View style={styles.dnaText}>
-                <Text variant="headlineSm">Skor Kesehatan Driver</Text>
-                <Text variant="bodyMd" color="secondary" style={styles.dnaSub}>
-                  {dnaLabel} • Skor {Math.round(driver.dnaScore)}/100
-                </Text>
-              </View>
-              <ProgressRing
-                value={driver.dnaScore}
-                size={80}
-                color={dnaTone === 'success' ? colors.success : dnaTone === 'warning' ? colors.warning : colors.critical}
-                caption="Skor"
-              />
-            </Card>
+            <ShiftCard />
 
             {/* New incoming tasks */}
             {newTasks.length > 0 ? (
@@ -214,6 +203,8 @@ export default function HomeScreen() {
                     onPress={() => router.navigate('/inbox')}
                     accessibilityRole="button"
                     accessibilityLabel="Lihat semua tugas baru"
+                    // Target sentuh ≥44px (HIG/Material) — teks tautan hanya ~16px tinggi.
+                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                   >
                     <Text variant="labelMd" color="primaryContainer">
                       Lihat semua ›
@@ -252,6 +243,23 @@ export default function HomeScreen() {
                 </Text>
               </Card>
             )}
+
+            {/* DNA / health score — di bawah tugas: pada layar driver, tugas berikutnya harus terlihat
+                pertama (prinsip driving UX: tugas utama didahulukan, info lain sekunder). */}
+            <Card shadow style={styles.dnaCard}>
+              <View style={styles.dnaText}>
+                <Text variant="headlineSm">Skor Kesehatan Driver</Text>
+                <Text variant="bodyMd" color="secondary" style={styles.dnaSub}>
+                  {dnaLabel} • Skor {Math.round(driver.dnaScore)}/100
+                </Text>
+              </View>
+              <ProgressRing
+                value={driver.dnaScore}
+                size={80}
+                color={dnaTone === 'success' ? colors.success : dnaTone === 'warning' ? colors.warning : colors.critical}
+                caption="Skor"
+              />
+            </Card>
 
             {/* Quick actions */}
             <View style={styles.quickSection}>
@@ -314,6 +322,7 @@ export default function HomeScreen() {
                   onPress={openWorkload}
                   accessibilityRole="button"
                   accessibilityLabel="Lihat tugas dan DVIR"
+                  hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                 >
                   <Text variant="labelMd" color="primaryContainer">
                     Lihat ›
@@ -392,7 +401,7 @@ function TripSummaryCard({
               ARMADA
             </Text>
           </View>
-          <Text variant="labelMd">{vehicle?.plate ?? '—'}</Text>
+          <Text variant="labelMd">{trip.vehiclePlate ?? vehicle?.plate ?? '—'}</Text>
         </View>
 
         <View style={styles.metaCol}>

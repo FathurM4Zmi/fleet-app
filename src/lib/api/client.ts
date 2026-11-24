@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { idempotencyKeyFor, isIdempotentPath } from './idempotency';
 
 import { API_BASE_URL, API_TIMEOUT_MS, UPLOAD_TIMEOUT_MS } from './config';
 
@@ -121,6 +122,10 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     try {
       const headers: Record<string, string> = { Accept: 'application/json' };
       if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+      // MBRL-009: tulis yang bisa diputar ulang outbox membawa kunci dari isi permintaan.
+      if (options.method === 'POST' && isIdempotentPath(path)) {
+        headers['Idempotency-Key'] = idempotencyKeyFor(path, options.body);
+      }
       if (!options.anonymous) {
         const token = await tokenProvider();
         if (token) headers.Authorization = `Bearer ${token}`;

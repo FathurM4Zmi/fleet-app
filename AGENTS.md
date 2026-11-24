@@ -36,6 +36,7 @@ Docs: https://docs.expo.dev/eas/index.md
 
 ## Rules
 
+- **Akun mobile HANYA driver.** Aplikasi ini hanya untuk login driver (PIN/OTP/QR lewat `/api/driver/auth`). Akun web (System Administrator, Fleet Manager, Dispatcher, Maintenance Officer, Finance, Management/Viewer) tidak boleh dipakai atau ditampilkan di mobile — akun tersebut khusus untuk web.
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md

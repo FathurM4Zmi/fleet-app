@@ -78,8 +78,12 @@ export function useTrip(tripId: string | undefined) {
           tripApi.accept(tripId),
         );
       } else if (status === 'in_progress') {
-        await transition(status, `/api/driver/trips/${tripId}/start`, 'Mulai perjalanan', () =>
-          tripApi.start(tripId),
+        await transition(
+          status,
+          `/api/driver/trips/${tripId}/start`,
+          'Mulai perjalanan',
+          () => tripApi.start(tripId),
+          { odometerStartKm: null },
         );
       } else if (status === 'arrived') {
         await transition(status, `/api/driver/trips/${tripId}/arrive`, 'Tiba di tujuan', () =>
@@ -112,12 +116,19 @@ export function useTrip(tripId: string | undefined) {
     [tripId, transition],
   );
 
-  const start = useCallback(async () => {
-    if (!tripId) return;
-    await transition('in_progress', `/api/driver/trips/${tripId}/start`, 'Mulai perjalanan', () =>
-      tripApi.start(tripId),
-    );
-  }, [tripId, transition]);
+  const start = useCallback(
+    async (odometerStartKm?: number) => {
+      if (!tripId) return;
+      await transition(
+        'in_progress',
+        `/api/driver/trips/${tripId}/start`,
+        'Mulai perjalanan',
+        () => tripApi.start(tripId, odometerStartKm),
+        { odometerStartKm: odometerStartKm ?? null },
+      );
+    },
+    [tripId, transition],
+  );
 
   const arrive = useCallback(async () => {
     if (!tripId) return;
@@ -127,14 +138,14 @@ export function useTrip(tripId: string | undefined) {
   }, [tripId, transition]);
 
   const complete = useCallback(
-    async (actualDistanceKm?: number) => {
+    async (actualDistanceKm?: number, odometerEndKm?: number) => {
       if (!tripId) return;
       await transition(
         'completed',
         `/api/driver/trips/${tripId}/complete`,
         'Selesaikan trip',
-        () => tripApi.complete(tripId, actualDistanceKm),
-        { actualDistanceKm: actualDistanceKm ?? null },
+        () => tripApi.complete(tripId, actualDistanceKm, odometerEndKm),
+        { actualDistanceKm: actualDistanceKm ?? null, odometerEndKm: odometerEndKm ?? null },
       );
     },
     [tripId, transition],

@@ -105,12 +105,18 @@ export const tripApi = {
   accept: (id: string) => apiRequest<void>(`${BASE}/trips/${id}/accept`, { method: 'POST' }),
   decline: (id: string, reason: string) =>
     apiRequest<void>(`${BASE}/trips/${id}/decline`, { method: 'POST', body: { reason } }),
-  start: (id: string) => apiRequest<void>(`${BASE}/trips/${id}/start`, { method: 'POST' }),
+  /** BRL-011 — `odometerStartKm` menaikkan odometer kendaraan; turun → ditolak backend (422). */
+  start: (id: string, odometerStartKm?: number) =>
+    apiRequest<void>(`${BASE}/trips/${id}/start`, {
+      method: 'POST',
+      body: { odometerStartKm: odometerStartKm ?? null },
+    }),
   arrive: (id: string) => apiRequest<void>(`${BASE}/trips/${id}/arrive`, { method: 'POST' }),
-  complete: (id: string, actualDistanceKm?: number) =>
+  /** `odometerEndKm` ≥ odometer awal; jarak diturunkan server bila `actualDistanceKm` kosong. */
+  complete: (id: string, actualDistanceKm?: number, odometerEndKm?: number) =>
     apiRequest<void>(`${BASE}/trips/${id}/complete`, {
       method: 'POST',
-      body: { actualDistanceKm: actualDistanceKm ?? null },
+      body: { actualDistanceKm: actualDistanceKm ?? null, odometerEndKm: odometerEndKm ?? null },
     }),
 };
 
@@ -152,6 +158,9 @@ export interface DvirPayload {
 
 export const dvirApi = {
   queue: () => apiRequest<DvirQueueItem[]>(`${BASE}/dvir/queue`),
+  /** FRD-M17-04 — checklist yang berlaku untuk unit (template atau standar). */
+  checklist: (vehicleId: string, type: 'PreTrip' | 'PostTrip') =>
+    apiRequest<DvirChecklistDto>(`${BASE}/dvir/checklist`, { query: { vehicleId, type } }),
   history: (params: { vehicleId?: string; take?: number } = {}) =>
     apiRequest<DvirRecord[]>(`${BASE}/dvir`, { query: params }),
   submit: (payload: DvirPayload) =>
@@ -223,6 +232,10 @@ export const fuelApi = {
     latitude?: number | null;
     longitude?: number | null;
     locationName?: string | null;
+    /** Wajib akurat untuk konsumsi tank-to-tank (L/100km). Default server: true. */
+    isFullTank?: boolean;
+    fuelType?: 'Diesel' | 'Petrol' | 'Electric' | null;
+    invoiceNumber?: string | null;
   }) => apiRequest<{ id: string }>(`${BASE}/fuel`, { method: 'POST', body: payload }),
   card: () => apiRequest<FuelCard | null>(`${BASE}/fuel-card`),
   cardTransactions: (take = 50) =>
@@ -318,3 +331,63 @@ export const settlementApi = {
 export { apiUpload as uploadFile } from './client';
 
 export type { TrackingPoint, VehicleSpec };
+
+/** Biaya perjalanan per trip (tol, parkir, bongkar muat, makan, penginapan). */
+export type TripExpenseCategory = 'Toll' | 'Parking' | 'LoadingUnloading' | 'Meal' | 'Lodging' | 'Other';
+
+export interface TripExpense {
+  id: string;
+  tripId: string;
+  category: TripExpenseCategory;
+  amount: number;
+  currency: string;
+  incurredAt: string;
+  note: string | null;
+  receiptPath: string;
+  status: 'Submitted' | 'Approved' | 'Rejected';
+  reviewedBy: string | null;
+  reviewNote: string | null;
+}
+
+export const expenseApi = {
+  list: (tripId?: string) =>
+    apiRequest<TripExpense[]>(`${BASE}/expenses`, { query: tripId ? { tripId } : {} }),
+  submit: (
+    tripId: string,
+    payload: { category: TripExpenseCategory; amount: number; receiptPath: string; note?: string | null },
+  ) =>
+    apiRequest<{ id: string }>(`${BASE}/trips/${tripId}/expenses`, { method: 'POST', body: payload }),
+};
+
+/** Tombol darurat — alert Critical ke Fleet Manager & Dispatcher. */
+export const sosApi = {
+  trigger: (payload: { latitude?: number | null; longitude?: number | null; note?: string | null }) =>
+    apiRequest<{ alertId: string | null; notified: boolean }>(`${BASE}/sos`, { method: 'POST', body: payload }),
+};
+
+export interface DvirChecklistDto {
+  templateId: string | null;
+  templateName: string;
+  inspectionType: string;
+  items: { key: string; group: string; label: string; critical: boolean }[];
+}
+
+/* ── Shift & kehadiran (FRD-M20-05) ─────────────────────────────────── */
+
+export interface ShiftDto {
+  id: string;
+  startAt: string;
+  endAt: string;
+  note: string | null;
+  status: string;
+  attendance: string;
+  clockInAt: string | null;
+  clockOutAt: string | null;
+  workedHours: number;
+}
+
+export const shiftApi = {
+  mine: () => apiRequest<ShiftDto[]>(`${BASE}/shifts`),
+  clockIn: (id: string) => apiRequest<ShiftDto>(`${BASE}/shifts/${id}/clock-in`, { method: 'POST' }),
+  clockOut: (id: string) => apiRequest<ShiftDto>(`${BASE}/shifts/${id}/clock-out`, { method: 'POST' }),
+};

@@ -100,7 +100,7 @@ export default function SettlementScreen() {
         subtitle={settlementSummary.period}
         onBack
         right={
-          <Pressable accessibilityRole="button" accessibilityLabel="Kalender" hitSlop={8}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Kalender" hitSlop={12}>
             <Icon name="calendar" size={24} color={colors.secondary} />
           </Pressable>
         }

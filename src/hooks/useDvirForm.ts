@@ -97,6 +97,16 @@ export function useDvirForm(tripId: string | undefined, inspectionType: 'pre' | 
     start: () => {
       if (tripId) dispatch({ type: 'dvir/start', tripId, inspectionType });
     },
+    applyChecklist: (templateName: string, list: { key: string; group: string; label: string; critical: boolean }[]) => {
+      if (!tripId) return;
+      dispatch({
+        type: 'dvir/applyChecklist',
+        tripId,
+        inspectionType,
+        templateName,
+        items: list.map((i) => ({ id: i.key, label: i.label, group: i.group, critical: i.critical })),
+      });
+    },
     setResult: (itemId: string, result: DvirResult) => {
       if (tripId) {
         dispatch({

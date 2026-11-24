@@ -1,3 +1,4 @@
+import { useNetInfo } from '@react-native-community/netinfo';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,16 +11,24 @@ import { colors, spacing } from '@/theme';
 export function OfflineBanner() {
   const insets = useSafeAreaInsets();
   const { pending, syncing, sync } = useOutbox();
+  // Visibilitas status sistem (heuristik #1): beri tahu saat sinyal hilang walau antrean kosong,
+  // supaya driver tahu aksinya akan disimpan dulu, bukan gagal diam-diam.
+  const net = useNetInfo();
+  const offline = net.isConnected === false;
 
-  if (pending === 0) return null;
+  if (pending === 0 && !offline) return null;
 
   return (
     <View style={[styles.banner, { paddingTop: insets.top + spacing.xs }]}>
       <Icon name="sync" size={16} color={colors.onPrimary} />
       <Text variant="labelSm" color="onPrimary" style={styles.text}>
-        {syncing ? 'Menyinkronkan data…' : 'Tersimpan offline. Akan tersinkron saat online.'}
+        {syncing
+          ? 'Menyinkronkan data…'
+          : pending > 0
+            ? 'Tersimpan offline. Akan tersinkron saat online.'
+            : 'Tidak ada sinyal. Data yang dikirim akan disimpan dan dikirim otomatis.'}
       </Text>
-      {!syncing ? (
+      {!syncing && pending > 0 ? (
         <Pressable
           onPress={() => void sync()}
           accessibilityRole="button"

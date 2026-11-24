@@ -6,7 +6,8 @@ import { Text } from './Text';
 
 export interface ProgressRingProps {
   /** 0–100. */
-  value: number;
+  /** `null` = belum ada nilai: cincin kosong dan teks "—". */
+  value: number | null;
   size?: number;
   strokeWidth?: number;
   /** Ring colour. Defaults to the brand blue. */
@@ -30,7 +31,7 @@ export function ProgressRing({
 }: ProgressRingProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const clamped = Math.max(0, Math.min(100, value));
+  const clamped = value == null ? 0 : Math.max(0, Math.min(100, value));
   const offset = circumference * (1 - clamped / 100);
 
   return (
@@ -65,7 +66,7 @@ export function ProgressRing({
             variant="headlineMd"
             style={{ fontSize: Math.round(size * 0.3), lineHeight: Math.round(size * 0.34) }}
           >
-            {Math.round(clamped)}
+            {value == null ? '—' : Math.round(clamped)}
           </Text>
           {suffix ? (
             <Text variant="labelSm" color="textMuted">

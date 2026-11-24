@@ -180,6 +180,14 @@ export default function ProfileScreen() {
       href: '/fuel-card',
     },
     {
+      key: 'expenses',
+      icon: 'receipt',
+      iconColor: colors.primary,
+      label: 'Biaya Perjalanan',
+      value: 'Tol, parkir, bongkar muat',
+      href: '/expenses',
+    },
+    {
       key: 'vehicle',
       icon: 'truck',
       iconColor: colors.onSurfaceVariant,
@@ -240,6 +248,7 @@ export default function ProfileScreen() {
               onPress={openEdit}
               accessibilityRole="button"
               accessibilityLabel="Edit profil"
+              hitSlop={8}
               style={({ pressed }) => [styles.editButton, pressed && styles.menuRowPressed]}
             >
               <Icon name="edit" size={14} color={colors.onSurface} />

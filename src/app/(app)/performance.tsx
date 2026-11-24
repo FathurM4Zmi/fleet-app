@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   gridRow: { flexDirection: 'row', gap: spacing.sm + 4 },
   kpiTile: { flex: 1, justifyContent: 'space-between', gap: spacing.sm },
   kpiHead: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: spacing.xs },
-  kpiLabel: { flex: 1, fontSize: 10 },
+  kpiLabel: { flex: 1, fontSize: 12 },
   deltaChip: { paddingHorizontal: spacing.sm, paddingVertical: 1, borderRadius: radius.pill },
   kpiValueRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.xs },
   kpiValue: { fontSize: 30, lineHeight: 32 },

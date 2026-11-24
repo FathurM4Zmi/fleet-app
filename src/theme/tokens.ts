@@ -32,7 +32,8 @@ export const colors = {
   onSurfaceVariant: '#434656',
   /** Secondary metadata, timestamps, placeholders. */
   textSecondary: '#4B5563',
-  textMuted: '#9CA3AF',
+  // WCAG AA: #9CA3AF hanya 2.4–2.5:1 di latar terang → #5F6672 (≥5.2:1) — audit UX 2026-11-24.
+  textMuted: '#5F6672',
 
   outline: '#747688',
   outlineVariant: '#C4C5D9',
@@ -57,11 +58,13 @@ export const colors = {
   onErrorContainer: '#93000A',
 
   /** Status anchors. */
-  success: '#12805C',
+  // 4.38:1 di atas successContainer → #0E7050 (≥5.4:1).
+  success: '#0E7050',
   successContainer: '#E7F5EF',
   warning: '#B45309',
   warningContainer: '#FDF3E7',
-  critical: '#DC2626',
+  // 4.1:1 di atas criticalContainer → #B91C1C (red-700).
+  critical: '#B91C1C',
   criticalContainer: '#FCE8E8',
   info: '#1B4DFF',
   infoContainer: '#E9EDFF',
@@ -147,11 +150,12 @@ export const typography = {
   /** 12/16 semibold, tracked — badge and section labels. */
   labelMd: { fontFamily: fonts.semiBold, fontSize: 12, lineHeight: 16, letterSpacing: 0.6 },
   /** 11/16 semibold, tracked — micro labels. */
-  labelSm: { fontFamily: fonts.semiBold, fontSize: 11, lineHeight: 16, letterSpacing: 0.44 },
+  // ≥12px: dibaca sekilas di kabin/di bawah terik (audit UX 2026-11-24).
+  labelSm: { fontFamily: fonts.semiBold, fontSize: 12, lineHeight: 16, letterSpacing: 0.44 },
   /** 13/18 regular — helper text, timestamps. */
   caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
   /** 11/16 regular — footer microcopy. */
-  micro: { fontFamily: fonts.regular, fontSize: 11, lineHeight: 16 },
+  micro: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 16 },
 } as const satisfies Record<string, TextStyle>;
 
 export type TypographyVariant = keyof typeof typography;
