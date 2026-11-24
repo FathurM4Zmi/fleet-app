@@ -149,7 +149,7 @@ export default function HomeScreen() {
               {greeting()}, {firstName}
             </Text>
             <Text variant="labelMd" color="secondary">
-              Driver • {driver.site}
+              {driver.site && driver.site !== '—' ? `Driver • ${driver.site}` : 'Driver'}
             </Text>
           </View>
         </View>
@@ -392,7 +392,7 @@ function TripSummaryCard({
               ARMADA
             </Text>
           </View>
-          <Text variant="labelMd">{vehicle?.plate ?? '—'}</Text>
+          <Text variant="labelMd">{trip.vehiclePlate ?? vehicle?.plate ?? '—'}</Text>
         </View>
 
         <View style={styles.metaCol}>

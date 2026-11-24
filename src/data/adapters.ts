@@ -216,7 +216,8 @@ export function toVehicleDetail(dto: DriverVehicleWire, documents: VehicleDocume
     fuelType: dto.fuelType ?? '—',
     transmission: dto.transmission ?? '—',
     year: dto.year ? String(dto.year) : '—',
-    healthScore: dto.healthScore ?? 0,
+    // G33 — null = belum dihitung; jangan tampilkan sebagai 0 (terbaca "sangat buruk").
+    healthScore: dto.healthScore ?? null,
     healthNote: dto.healthNote ?? 'Belum ada data kesehatan unit',
     healthDelta: '—',
     capacityKg: dto.capacityKg ? Number(dto.capacityKg) : 0,

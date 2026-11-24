@@ -526,7 +526,7 @@ export interface VehicleDetail {
   transmission: string;
   year: string;
   /** 0–100 health score. */
-  healthScore: number;
+  healthScore: number | null;
   healthNote: string;
   healthDelta: string;
   capacityKg: number;

@@ -833,7 +833,7 @@ describe('vehicle detail and trip-derived vehicle', () => {
     const view = toVehicleDetail(vehicle);
 
     expect(view.year).toBe('2021');
-    expect(view.healthScore).toBe(0);
+    expect(view.healthScore).toBeNull(); // G33 — belum dihitung, bukan 0
     expect(view.healthNote).toBe('Belum ada data kesehatan unit');
     expect(view.capacityKg).toBe(12000);
     expect(view.documents).toEqual([]);

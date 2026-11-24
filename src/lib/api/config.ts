@@ -1,6 +1,8 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
+import { currentToken } from '@/lib/auth/session';
+
 /**
  * Base URL of the FleetOps API.
  *
@@ -68,7 +70,7 @@ export const UPLOAD_TIMEOUT_MS = 60_000;
 export const AUTH_TIMEOUT_MS = 10_000;
 
 /**
- * Absolute URL for a stored evidence path (`uploads/...`).
+ * Absolute URL for a stored evidence path (`uploads/...`), carrying the session token.
  *
  * Local and inline URIs (a freshly captured `file://`/`blob:` photo, a `data:`
  * preview) already carry their own scheme and must be returned untouched —
@@ -79,5 +81,9 @@ const ABSOLUTE_URI = /^(https?|file|blob|data|content):/i;
 export function mediaUrl(path: string | null | undefined): string | undefined {
   if (!path) return undefined;
   if (ABSOLUTE_URI.test(path)) return path;
-  return `${API_BASE_URL}/${path.replace(/^\/+/, '')}`;
+  const url = `${API_BASE_URL}/${path.replace(/^\/+/, '')}`;
+  // G30 — berkas bukti di server wajib login; <Image> di web tidak bisa membawa header,
+  // jadi access token (umur pendek) dikirim lewat query — hanya diterima BE untuk /uploads.
+  const token = currentToken();
+  return token ? `${url}?access_token=${encodeURIComponent(token)}` : url;
 }

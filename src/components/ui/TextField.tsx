@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Platform,
   Pressable,
   StyleSheet,
   TextInput,
@@ -113,6 +114,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     color: colors.ink,
     paddingVertical: spacing.md,
+    // G35 — di web, outline fokus bawaan browser tergambar DI DALAM kotak yang sudah
+    // berganti warna saat fokus → terlihat border ganda. Fokus sudah ditandai kontainer.
+    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null),
   },
   helper: { marginTop: spacing.xs + 2 },
 });

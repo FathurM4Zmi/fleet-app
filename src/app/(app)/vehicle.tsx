@@ -114,7 +114,7 @@ export default function VehicleScreen() {
 
         {/* Health ring */}
         <Card shadow style={styles.healthCard}>
-          <ProgressRing value={detail.healthScore} size={64} strokeWidth={5} color={colors.success} suffix="/100" />
+          <ProgressRing value={detail.healthScore} size={64} strokeWidth={5} color={colors.success} suffix={detail.healthScore == null ? undefined : "/100"} />
           <View style={styles.flex}>
             <Text variant="bodyBold">Skor Kesehatan Kendaraan</Text>
             <Text variant="caption" color="secondary" style={styles.healthNote}>
