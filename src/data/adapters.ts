@@ -760,7 +760,8 @@ export function toSettlement(dto: SettlementWire): {
       total: rateMissing ? '—' : rupiah(Number(dto.amount)),
       status: dto.status,
       paidNote: `${dto.tripCount} trip selesai`,
-      punctuality: 'Estimasi',
+      // Status final dari BE (Estimasi → Disiapkan → Disetujui → Dibayar), bukan teks tetap.
+      punctuality: dto.status,
       rateMissing,
     },
     lines: dto.lines.map((line) => ({
