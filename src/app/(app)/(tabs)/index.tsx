@@ -4,6 +4,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/Icon';
+import { SosButton } from '@/components/SosButton';
 import {
   Badge,
   Button,
@@ -154,6 +155,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        <SosButton />
         <Pressable
           onPress={() => router.navigate('/notifications')}
           accessibilityRole="button"

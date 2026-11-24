@@ -180,6 +180,14 @@ export default function ProfileScreen() {
       href: '/fuel-card',
     },
     {
+      key: 'expenses',
+      icon: 'receipt',
+      iconColor: colors.primary,
+      label: 'Biaya Perjalanan',
+      value: 'Tol, parkir, bongkar muat',
+      href: '/expenses',
+    },
+    {
       key: 'vehicle',
       icon: 'truck',
       iconColor: colors.onSurfaceVariant,

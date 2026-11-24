@@ -328,3 +328,36 @@ export const settlementApi = {
 export { apiUpload as uploadFile } from './client';
 
 export type { TrackingPoint, VehicleSpec };
+
+/** Biaya perjalanan per trip (tol, parkir, bongkar muat, makan, penginapan). */
+export type TripExpenseCategory = 'Toll' | 'Parking' | 'LoadingUnloading' | 'Meal' | 'Lodging' | 'Other';
+
+export interface TripExpense {
+  id: string;
+  tripId: string;
+  category: TripExpenseCategory;
+  amount: number;
+  currency: string;
+  incurredAt: string;
+  note: string | null;
+  receiptPath: string;
+  status: 'Submitted' | 'Approved' | 'Rejected';
+  reviewedBy: string | null;
+  reviewNote: string | null;
+}
+
+export const expenseApi = {
+  list: (tripId?: string) =>
+    apiRequest<TripExpense[]>(`${BASE}/expenses`, { query: tripId ? { tripId } : {} }),
+  submit: (
+    tripId: string,
+    payload: { category: TripExpenseCategory; amount: number; receiptPath: string; note?: string | null },
+  ) =>
+    apiRequest<{ id: string }>(`${BASE}/trips/${tripId}/expenses`, { method: 'POST', body: payload }),
+};
+
+/** Tombol darurat — alert Critical ke Fleet Manager & Dispatcher. */
+export const sosApi = {
+  trigger: (payload: { latitude?: number | null; longitude?: number | null; note?: string | null }) =>
+    apiRequest<{ alertId: string | null; notified: boolean }>(`${BASE}/sos`, { method: 'POST', body: payload }),
+};

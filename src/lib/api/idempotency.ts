@@ -16,6 +16,7 @@ const IDEMPOTENT_PATHS = [
   /\/driver\/incidents$/,
   /\/driver\/vehicle\/odometer-correction$/,
   /\/driver\/tasks\/[^/]+\/pod$/,
+  /\/driver\/trips\/[^/]+\/expenses$/,
 ];
 
 export function isIdempotentPath(path: string): boolean {
