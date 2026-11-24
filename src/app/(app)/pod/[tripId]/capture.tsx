@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   content: { gap: spacing.md, paddingHorizontal: spacing.gutter, paddingBottom: spacing.xxl },
   flex: { flex: 1 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  tracked: { letterSpacing: 0.6, fontSize: 11 },
+  tracked: { letterSpacing: 0.6, fontSize: 12 },
   pressed: { opacity: 0.85 },
 
   immutable: {

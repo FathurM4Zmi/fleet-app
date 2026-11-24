@@ -71,7 +71,7 @@ export default function VehicleScreen() {
         title="Kendaraan Saya"
         onBack
         right={
-          <Pressable accessibilityRole="button" accessibilityLabel="Sinkronisasi" hitSlop={8}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Sinkronisasi" hitSlop={12}>
             <Icon name="sync" size={22} color={colors.onSurfaceVariant} />
           </Pressable>
         }

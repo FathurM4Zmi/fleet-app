@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, G, Line, Path } from 'react-native-svg';
 
+import { Text } from './Text';
 import { colors } from '@/theme';
 
 /** Fixed coordinate space; the SVG scales to the parent width. */
@@ -79,6 +80,14 @@ const toPoints = (values: number[], extra: number[] = []): { points: Point[]; mi
 
 export function TrendChart({ series, reference, height = 128, grid = true }: TrendChartProps) {
   const first = series[0];
+  // < 2 titik tidak membentuk tren (dan Math.min() kosong = Infinity → path rusak).
+  if (!first || first.values.length < 2) {
+    return (
+      <View style={[styles.base, styles.empty, { height }]}>
+        <Text variant="bodyMd" color="textSecondary">Data tren belum cukup — tampil setelah 2 minggu aktif.</Text>
+      </View>
+    );
+  }
   const scale = first ? toPoints(first.values, reference === undefined ? [] : [reference]) : undefined;
 
   const referenceY =
@@ -153,5 +162,6 @@ export function TrendChart({ series, reference, height = 128, grid = true }: Tre
 }
 
 const styles = StyleSheet.create({
+  empty: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   base: { width: '100%' },
 });

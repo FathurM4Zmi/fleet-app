@@ -162,6 +162,7 @@ const styles = StyleSheet.create({
   form: { gap: spacing.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
+    minHeight: 44, justifyContent: 'center',
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.pill,
     borderWidth: 1, borderColor: colors.outlineVariant, backgroundColor: colors.surface,
   },

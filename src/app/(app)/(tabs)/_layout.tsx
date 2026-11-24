@@ -46,7 +46,7 @@ export default function TabsLayout() {
           headerShown: false,
           tabBarActiveTintColor: colors.primaryContainer,
           tabBarInactiveTintColor: colors.secondary,
-          tabBarLabelStyle: { fontFamily: fonts.semiBold, fontSize: 11 },
+          tabBarLabelStyle: { fontFamily: fonts.semiBold, fontSize: 12 },
           tabBarStyle: {
             height: sizes.tabBar + insets.bottom,
             paddingTop: spacing.sm,

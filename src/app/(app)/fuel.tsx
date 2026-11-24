@@ -403,7 +403,7 @@ export default function FuelLogScreen() {
               disabled={locating}
               accessibilityRole="button"
               accessibilityLabel="Gunakan lokasi saat ini"
-              hitSlop={8}
+              hitSlop={12}
             >
               <Icon
                 name="recenter"
@@ -571,6 +571,7 @@ const styles = StyleSheet.create({
   inputShellError: { borderColor: colors.critical },
   inputShellWarning: { borderColor: '#FDE68A' },
   input: {
+    minHeight: 44,
     flex: 1,
     ...typography.headlineSm,
     color: colors.ink,

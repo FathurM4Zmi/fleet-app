@@ -248,6 +248,7 @@ export default function ProfileScreen() {
               onPress={openEdit}
               accessibilityRole="button"
               accessibilityLabel="Edit profil"
+              hitSlop={8}
               style={({ pressed }) => [styles.editButton, pressed && styles.menuRowPressed]}
             >
               <Icon name="edit" size={14} color={colors.onSurface} />

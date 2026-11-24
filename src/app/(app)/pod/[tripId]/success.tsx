@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   content: { gap: spacing.md, paddingHorizontal: spacing.gutter, paddingBottom: spacing.xxl },
   flex: { flex: 1 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  tracked: { letterSpacing: 0.6, fontSize: 11, textTransform: 'uppercase' },
+  tracked: { letterSpacing: 0.6, fontSize: 12, textTransform: 'uppercase' },
 
   banner: { alignItems: 'center', gap: spacing.xs, paddingTop: spacing.md },
   halo: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.successContainer, marginBottom: spacing.sm },

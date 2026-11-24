@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     borderColor: colors.divider,
     backgroundColor: colors.surface,
   },
-  severityLabel: { fontSize: 11, lineHeight: 14 },
+  severityLabel: { fontSize: 12, lineHeight: 16 },
 
   textarea: {
     borderRadius: radius.card,

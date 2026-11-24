@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
+import { TREND_LABEL, trendDirection } from '@/lib/trend';
 import {
   BottomBar,
   Button,
@@ -58,6 +59,7 @@ export default function DnaScreen() {
   const ringColor = tone === 'success' ? colors.success : colors.warning;
   // FRD-MOB-DNA-03 — penurunan ≥5 poin dianggap signifikan dan memicu banner coaching.
   const deltaDown = dnaSummary.delta < 0;
+  const direction = trendDirection(dnaSummary.trend.map((point) => point.score));
   const significantDrop = dnaSummary.delta <= -5;
 
   return (
@@ -66,7 +68,7 @@ export default function DnaScreen() {
         title="DNA Saya"
         onBack
         right={
-          <Pressable accessibilityRole="button" accessibilityLabel="Bantuan dan info" hitSlop={8}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Bantuan dan info" hitSlop={12}>
             <Icon name="info" size={22} color={colors.secondary} />
           </Pressable>
         }
@@ -127,7 +129,7 @@ export default function DnaScreen() {
               </Text>
             </View>
             <Text variant="caption" color="textSecondary">
-              Dibanding 12 minggu sebelumnya. Ikuti coaching agar skor kembali naik.
+              Dibanding awal tren {dnaSummary.weeksTracked} minggu terakhir. Ikuti coaching agar skor kembali naik.
             </Text>
             <Button
               label="Buka Coaching"
@@ -144,9 +146,9 @@ export default function DnaScreen() {
             <Text variant="labelSm" color="textMuted" style={styles.tracked}>
               TREN {dnaSummary.weeksTracked} MINGGU
             </Text>
-            <View style={styles.risingChip}>
-              <Text variant="labelSm" color="success">
-                Konsisten Naik
+            <View style={[styles.risingChip, direction === 'down' && styles.deltaPillDown]}>
+              <Text variant="labelSm" color={direction === 'down' ? 'critical' : direction === 'up' ? 'success' : 'textSecondary'}>
+                {TREND_LABEL[direction]}
               </Text>
             </View>
           </View>

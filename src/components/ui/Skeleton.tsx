@@ -46,6 +46,8 @@ export function Skeleton({ width = '100%', height = 16, cornerRadius = radius.in
   return (
     <Animated.View
       accessibilityRole="progressbar"
+      // Nama wajib untuk progressbar (WCAG 4.1.2) — dibacakan screen reader saat data dimuat.
+      accessibilityLabel="Memuat"
       style={[styles.base, { width, height, borderRadius: cornerRadius, opacity }, style]}
     />
   );

@@ -189,22 +189,6 @@ export default function HomeScreen() {
           </>
         ) : (
           <>
-            {/* DNA / health score */}
-            <Card shadow style={styles.dnaCard}>
-              <View style={styles.dnaText}>
-                <Text variant="headlineSm">Skor Kesehatan Driver</Text>
-                <Text variant="bodyMd" color="secondary" style={styles.dnaSub}>
-                  {dnaLabel} • Skor {Math.round(driver.dnaScore)}/100
-                </Text>
-              </View>
-              <ProgressRing
-                value={driver.dnaScore}
-                size={80}
-                color={dnaTone === 'success' ? colors.success : dnaTone === 'warning' ? colors.warning : colors.critical}
-                caption="Skor"
-              />
-            </Card>
-
             {/* New incoming tasks */}
             {newTasks.length > 0 ? (
               <View style={styles.newTasksSection}>
@@ -216,6 +200,8 @@ export default function HomeScreen() {
                     onPress={() => router.navigate('/inbox')}
                     accessibilityRole="button"
                     accessibilityLabel="Lihat semua tugas baru"
+                    // Target sentuh ≥44px (HIG/Material) — teks tautan hanya ~16px tinggi.
+                    hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                   >
                     <Text variant="labelMd" color="primaryContainer">
                       Lihat semua ›
@@ -254,6 +240,23 @@ export default function HomeScreen() {
                 </Text>
               </Card>
             )}
+
+            {/* DNA / health score — di bawah tugas: pada layar driver, tugas berikutnya harus terlihat
+                pertama (prinsip driving UX: tugas utama didahulukan, info lain sekunder). */}
+            <Card shadow style={styles.dnaCard}>
+              <View style={styles.dnaText}>
+                <Text variant="headlineSm">Skor Kesehatan Driver</Text>
+                <Text variant="bodyMd" color="secondary" style={styles.dnaSub}>
+                  {dnaLabel} • Skor {Math.round(driver.dnaScore)}/100
+                </Text>
+              </View>
+              <ProgressRing
+                value={driver.dnaScore}
+                size={80}
+                color={dnaTone === 'success' ? colors.success : dnaTone === 'warning' ? colors.warning : colors.critical}
+                caption="Skor"
+              />
+            </Card>
 
             {/* Quick actions */}
             <View style={styles.quickSection}>
@@ -316,6 +319,7 @@ export default function HomeScreen() {
                   onPress={openWorkload}
                   accessibilityRole="button"
                   accessibilityLabel="Lihat tugas dan DVIR"
+                  hitSlop={{ top: 14, bottom: 14, left: 8, right: 8 }}
                 >
                   <Text variant="labelMd" color="primaryContainer">
                     Lihat ›
